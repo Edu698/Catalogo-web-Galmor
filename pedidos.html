@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Pedidos — Galmor Textiles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    .panel { max-width: 1100px; margin: 0 auto; padding: 20px var(--margen) 80px; }
+    .panel-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 16px; }
+    .panel-cab h1 { font-size: 44px; }
+    .importar { display: flex; gap: 8px; margin: 12px 0 18px; }
+    .importar input { flex: 1; height: 48px; padding: 0 12px; border: 1px solid var(--linea); background: var(--arena-3); }
+    .importar .btn { min-height: 48px; font-size: 16px; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .filtros button { min-height: 44px; padding: 0 14px; border: 1px solid var(--linea); background: var(--arena-3); font: 600 14px var(--texto); }
+    .filtros button.activa { background: var(--tinta); color: var(--arena); border-color: var(--tinta); }
+    .filtros label { display: flex; align-items: center; gap: 6px; font-weight: 600; margin-left: auto; }
+    .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .acciones .btn { min-height: 48px; font-size: 17px; }
+    .pedido { background: #fff; border-left: 6px solid var(--linea); padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+    .pedido.pagado { border-left-color: var(--denim); }
+    .pedido.despachado { border-left-color: #2e7d32; opacity: .75; }
+    .pedido input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--tinta); }
+    .pedido h2 { font-size: 26px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+    .pedido h2 small { font: 500 13px var(--texto); color: var(--tinta-3); text-transform: none; }
+    .estado { font: 600 12px var(--texto); padding: 3px 8px; text-transform: uppercase; letter-spacing: .06em; background: var(--arena-2); }
+    .pagado .estado { background: var(--denim); color: #fff; }
+    .despachado .estado { background: #2e7d32; color: #fff; }
+    .pedido dl { display: grid; grid-template-columns: 110px 1fr; gap: 2px 10px; margin: 10px 0; font-size: 14px; }
+    .pedido dt { color: var(--tinta-3); }
+    .pedido dd { margin: 0; }
+    .pedido ul { margin: 6px 0 10px; padding-left: 18px; font-size: 14px; }
+    .pedido .total { font: 900 26px var(--titulo); }
+    .pedido-botones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pedido-botones button, .pedido-botones a { min-height: 44px; padding: 0 12px; border: 1px solid var(--tinta); background: none; font: 600 14px var(--texto);
+      display: inline-flex; align-items: center; text-decoration: none; color: var(--tinta); }
+    .pedido-botones .principal { background: var(--denim); color: var(--arena); border-color: var(--denim); }
+    .pedido-botones .borrar { border-color: var(--error); color: var(--error); margin-left: auto; }
+    .vacio-panel { background: var(--arena-3); padding: 28px; text-align: center; color: var(--tinta-2); }
+    .aviso-panel { background: var(--denim); color: var(--arena); padding: 12px 16px; margin-bottom: 14px; font-weight: 600; }
+    .ayuda { font-size: 14px; color: var(--tinta-2); background: var(--arena-3); padding: 14px 16px; margin-top: 28px; }
+    #rotulos { display: none; }
+
+    /* Rótulos: 2 por fila en hoja A4, para recortar y pegar en la bolsa. */
+    @page { size: A4; margin: 8mm; }
+    @media print {
+      body > *:not(#rotulos) { display: none !important; }
+      body { background: #fff; }
+      #rotulos { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+      .etiq { border: 1.5px dashed #000; padding: 5mm; height: 92mm; break-inside: avoid; display: flex; flex-direction: column; font: 400 11pt var(--texto); color: #000; }
+      .etiq-cab { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 2mm; }
+      .etiq-cab b { font: 900 18pt var(--titulo); text-transform: uppercase; }
+      .etiq-cab span { font: 800 13pt var(--titulo); border: 2px solid #000; padding: 1mm 3mm; text-transform: uppercase; }
+      .etiq small { font-size: 8pt; letter-spacing: .15em; text-transform: uppercase; color: #444; margin-top: 3mm; }
+      .etiq .nombre { font: 900 22pt/1 var(--titulo); text-transform: uppercase; margin: 1mm 0 2mm; }
+      .etiq p { margin: .6mm 0; }
+      .etiq .dir { font-weight: 600; font-size: 12pt; }
+      .etiq-pie { margin-top: auto; border-top: 1px solid #000; padding-top: 2mm; display: flex; justify-content: space-between; font-size: 9pt; }
+    }
+  </style>
+</head>
+<body>
+  <header class="cab">
+    <a class="logo" href="./"><span>Galmor Textiles</span><small>Panel de pedidos</small></a>
+  </header>
+
+  <main class="panel">
+    <div id="aviso"></div>
+    <div class="panel-cab">
+      <h1>Pedidos</h1>
+      <p id="resumen"></p>
+    </div>
+
+    <form class="importar" id="importar">
+      <input id="enlace" placeholder="Pega aquí el enlace «Registro del pedido» del WhatsApp" autocomplete="off">
+      <button class="btn btn-denim">Agregar</button>
+    </form>
+
+    <div class="filtros" id="filtros">
+      <button data-f="cobrar">Por cobrar</button>
+      <button data-f="rotular">Pagados por rotular</button>
+      <button data-f="despachados">Despachados</button>
+      <button data-f="todos">Todos</button>
+      <label><input type="checkbox" id="solo-hoy"> Solo hoy</label>
+    </div>
+
+    <div class="acciones">
+      <button class="btn btn-denim" id="imprimir">Imprimir rótulos (<span id="n-sel">0</span>)</button>
+      <button class="btn btn-borde" id="marcar-despachados">Marcar como despachados</button>
+      <button class="btn btn-borde" id="respaldo">Descargar respaldo</button>
+      <label class="btn btn-borde">Cargar respaldo<input type="file" id="cargar" accept="application/json" hidden></label>
+    </div>
+
+    <div id="lista"></div>
+
+    <p class="ayuda"><b>Cómo funciona:</b> cada cliente te envía por WhatsApp su pedido con un enlace «Registro del pedido».
+      Ábrelo en este celular o computadora (o pégalo arriba) y el pedido aparece aquí. Cuando veas la captura de pago, marca
+      <b>Pagado</b>. Luego elige los pagados, toca <b>Imprimir rótulos</b>, pégalos en las bolsas y marca <b>Despachados</b>.
+      Los pedidos se guardan solo en este equipo: usa <b>Descargar respaldo</b> de vez en cuando.</p>
+  </main>
+
+  <section id="rotulos"></section>
+
+  <script src="productos.js"></script>
+  <script>
+  (() => {
+    const C = window.CATALOGO;
+    const $ = (s) => document.querySelector(s);
+    const soles = (n) => "S/ " + n.toFixed(2);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const nombre = (id) => (C.productos.find((p) => p.id === id) || { nombre: id }).nombre;
+    const CLAVE = "galmor_pedidos";
+    let pedidos = (() => { try { return JSON.parse(localStorage.getItem(CLAVE)) || []; } catch { return []; } })();
+    const guardar = () => localStorage.setItem(CLAVE, JSON.stringify(pedidos));
+    let filtro = "cobrar";
+    const seleccion = new Set();
+
+    function decodificar(texto) {
+      const m = String(texto).match(/#p=([A-Za-z0-9_-]+)/);
+      if (!m) throw new Error("Ese texto no tiene un enlace de pedido.");
+      const b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const r = JSON.parse(new TextDecoder().decode(bytes));
+      if (!r.n || !r.c || !Array.isArray(r.i)) throw new Error("El enlace del pedido está incompleto.");
+      return r;
+    }
+    function agregar(texto) {
+      const r = decodificar(texto);
+      if (pedidos.some((p) => p.n === r.n)) return avisar(`El pedido ${r.n} ya estaba registrado.`);
+      pedidos.unshift({ ...r, estado: "nuevo" });
+      guardar();
+      avisar(`Pedido ${r.n} de ${r.c.nombre} agregado.`);
+    }
+    function avisar(t) { $("#aviso").innerHTML = `<p class="aviso-panel">${esc(t)}</p>`; }
+
+    const hoy = () => new Date().toLocaleDateString("es-PE", { timeZone: "America/Lima" });
+    const fecha = (iso) => new Date(iso).toLocaleString("es-PE", { timeZone: "America/Lima", dateStyle: "short", timeStyle: "short" });
+    const total = (p) => p.i.reduce((s, [, , , cant, precio]) => s + cant * precio, 0);
+    const piezas = (p) => p.i.reduce((s, it) => s + it[3], 0);
+    const destino = (c) => c.envio === "lima" ? `${c.direccion}, ${c.distrito}` : `${c.agencia} · ${c.sede}, ${c.ciudad}, ${c.departamento}`;
+    const ETIQUETA = { nuevo: "Por cobrar", pagado: "Pagado", despachado: "Despachado" };
+
+    function visibles() {
+      return pedidos.filter((p) =>
+        (filtro === "todos" || (filtro === "cobrar" && p.estado === "nuevo") || (filtro === "rotular" && p.estado === "pagado")
+          || (filtro === "despachados" && p.estado === "despachado"))
+        && (!$("#solo-hoy").checked || new Date(p.d).toLocaleDateString("es-PE", { timeZone: "America/Lima" }) === hoy()));
+    }
+    function pintar() {
+      document.querySelectorAll("#filtros button").forEach((b) => b.classList.toggle("activa", b.dataset.f === filtro));
+      const cuenta = (e) => pedidos.filter((p) => p.estado === e).length;
+      $("#resumen").textContent = `${cuenta("nuevo")} por cobrar · ${cuenta("pagado")} por rotular · ${cuenta("despachado")} despachados`;
+      const lista = visibles();
+      $("#lista").innerHTML = lista.length ? lista.map((p) => {
+        const c = p.c;
+        return `<article class="pedido ${p.estado}">
+          <input type="checkbox" data-sel="${esc(p.n)}" ${seleccion.has(p.n) ? "checked" : ""} aria-label="Elegir ${esc(p.n)}">
+          <div>
+            <h2>${esc(p.n)} <span class="estado">${ETIQUETA[p.estado]}</span> <small>${fecha(p.d)}</small></h2>
+            <dl>
+              <dt>Cliente</dt><dd><b>${esc(c.nombre)}</b></dd>
+              <dt>DNI</dt><dd>${esc(c.dni)}</dd>
+              <dt>Celular</dt><dd>${esc(c.celular)}</dd>
+              <dt>Envío</dt><dd>${c.envio === "lima" ? "Lima · Motorizado" : "Provincia · Agencia"} — ${esc(destino(c))}</dd>
+              <dt>Pago</dt><dd>${esc(c.pago)} · ${esc(c.comprobante)}</dd>
+            </dl>
+            <ul>${p.i.map(([id, color, talla, cant, precio]) => `<li>${esc(nombre(id))} · ${esc(color)} · Talla ${esc(talla)} · ${cant} prenda(s) — ${soles(cant * precio)}</li>`).join("")}</ul>
+            <span class="total">Total ${soles(total(p))}</span>
+            <div class="pedido-botones">
+              ${p.estado === "nuevo" ? `<button class="principal" data-pagado="${esc(p.n)}">✓ Marcar pagado</button>` : ""}
+              ${p.estado === "pagado" ? `<button data-despachado="${esc(p.n)}">Marcar despachado</button><button data-nuevo="${esc(p.n)}">Volver a por cobrar</button>` : ""}
+              ${p.estado === "despachado" ? `<button data-pagado="${esc(p.n)}">Volver a pagados</button>` : ""}
+              <a href="https://wa.me/51${esc(c.celular)}" target="_blank" rel="noopener">WhatsApp del cliente</a>
+              <button class="borrar" data-borrar="${esc(p.n)}">Eliminar</button>
+            </div>
+          </div>
+        </article>`;
+      }).join("") : `<p class="vacio-panel">No hay pedidos en esta lista.</p>`;
+      for (const n of [...seleccion]) if (!pedidos.some((p) => p.n === n)) seleccion.delete(n);
+      $("#n-sel").textContent = seleccion.size || pedidos.filter((p) => p.estado === "pagado").length;
+    }
+    // Sin elegir nada, se imprimen todos los pagados por rotular.
+    const elegidos = () => seleccion.size ? pedidos.filter((p) => seleccion.has(p.n)) : pedidos.filter((p) => p.estado === "pagado");
+
+    function rotulos(lista) {
+      $("#rotulos").innerHTML = lista.map((p) => {
+        const c = p.c;
+        const lineas = c.envio === "lima"
+          ? `<p class="dir">${esc(c.direccion)}</p><p class="dir">${esc(c.distrito)} — Lima</p>`
+          : `<p class="dir">Agencia ${esc(c.agencia)}: ${esc(c.sede)}</p><p class="dir">${esc(c.ciudad)} — ${esc(c.departamento)}</p>`;
+        return `<div class="etiq">
+          <div class="etiq-cab"><b>Galmor Textiles</b><span>${c.envio === "lima" ? "Lima · Motorizado" : esc(c.agencia)}</span></div>
+          <small>Destinatario</small>
+          <p class="nombre">${esc(c.nombre)}</p>
+          <p>DNI: <b>${esc(c.dni)}</b> · Cel: <b>${esc(c.celular)}</b></p>
+          ${lineas}
+          <div class="etiq-pie"><span>Pedido <b>${esc(p.n)}</b> · ${piezas(p)} prenda(s)</span><span>Remite: Galmor Textiles · 983 573 288</span></div>
+        </div>`;
+      }).join("");
+    }
+
+    const cambiar = (n, estado) => { const p = pedidos.find((x) => x.n === n); if (p) { p.estado = estado; guardar(); pintar(); } };
+    $("#lista").addEventListener("click", (e) => {
+      const d = e.target.dataset;
+      if (d.pagado) cambiar(d.pagado, "pagado");
+      if (d.despachado) cambiar(d.despachado, "despachado");
+      if (d.nuevo) cambiar(d.nuevo, "nuevo");
+      if (d.borrar && confirm(`¿Eliminar el pedido ${d.borrar}?`)) { pedidos = pedidos.filter((p) => p.n !== d.borrar); guardar(); pintar(); }
+    });
+    $("#lista").addEventListener("change", (e) => {
+      const n = e.target.dataset.sel;
+      if (!n) return;
+      e.target.checked ? seleccion.add(n) : seleccion.delete(n);
+      $("#n-sel").textContent = seleccion.size || pedidos.filter((p) => p.estado === "pagado").length;
+    });
+    $("#filtros").addEventListener("click", (e) => { if (e.target.dataset.f) { filtro = e.target.dataset.f; pintar(); } });
+    $("#solo-hoy").onchange = pintar;
+    $("#imprimir").onclick = () => {
+      const lista = elegidos();
+      if (!lista.length) return avisar("No hay pedidos pagados para rotular.");
+      rotulos(lista);
+      print();
+    };
+    $("#marcar-despachados").onclick = () => {
+      const lista = elegidos();
+      if (!lista.length || !confirm(`¿Marcar ${lista.length} pedido(s) como despachados?`)) return;
+      lista.forEach((p) => (p.estado = "despachado"));
+      seleccion.clear();
+      guardar();
+      pintar();
+    };
+    $("#importar").onsubmit = (e) => {
+      e.preventDefault();
+      try { agregar($("#enlace").value); $("#enlace").value = ""; } catch (err) { avisar(err.message); }
+      pintar();
+    };
+    $("#respaldo").onclick = () => {
+      const blob = new Blob([JSON.stringify(pedidos, null, 1)], { type: "application/json" });
+      Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `pedidos-galmor-${new Date().toISOString().slice(0, 10)}.json` }).click();
+    };
+    $("#cargar").onchange = async (e) => {
+      try {
+        const lista = JSON.parse(await e.target.files[0].text());
+        let nuevos = 0;
+        for (const p of lista) if (p.n && !pedidos.some((x) => x.n === p.n)) { pedidos.push(p); nuevos++; }
+        pedidos.sort((a, b) => b.d.localeCompare(a.d));
+        guardar();
+        avisar(`${nuevos} pedido(s) cargados del respaldo.`);
+      } catch { avisar("Ese archivo no es un respaldo válido."); }
+      pintar();
+    };
+
+    // Enlace abierto desde WhatsApp: pedidos.html#p=...
+    if (location.hash.startsWith("#p=")) {
+      try { agregar(location.hash); } catch (err) { avisar(err.message); }
+      history.replaceState(null, "", location.pathname);
+    }
+    pintar();
+  })();
+  </script>
+</body>
+</html>

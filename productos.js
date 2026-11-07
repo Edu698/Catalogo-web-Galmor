@@ -10,7 +10,7 @@ window.CATALOGO = {
   // Datos para pagar. Reemplazar "POR DEFINIR" con los datos reales.
   pago: {
     transferencia: { banco: "POR DEFINIR", cuenta: "POR DEFINIR", cci: "POR DEFINIR", titular: "Galmor Textiles" },
-    yape: { numero: "983 573 288", titular: "POR DEFINIR" },
+    yape: { numero: "983 573 288", titular: "Eduardo Fernández" },
     plin: { numero: "983 573 288", titular: "POR DEFINIR" },
   },
 
@@ -30,7 +30,7 @@ window.CATALOGO = {
         "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
         "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
       },
-      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
+      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
@@ -42,7 +42,7 @@ window.CATALOGO = {
         "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
         "Plomo oscuro": "#2a2c31", "Negro": "#141416",
       },
-      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
+      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
@@ -53,7 +53,7 @@ window.CATALOGO = {
         "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
         "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
       },
-      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
+      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Tacto papel", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
@@ -64,7 +64,7 @@ window.CATALOGO = {
         "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
         "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
       },
-      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
+      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
@@ -77,7 +77,7 @@ window.CATALOGO = {
         "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
         "Negro": "#161616",
       },
-      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
+      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Tacto papel", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],

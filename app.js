@@ -367,12 +367,16 @@
     try {
       const ahora = new Date();
       const parte = (o) => new Intl.DateTimeFormat("en-GB", { timeZone: "America/Lima", ...o }).format(ahora);
-      const numero = `GT-${parte({ year: "2-digit" })}${parte({ month: "2-digit" })}${parte({ day: "2-digit" })}-${parte({ hour: "2-digit", hour12: false })}${parte({ minute: "2-digit" }).padStart(2, "0")}`;
+      // GT-AAMMDD-XXXX: fecha del pedido + 4 letras al azar, para que dos pedidos del mismo día nunca se repitan.
+      const LETRAS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+      const azar = Array.from(crypto.getRandomValues(new Uint8Array(4)), (n) => LETRAS[n % LETRAS.length]).join("");
+      const numero = `GT-${parte({ year: "2-digit" })}${parte({ month: "2-digit" })}${parte({ day: "2-digit" })}-${azar}`;
       const items = carrito.map((i) => ({ ...i }));
       const blob = await imagenPedido(f, numero, ahora, items);
-      pedido = { numero, total: total(items), piezas: piezas(items), archivo: new File([blob], `pedido-${numero}.png`, { type: "image/png" }) };
+      const texto = mensajePedido(f, numero, ahora, items);
+      pedido = { numero, texto, archivo: new File([blob], `pedido-${numero}.png`, { type: "image/png" }) };
       $("#pedido-img").src = URL.createObjectURL(blob);
-      $("#abrir-chat").href = wsp(`Hola, envío mi pedido ${numero}`);
+      $("#abrir-chat").href = wsp(texto);
       carrito = [];
       guardar();
       pintarCarrito();
@@ -387,11 +391,36 @@
   $("#enviar-imagen").onclick = async () => {
     const archivo = pedido.archivo;
     if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      try { return await navigator.share({ files: [archivo], text: `Pedido ${pedido.numero}` }); } catch (err) { if (err.name === "AbortError") return; }
+      try { return await navigator.share({ files: [archivo], text: pedido.texto }); } catch (err) { if (err.name === "AbortError") return; }
     }
     Object.assign(document.createElement("a"), { href: URL.createObjectURL(archivo), download: archivo.name }).click();
-    window.open(wsp(`Hola Galmor, envío mi pedido ${pedido.numero}: ${pedido.piezas} prenda(s), total ${soles(pedido.total)}. Adjunto la imagen del pedido y la captura de mi pago.`), "_blank");
+    window.open(wsp(pedido.texto), "_blank");
   };
+
+  // Mensaje de WhatsApp: saludo con el nombre del cliente, resumen del pedido y enlace que lo registra en pedidos.html.
+  function mensajePedido(f, numero, fecha, items) {
+    const hora = +new Intl.DateTimeFormat("en-GB", { timeZone: "America/Lima", hour: "2-digit", hour12: false }).format(fecha);
+    const saludo = hora < 12 ? "buenos días" : hora < 19 ? "buenas tardes" : "buenas noches";
+    const envio = f.envio === "lima" ? `Lima, motorizado: ${f.direccion}, ${f.distrito}`
+      : `Provincia, ${f.agencia}: ${f.sede}, ${f.ciudad}, ${f.departamento}`;
+    const registro = { n: numero, d: fecha.toISOString(), c: f, i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
+    const codigo = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(registro)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const enlace = new URL(`pedidos.html#p=${codigo}`, location.href).href;
+    return [
+      `Hola, ${saludo}. Mi nombre es ${f.nombre} (DNI ${f.dni}, cel. ${f.celular}).`,
+      `Este es el pedido que necesito: *${numero}*`,
+      "",
+      ...items.map((i) => `• ${producto(i.id).nombre} · ${i.color} · Talla ${i.talla} · ${i.cant} prenda(s) — ${soles(producto(i.id).precio * i.cant)}`),
+      "",
+      `*Total: ${soles(total(items))}* (IGV incluido)`,
+      `Envío: ${envio}`,
+      `Pago: ${f.pago} · Comprobante: ${f.comprobante}`,
+      "",
+      "Adjunto la imagen del pedido y la captura de mi pago.",
+      "",
+      `Registro del pedido: ${enlace}`,
+    ].join("\n");
+  }
 
   const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 

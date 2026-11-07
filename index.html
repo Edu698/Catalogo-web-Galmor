@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="fotos/jean-semi-pitillo/modelo-1.webp">
+  <link rel="preload" as="image" href="marca/logo-zoroz77.webp">
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
@@ -28,7 +28,7 @@
     <a class="logo" href="./" aria-label="Galmor Textiles, inicio">
       <span>Galmor Textiles</span><small>Taller limeño · 1988</small>
     </a>
-    <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito">Carrito <span id="contador">0</span></button>
+    <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.8a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/></svg><b>Carrito</b><span id="contador">0</span></button>
   </header>
 
   <div class="cinta" aria-hidden="true"><div class="cinta-pista" id="cinta"></div></div>
@@ -36,7 +36,10 @@
   <main>
     <!-- 3. Portada -->
     <section class="hero">
-      <div class="hero-foto"><img src="fotos/jean-semi-pitillo/modelo-1.webp" alt="Modelo con jean Zoroz 77 en el taller" fetchpriority="high"></div>
+      <div class="hero-logos">
+        <img class="logo-zoroz" src="marca/logo-zoroz77.webp" alt="Zoroz 77 Urban Jeans" fetchpriority="high">
+        <img class="logo-galmor" src="marca/logo-galmor.webp" alt="Galmor, mejor imposible">
+      </div>
       <div class="hero-texto">
         <p class="ceja">Nuestra historia</p>
         <h1>Hecho en Lima desde 1988</h1>
