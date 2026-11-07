@@ -1,221 +1,249 @@
 (() => {
   const C = window.CATALOGO;
   const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const soles = (n) => "S/ " + n.toFixed(2);
   const producto = (id) => C.productos.find((p) => p.id === id);
   const wsp = (texto) => `https://wa.me/${C.whatsapp}${texto ? "?text=" + encodeURIComponent(texto) : ""}`;
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---------- Bienvenida: una vez por visita ----------
+  // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
+  const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
+  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.webp`;
+  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.webp`);
+  const nombresColor = (p) => Object.keys(p.colores);
+  const marcaDe = (p) => C.marcas[p.marca];
+
+  // ---------- 1. Bienvenida: una vez por visita, se va sola a los 2 s ----------
   const splash = $("#splash");
   if (sessionStorage.getItem("galmor_visto")) splash.remove();
   else {
     sessionStorage.setItem("galmor_visto", "1");
-    setTimeout(() => splash.classList.add("fuera"), 2200);
-    setTimeout(() => splash.remove(), 3100);
+    setTimeout(() => splash.classList.add("fuera"), quieto ? 600 : 2000);
+    setTimeout(() => splash.remove(), quieto ? 700 : 2350);
   }
 
-  // ---------- Fotos: fotos/<id>/<color>.jpg y fotos/<id>/modelo-N.jpg ----------
-  const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
-  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.jpg`;
-  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.jpg`);
-  const vistas = (p, color) => [fotoColor(p, color), ...modelos(p)];
-  const nombresColor = (p) => Object.keys(p.colores);
-  const marcaAgua = (p) =>
-    `<div class="marca-agua"><span>${C.marcas[p.marca].toUpperCase()}</span></div><div class="sello">GALMOR TEXTILES</div>`;
-
-  // ---------- Catálogo ----------
+  // ---------- 2. Pestañas de marca y catálogo ----------
+  const PESTANAS = { todos: "Todos", zoroz: "Zoroz 77", galmor: "Galmor" };
   let filtro = "todos";
-  function pintarFiltros() {
-    const opciones = { todos: "Todos", ...C.marcas };
-    $("#filtros").innerHTML = Object.entries(opciones)
-      .map(([id, n]) => `<button data-marca="${id}" class="${id === filtro ? "activo" : ""}">${n}</button>`)
+  function pintarPestanas() {
+    $("#pestanas").innerHTML = Object.entries(PESTANAS)
+      .map(([id, n]) => `<button data-marca="${id}" class="${id === filtro ? "activa" : ""}" aria-pressed="${id === filtro}">${n}</button>`)
       .join("");
   }
-  function pintarCatalogo() {
-    $("#rejilla").innerHTML = C.productos
-      .filter((p) => filtro === "todos" || p.marca === filtro)
-      .map((p) => {
-        const b = fotoColor(p, nombresColor(p)[0]);
-        const a = modelos(p)[0] || b;
-        return `<article class="tarjeta" data-id="${p.id}">
-          <div class="foto"><img src="${a}" alt="${p.nombre}" loading="lazy"><img src="${b}" alt="" loading="lazy">
-            <span class="etiqueta-colores">${nombresColor(p).length} colores</span>${marcaAgua(p)}</div>
-          <div class="marca">${C.marcas[p.marca]}</div>
-          <h3>${p.nombre}</h3>
-          <div class="precio">${soles(p.precio)}</div>
-          <div class="puntos">${nombresColor(p).map((c) => `<span class="punto" title="${c}" style="background:${p.colores[c]}"></span>`).join("")}</div>
-        </article>`;
-      })
-      .join("") || `<p class="vacio">Próximamente: nueva colección ${C.marcas[filtro]}.</p>`;
+  function tarjeta(p) {
+    const colores = nombresColor(p);
+    const a = modelos(p)[0] || fotoColor(p, colores[0]);
+    const puntos = colores.slice(0, 5).map((c) => `<i style="background:${p.colores[c]}" title="${c}"></i>`).join("");
+    return `<button class="tarjeta" data-id="${p.id}">
+      <span class="tarjeta-foto"><img src="${a}" alt="${p.nombre}" loading="lazy"><img src="${fotoColor(p, colores[0])}" alt="" loading="lazy"></span>
+      <span class="tarjeta-nombre">${p.nombre}</span>
+      <span class="tarjeta-pie"><span class="precio">${soles(p.precio)}</span><span class="n-colores">${colores.length} colores</span></span>
+      <span class="puntos">${puntos}${colores.length > 5 ? `<small>+${colores.length - 5}</small>` : ""}</span>
+    </button>`;
   }
-  $("#filtros").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    filtro = b.dataset.marca;
-    pintarFiltros();
+  const tilePronto = () => `<div class="pronto"><small>Próximamente</small><b>Galmor</b>
+      <p>Classic Men · Mejor imposible. Sé el primero en saberlo.</p>
+      <a class="btn" href="${wsp("Hola Galmor, avísenme cuando llegue la colección Galmor.")}" target="_blank" rel="noopener">Avísame por WhatsApp</a></div>`;
+  function pintarCatalogo() {
+    $("#titulo-catalogo").textContent = filtro === "todos" ? "Lo más pedido" : PESTANAS[filtro];
+    const lista = C.productos.filter((p) => filtro === "todos" || p.marca === filtro).map(tarjeta).join("");
+    $("#rejilla").innerHTML = lista + (filtro !== "zoroz" ? tilePronto() : "");
+  }
+  function filtrar(marca) {
+    filtro = marca;
+    pintarPestanas();
     pintarCatalogo();
-  });
-  $("#rejilla").addEventListener("click", (e) => {
-    const t = e.target.closest(".tarjeta");
-    if (t) abrirDetalle(t.dataset.id);
-  });
+  }
+  $("#pestanas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) filtrar(b.dataset.marca); });
+  $$("[data-filtro]").forEach((a) => a.addEventListener("click", () => filtrar(a.dataset.filtro)));
+  $("#rejilla").addEventListener("click", (e) => { const t = e.target.closest(".tarjeta"); if (t) abrirProducto(t.dataset.id); });
 
-  // ---------- Detalle: colores, tallas, fotos y zoom ----------
-  const dlg = $("#detalle");
-  function abrirDetalle(id) {
+  // ---------- 3. Producto ----------
+  const dlg = $("#producto");
+  function abrirProducto(id, colorSlug) {
     const p = producto(id);
-    const sel = { color: nombresColor(p)[0], talla: null, cant: 1, vista: 0 };
+    if (!p) return;
+    const colores = nombresColor(p);
+    const sel = { color: colores.find((c) => slug(c) === colorSlug) || colores[0], talla: null, cant: 1 };
+    const ficha = Object.entries(p.ficha).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
 
-    dlg.innerHTML = `<button class="cerrar" aria-label="Cerrar">×</button>
-      <div class="detalle-cuerpo">
+    dlg.innerHTML = `
+      <div class="producto-cab"><button class="volver">← Volver</button><button class="cerrar-x" aria-label="Cerrar">×</button></div>
+      <div class="producto-cuerpo">
+        <div class="miniaturas" aria-label="Fotos"></div>
         <div class="galeria">
-          <div class="visor"><img alt="${p.nombre}">${marcaAgua(p)}</div>
-          <p class="ayuda-visor">Arrastra para ver más fotos · toca para hacer zoom</p>
-          <div class="miniaturas"></div>
+          <div class="galeria-pista" tabindex="0" aria-label="Fotos del producto, desliza para ver más"></div>
+          <span class="galeria-cuenta"></span><span class="sello">GALMOR TEXTILES</span>
+          <div class="galeria-puntos"></div>
         </div>
         <div class="info">
-          <div class="marca">${C.marcas[p.marca]}</div>
+          <p class="ceja">${marcaDe(p)} · Urban jeans</p>
           <h2>${p.nombre}</h2>
-          <div class="precio">${soles(p.precio)}</div>
-          <div class="igv">Precio incluye IGV</div>
-          <p>${p.descripcion}</p>
-          <div class="etiqueta">Color: <b class="nombre-color"></b></div>
-          <div class="muestras">${nombresColor(p).map((c) => `<button class="muestra" data-color="${c}" title="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
-          <div class="etiqueta">Talla</div>
-          <div class="tallas">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
-          <div class="etiqueta">Cantidad</div>
-          <div class="cantidad"><button data-d="-1">−</button><span class="cant">1</span><button data-d="1">+</button></div>
-          <p class="aviso"></p>
-          <button class="btn btn-bloque btn-naranja agregar">Agregar al carrito</button>
-          <details class="ficha" open><summary>Ficha técnica</summary>
-            <table>${Object.entries(p.ficha).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}
-              <tr><td>Tallas</td><td>${p.tallas.join(" · ")}</td></tr></table>
-          </details>
-          <p class="envio-nota">Lima: pide hoy y recíbelo mañana en motorizado. Provincias: despachamos mañana por Shalom, Olva u otra agencia.</p>
+          <p class="precio">${soles(p.precio)}</p>
+          <p class="igv">Precio incluye IGV</p>
+          <p class="desc">${p.descripcion}</p>
+          <p class="rotulo"><span>Color: <b class="nombre-color"></b></span></p>
+          <div class="muestras">${colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" aria-label="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
+          <div class="tallas-bloque">
+            <p class="rotulo"><span>Talla</span></p>
+            <div class="tallas">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
+            <p class="aviso-talla" role="alert"></p>
+          </div>
+          <p class="rotulo"><span>Cantidad</span></p>
+          <div class="cantidad"><button data-d="-1" aria-label="Menos">−</button><span class="cant">1</span><button data-d="1" aria-label="Más">+</button></div>
+          <button class="btn btn-denim agregar">Agregar al carrito · ${soles(p.precio)}</button>
+          <div class="envio-nota"><b>Lima: pide hoy, llega mañana</b>Pedidos hasta las 6 p.m. Provincias: 2 a 4 días por Shalom u Olva.</div>
+          <div class="ficha"><h3>Ficha técnica</h3><dl>${ficha}<div><dt>Tallas</dt><dd>${p.tallas.join(" · ")}</dd></div></dl></div>
         </div>
-      </div>`;
+      </div>
+      <div class="barra-fija"><button class="btn btn-denim agregar">Agregar al carrito · ${soles(p.precio)}</button></div>`;
 
-    const visor = $(".visor", dlg);
-    const img = $("img", visor);
-    function mostrar(i) {
-      const fotos = vistas(p, sel.color);
-      sel.vista = (i + fotos.length) % fotos.length;
-      img.src = fotos[sel.vista];
-      $(".miniaturas", dlg).innerHTML = fotos
-        .map((f, j) => `<img src="${f}" data-i="${j}" class="${j === sel.vista ? "activa" : ""}" alt="">`)
-        .join("");
+    const pista = $(".galeria-pista", dlg);
+    let fotos = [];
+    const indice = () => Math.round(pista.scrollLeft / pista.clientWidth) || 0;
+    function marcar() {
+      const i = indice();
+      $(".galeria-cuenta", dlg).textContent = `${i + 1} / ${fotos.length}`;
+      $$(".galeria-puntos i", dlg).forEach((d, j) => d.classList.toggle("activo", j === i));
+      $$(".miniaturas button", dlg).forEach((b, j) => b.classList.toggle("activa", j === i));
+    }
+    const irA = (i, suave = true) => pista.scrollTo({ left: i * pista.clientWidth, behavior: suave && !quieto ? "smooth" : "auto" });
+    function pintarGaleria() {
+      // Al elegir un color, la galería muestra primero ese color y luego las fotos con modelo.
+      fotos = [fotoColor(p, sel.color), ...modelos(p)];
+      pista.innerHTML = fotos.map((f, i) => `<img src="${f}" alt="${p.nombre}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("");
+      $(".galeria-puntos", dlg).innerHTML = fotos.map(() => "<i></i>").join("");
+      $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f}" alt="" loading="lazy"></button>`).join("");
+      irA(0, false);
+      marcar();
     }
     function elegirColor(c) {
       sel.color = c;
       $(".nombre-color", dlg).textContent = c;
-      dlg.querySelectorAll(".muestra").forEach((m) => m.classList.toggle("activa", m.dataset.color === c));
-      mostrar(0); // la foto de ese color
+      $$(".muestra", dlg).forEach((m) => m.classList.toggle("activa", m.dataset.color === c));
+      pintarGaleria();
+      history.replaceState(null, "", `?producto=${p.id}&color=${slug(c)}`);
     }
-    elegirColor(sel.color);
-    if (p.modelos) mostrar(1); // al abrir, primero la foto con modelo
-
-    // Arrastrar a los lados cambia de foto. Tocar sin arrastrar hace zoom; mover el dedo/ratón recorre la foto.
-    let x0 = null, arrastro = false, zoom = false;
-    const origen = (e) => {
-      const r = visor.getBoundingClientRect();
-      img.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
-    };
-    visor.addEventListener("pointerdown", (e) => { x0 = e.clientX; arrastro = false; });
-    visor.addEventListener("pointermove", (e) => {
-      if (zoom) return origen(e);
-      if (x0 === null || Math.abs(e.clientX - x0) < 40) return;
-      arrastro = true;
-      mostrar(sel.vista + (e.clientX < x0 ? 1 : -1));
-      x0 = e.clientX;
-    });
-    visor.addEventListener("pointerup", (e) => {
-      if (!arrastro) {
-        zoom = !zoom;
-        visor.classList.toggle("zoom", zoom);
-        origen(e);
-      }
-      x0 = null;
-    });
-    visor.addEventListener("pointerleave", () => (x0 = null));
+    pista.addEventListener("scroll", () => requestAnimationFrame(marcar), { passive: true });
 
     dlg.onclick = (e) => {
-      const t = e.target;
-      if (t === dlg || t.classList.contains("cerrar")) return dlg.close();
-      if (t.dataset.i) mostrar(+t.dataset.i);
-      if (t.dataset.color) elegirColor(t.dataset.color);
+      if (e.target.tagName === "IMG" && e.target.parentElement === pista) return abrirLupa(e.target.src);
+      const t = e.target.closest("button") || e.target;
+      if (t === dlg || t.classList.contains("cerrar-x") || t.classList.contains("volver")) return dlg.close();
+      if (t.dataset.color) return elegirColor(t.dataset.color);
+      if (t.dataset.i) return irA(+t.dataset.i);
       if (t.dataset.talla) {
         sel.talla = t.dataset.talla;
-        dlg.querySelectorAll(".tallas button").forEach((b) => b.classList.toggle("activa", b === t));
-        $(".aviso", dlg).textContent = "";
+        $$(".tallas button", dlg).forEach((b) => b.classList.toggle("activa", b === t));
+        $(".aviso-talla", dlg).textContent = "";
       }
       if (t.dataset.d) {
         sel.cant = Math.max(1, sel.cant + +t.dataset.d);
         $(".cant", dlg).textContent = sel.cant;
       }
       if (t.classList.contains("agregar")) {
-        if (!sel.talla) return ($(".aviso", dlg).textContent = "Elige tu talla.");
-        agregar(p.id, sel.color, sel.talla, sel.cant);
+        if (!sel.talla) {
+          const bloque = $(".tallas-bloque", dlg);
+          $(".aviso-talla", dlg).textContent = "Elige tu talla";
+          bloque.scrollIntoView({ behavior: quieto ? "auto" : "smooth", block: "center" });
+          bloque.classList.remove("sacude"); void bloque.offsetWidth; bloque.classList.add("sacude");
+          return;
+        }
+        agregar(p, sel.color, sel.talla, sel.cant);
         dlg.close();
-        avisar(`${p.nombre} · ${sel.color} · Talla ${sel.talla}`);
       }
     };
+
+    // Celular: barra fija de "Agregar" cuando el botón principal sale de la vista.
+    const barra = $(".barra-fija", dlg);
+    // Reason: el margen de -56 px descuenta la cabecera fija del producto, que tapa el botón al subir.
+    new IntersectionObserver(([e]) => barra.classList.toggle("visible", e.intersectionRatio < 1 && e.boundingClientRect.top < 120),
+      { root: dlg, rootMargin: "-56px 0px 0px 0px", threshold: [0, 1] }).observe($(".info .agregar", dlg));
+
     dlg.showModal();
+    document.activeElement?.blur(); // sin recuadro de foco sobre "Volver" al abrir con el dedo
+    dlg.scrollTop = 0;
+    elegirColor(sel.color);
   }
+  dlg.addEventListener("close", () => history.replaceState(null, "", location.pathname));
 
-  // Aviso corto al agregar: el cliente sigue comprando, el carrito no se abre solo.
+  // Foto ampliada: en celular se acerca con los dedos; en computadora, clic = zoom que sigue al mouse.
+  const lupa = $("#lupa"), marco = $(".lupa-marco", lupa), lupaImg = $("#lupa-img");
+  function abrirLupa(src) {
+    lupaImg.src = src;
+    marco.classList.remove("zoom");
+    lupa.showModal();
+  }
+  lupaImg.addEventListener("click", (e) => {
+    const r = lupaImg.getBoundingClientRect();
+    lupaImg.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+    marco.classList.toggle("zoom");
+  });
+  lupaImg.addEventListener("mousemove", (e) => {
+    if (!marco.classList.contains("zoom")) return;
+    const r = marco.getBoundingClientRect();
+    lupaImg.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+  });
+  $("#cerrar-lupa").onclick = () => lupa.close();
+
+  // ---------- 4. Aviso "Agregado" (no abre el carrito) ----------
   let tAviso;
-  function avisar(texto) {
-    const a = $("#aviso-flotante");
-    a.innerHTML = `<span>✓ Agregado: ${texto}</span><button>Ver carrito</button>`;
-    a.querySelector("button").onclick = abrirCarrito;
-    a.classList.add("visible");
+  function avisar(p, color, talla) {
+    const t = $("#toast");
+    t.innerHTML = `<img src="${fotoColor(p, color)}" alt=""><div><b>✓ Agregado</b><small>${p.nombre} · ${color} · ${talla}</small></div><button>Ver carrito</button>`;
+    $("button", t).onclick = () => { t.classList.remove("visible"); abrirCarrito(); };
+    t.classList.add("visible");
     clearTimeout(tAviso);
-    tAviso = setTimeout(() => a.classList.remove("visible"), 3500);
+    tAviso = setTimeout(() => t.classList.remove("visible"), 3000);
   }
 
-  // ---------- Carrito (se guarda en el navegador) ----------
-  let carrito = JSON.parse(localStorage.getItem("galmor_carrito") || "[]").filter((i) => producto(i.id));
+  // ---------- 5. Carrito ----------
+  const leer = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  let carrito = leer("galmor_carrito", []).filter((i) => producto(i.id));
   const guardar = () => localStorage.setItem("galmor_carrito", JSON.stringify(carrito));
-  const total = () => carrito.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
-  const piezas = () => carrito.reduce((s, i) => s + i.cant, 0);
+  const total = (items = carrito) => items.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
+  const piezas = (items = carrito) => items.reduce((s, i) => s + i.cant, 0);
+  const base = (t) => Math.round((t / 1.18) * 100) / 100; // Op. gravada; IGV = total − op. gravada
 
-  function agregar(id, color, talla, cant) {
-    const ya = carrito.find((i) => i.id === id && i.color === color && i.talla === talla);
+  function agregar(p, color, talla, cant) {
+    const ya = carrito.find((i) => i.id === p.id && i.color === color && i.talla === talla);
     if (ya) ya.cant += cant;
-    else carrito.push({ id, color, talla, cant });
+    else carrito.push({ id: p.id, color, talla, cant });
     guardar();
     pintarCarrito();
     const b = $("#abrir-carrito");
-    b.classList.remove("salta");
-    void b.offsetWidth; // reinicia la animación
-    b.classList.add("salta");
+    b.classList.remove("pulso"); void b.offsetWidth; b.classList.add("pulso");
+    avisar(p, color, talla);
   }
-  function desglose(t) {
-    const base = t / 1.18;
-    return [["Op. gravada", soles(base)], ["IGV (18 %)", soles(t - base)]];
-  }
+
   function pintarCarrito() {
     $("#contador").textContent = piezas();
-    $("#ir-pagar").hidden = !carrito.length;
+    if (pasoActual === 1) $("#carrito-titulo").textContent = `Tu carrito (${piezas()})`;
     if (!carrito.length) {
-      $("#carrito-items").innerHTML = `<p class="vacio">Tu carrito está vacío.</p>`;
-      $("#carrito-totales").innerHTML = "";
+      $("#carrito-items").innerHTML = `<div class="vacio"><p>Tu carrito está vacío</p><button class="btn btn-denim" id="ver-productos">Ver productos</button></div>`;
+      $("#carrito-resumen").innerHTML = "";
+      $("#ver-productos").onclick = () => { cerrarCarrito(); $("#catalogo").scrollIntoView(); };
       return;
     }
-    $("#carrito-items").innerHTML = carrito
-      .map((i, k) => {
-        const p = producto(i.id);
-        return `<div class="item"><img src="${fotoColor(p, i.color)}" alt="">
-          <div><b>${p.nombre}</b><small>${i.color} · Talla ${i.talla}</small>
-            <div class="cantidad"><button data-k="${k}" data-d="-1">−</button><span>${i.cant}</span><button data-k="${k}" data-d="1">+</button></div>
-            <button class="quitar" data-quitar="${k}">Quitar</button></div>
-          <b>${soles(p.precio * i.cant)}</b></div>`;
-      })
-      .join("");
-    const t = total();
-    $("#carrito-totales").innerHTML = desglose(t).map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join("")
-      + `<div class="total"><span>Total</span><span>${soles(t)}</span></div>`
-      + `<div><span>Envío</span><span>se coordina por WhatsApp</span></div>`;
+    $("#carrito-items").innerHTML = carrito.map((i, k) => {
+      const p = producto(i.id);
+      return `<div class="item"><img src="${fotoColor(p, i.color)}" alt="">
+        <div><b>${p.nombre}</b><small>${marcaDe(p)} · ${i.color} · Talla ${i.talla}</small>
+          <div class="cantidad"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button><span>${i.cant}</span><button data-k="${k}" data-d="1" aria-label="Más">+</button></div>
+          <button class="quitar" data-quitar="${k}">Quitar</button></div>
+        <span class="precio">${soles(p.precio * i.cant)}</span></div>`;
+    }).join("");
+    const t = total(), b = base(t);
+    $("#carrito-resumen").innerHTML = `<div class="resumen">
+        <div><span>Op. gravada</span><span>${soles(b)}</span></div>
+        <div><span>IGV (18 %)</span><span>${soles(t - b)}</span></div>
+        <div class="total"><span>Total</span><span>${soles(t)}</span></div>
+        <p>El costo de envío se coordina por WhatsApp.</p></div>
+      <button class="btn btn-denim btn-alto" id="ir-pagar">Ir a pagar</button>
+      <button class="btn btn-borde" id="seguir">Seguir comprando</button>`;
+    $("#ir-pagar").onclick = () => paso(2);
+    $("#seguir").onclick = cerrarCarrito;
   }
   $("#carrito-items").addEventListener("click", (e) => {
     const d = e.target.dataset;
@@ -229,133 +257,125 @@
     pintarCarrito();
   });
 
-  // Pasos del panel: 1 carrito → 2 datos y pago → 3 pedido listo.
   const panel = $("#carrito"), velo = $("#velo");
+  let pasoActual = 1;
   function paso(n) {
-    $("#paso-carrito").hidden = n !== 1;
-    $("#form-pedido").hidden = n !== 2;
-    $("#paso-listo").hidden = n !== 3;
-    $("#carrito-titulo").textContent = ["Tu carrito", "Datos y pago", "Pedido listo"][n - 1];
+    pasoActual = n;
+    [1, 2, 3].forEach((i) => ($(`#paso-${i}`).hidden = i !== n));
+    $$(".pasos-barra i").forEach((b, i) => { b.className = i + 1 < n ? "hecho" : i + 1 === n ? "actual" : ""; });
+    $("#carrito-titulo").textContent = n === 1 ? `Tu carrito (${piezas()})` : n === 2 ? "Datos y pago" : "✓ Pedido listo";
     panel.scrollTop = 0;
     if (n === 2) pintarPago();
   }
   function abrirCarrito() {
-    paso(1);
+    if (pasoActual !== 3) paso(1);
     panel.classList.add("abierto"); velo.classList.add("visible"); panel.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
   }
-  function cerrarCarrito() { panel.classList.remove("abierto"); velo.classList.remove("visible"); panel.setAttribute("aria-hidden", "true"); }
+  function cerrarCarrito() {
+    panel.classList.remove("abierto"); velo.classList.remove("visible"); panel.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (pasoActual === 3) paso(1);
+  }
   $("#abrir-carrito").onclick = abrirCarrito;
   $("#cerrar-carrito").onclick = cerrarCarrito;
-  $("#seguir-comprando").onclick = cerrarCarrito;
   velo.onclick = cerrarCarrito;
-  $("#ir-pagar").onclick = () => paso(2);
-  $("#volver-carrito").onclick = () => paso(1);
+  $("#volver-1").onclick = () => paso(1);
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && panel.classList.contains("abierto")) cerrarCarrito(); });
 
-  // ---------- Datos y pago ----------
-  const form = $("#form-pedido");
+  // ---------- Paso 2: datos y pago ----------
+  const DISTRITOS = ["Ancón", "Ate", "Barranco", "Breña", "Carabayllo", "Cercado de Lima", "Chaclacayo", "Chorrillos", "Cieneguilla", "Comas",
+    "El Agustino", "Independencia", "Jesús María", "La Molina", "La Victoria", "Lince", "Los Olivos", "Lurigancho-Chosica", "Lurín",
+    "Magdalena del Mar", "Miraflores", "Pachacámac", "Pucusana", "Pueblo Libre", "Puente Piedra", "Punta Hermosa", "Punta Negra", "Rímac",
+    "San Bartolo", "San Borja", "San Isidro", "San Juan de Lurigancho", "San Juan de Miraflores", "San Luis", "San Martín de Porres",
+    "San Miguel", "Santa Anita", "Santa María del Mar", "Santa Rosa", "Santiago de Surco", "Surquillo", "Villa El Salvador",
+    "Villa María del Triunfo", "Callao", "Bellavista", "Carmen de la Legua-Reynoso", "La Perla", "La Punta", "Mi Perú", "Ventanilla"];
+  const DEPARTAMENTOS = ["Amazonas", "Áncash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Callao", "Cusco", "Huancavelica", "Huánuco",
+    "Ica", "Junín", "La Libertad", "Lambayeque", "Lima (provincias)", "Loreto", "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno",
+    "San Martín", "Tacna", "Tumbes", "Ucayali"];
+  const opciones = (lista, texto) => `<option value="">${texto}</option>` + lista.map((d) => `<option>${d}</option>`).join("");
+  $("#distritos").innerHTML = opciones(DISTRITOS, "Elige tu distrito");
+  $("#departamentos").innerHTML = opciones(DEPARTAMENTOS, "Elige");
+
+  const form = $("#paso-2");
+  // Recordar los datos del cliente para su próxima compra.
+  const cliente = leer("galmor_cliente", {});
+  for (const [k, v] of Object.entries(cliente)) {
+    const campo = form.elements[k];
+    if (!campo) continue;
+    if (campo instanceof RadioNodeList) $$(`[name="${k}"]`, form).forEach((r) => (r.checked = r.value === v));
+    else campo.value = v;
+  }
+  function mostrarEnvio() {
+    const lima = form.envio.value === "lima";
+    $("#envio-lima").hidden = !lima;
+    $("#envio-provincia").hidden = lima;
+  }
   function pintarPago() {
     const metodo = form.pago.value;
-    const d = C.pago[metodo === "Transferencia" ? "transferencia" : metodo.toLowerCase()];
+    const d = C.pago[metodo.toLowerCase()];
     const filas = metodo === "Transferencia"
       ? [["Banco", d.banco], ["Cuenta", d.cuenta], ["CCI", d.cci], ["Titular", d.titular]]
-      : [[metodo, d.numero], ["Titular", d.titular]];
+      : [[metodo, d.numero], ["A nombre de", d.titular]];
     $("#datos-pago").innerHTML = filas.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")
-      + `<div><span>Monto</span><b>${soles(total())}</b></div>`;
+      + `<div><span>Monto exacto</span></div><div class="monto">${soles(total())}</div>`;
   }
+  mostrarEnvio();
   form.addEventListener("change", (e) => {
+    if (e.target.name === "envio") mostrarEnvio();
     if (e.target.name === "pago") pintarPago();
-    if (e.target.name === "envio") {
-      const lima = form.envio.value.startsWith("Lima");
-      $("#envio-lima").hidden = !lima;
-      $("#envio-provincia").hidden = lima;
-    }
   });
 
-  // ---------- Pedido en imagen (PNG) ----------
-  const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
-
-  async function imagenPedido(f, numero) {
-    await Promise.all(["40px Anton", "700 20px Inter", "20px Inter"].map((fuente) => document.fonts.load(fuente)));
-    const fotos = await Promise.all(carrito.map((i) => cargarImg(fotoColor(producto(i.id), i.color))));
-    const W = 1080, FILA = 190, P = 60;
-    const envio = f.envio.startsWith("Lima") ? `${f.envio} — ${f.direccion || "dirección por coordinar"}`
-      : `${f.envio} — ${f.destino || "destino por coordinar"} — ${f.agencia}`;
-    const cliente = [["Cliente", f.nombre], ["DNI", f.dni], ["Celular", f.celular], ...(f.correo ? [["Correo", f.correo]] : []),
-      ["Envío", envio], ["Comprobante", f.comprobante], ["Pago", f.pago]];
-    const H = 300 + cliente.length * 40 + 50 + carrito.length * FILA + 300;
-    const cv = Object.assign(document.createElement("canvas"), { width: W, height: H });
-    const x = cv.getContext("2d");
-    const texto = (t, px, py, fuente, color = "#0d0d0d", alin = "left") => {
-      x.font = fuente; x.fillStyle = color; x.textAlign = alin; x.fillText(t, px, py);
-    };
-    const caja = (px, py, w, h, color) => { x.fillStyle = color; x.fillRect(px, py, w, h); };
-
-    caja(0, 0, W, H, "#fff");
-    // Cabecera
-    caja(0, 0, W, 220, "#0d0d0d");
-    texto("GALMOR", P, 120, "96px Anton", "#fff");
-    texto("TEXTILES", P + 4, 165, "700 22px Inter", "#ff4d00");
-    texto("PEDIDO", W - P, 92, "700 22px Inter", "#999", "right");
-    texto(numero, W - P, 140, "44px Anton", "#fff", "right");
-    texto(new Date().toLocaleString("es-PE", { dateStyle: "long", timeStyle: "short" }), W - P, 178, "20px Inter", "#bbb", "right");
-    caja(0, 220, W, 12, "#ff4d00");
-    // Datos del cliente
-    let y = 290;
-    for (const [k, v] of cliente) {
-      texto(k.toUpperCase(), P, y, "700 18px Inter", "#888");
-      texto(String(v).slice(0, 60), 270, y, "22px Inter");
-      y += 40;
+  const REGLAS = {
+    nombre: (v) => v.trim().split(/\s+/).length >= 2 || "Escribe tu nombre y apellido",
+    dni: (v) => /^\d{8}$/.test(v) || "El DNI tiene 8 dígitos",
+    celular: (v) => /^9\d{8}$/.test(v) || "9 dígitos, empieza con 9",
+    correo: (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || "Revisa tu correo",
+    direccion: (v, f) => f.envio !== "lima" || v.trim().length > 4 || "Escribe tu dirección",
+    distrito: (v, f) => f.envio !== "lima" || !!v || "Elige tu distrito",
+    departamento: (v, f) => f.envio !== "provincia" || !!v || "Elige el departamento",
+    ciudad: (v, f) => f.envio !== "provincia" || v.trim().length > 1 || "Escribe tu provincia o ciudad",
+    sede: (v, f) => f.envio !== "provincia" || v.trim().length > 1 || "Escribe la sede de la agencia",
+  };
+  function validar(f) {
+    let primero = null;
+    for (const [k, regla] of Object.entries(REGLAS)) {
+      const ok = regla(f[k] || "", f);
+      const campo = form.elements[k].closest(".campo");
+      campo.classList.toggle("mal", ok !== true);
+      $(".error", campo).textContent = ok === true ? "" : ok;
+      if (ok !== true && !primero) primero = form.elements[k];
     }
-    y += 10;
-    caja(P, y, W - 2 * P, 4, "#0d0d0d");
-    y += 40;
-    // Prendas
-    carrito.forEach((i, k) => {
-      const p = producto(i.id), foto = fotos[k];
-      caja(P, y, 120, 160, "#f1f1f1");
-      if (foto) {
-        const esc = Math.max(120 / foto.width, 160 / foto.height);
-        const sw = 120 / esc, sh = 160 / esc;
-        x.drawImage(foto, (foto.width - sw) / 2, 0, sw, sh, P, y, 120, 160);
-      }
-      texto(p.nombre.toUpperCase(), P + 150, y + 40, "30px Anton");
-      texto(`${C.marcas[p.marca]} · Color ${i.color} · Talla ${i.talla}`, P + 150, y + 82, "22px Inter", "#555");
-      texto(`${i.cant} × ${soles(p.precio)}`, P + 150, y + 122, "22px Inter", "#555");
-      texto(soles(p.precio * i.cant), W - P, y + 122, "700 26px Inter", "#0d0d0d", "right");
-      y += FILA;
-      caja(P, y - 15, W - 2 * P, 2, "#e2e2e2");
-    });
-    // Totales
-    y += 20;
-    for (const [k, v] of desglose(total())) {
-      texto(k, W - 330, y, "22px Inter", "#666");
-      texto(v, W - P, y, "22px Inter", "#666", "right");
-      y += 38;
-    }
-    caja(W - 440, y - 6, 440 - P, 70, "#0d0d0d");
-    texto("TOTAL", W - 420, y + 42, "34px Anton", "#ff4d00");
-    texto(soles(total()), W - P - 20, y + 42, "34px Anton", "#fff", "right");
-    texto(`${piezas()} prenda(s) · precios con IGV`, P, y + 42, "20px Inter", "#666");
-    // Pie
-    caja(0, H - 100, W, 100, "#ff4d00");
-    texto("ENVÍA ESTA IMAGEN Y LA CAPTURA DE TU PAGO AL 983 573 288", W / 2, H - 40, "30px Anton", "#0d0d0d", "center");
-    return new Promise((ok) => cv.toBlob(ok, "image/png"));
+    if (primero) primero.focus();
+    return !primero;
   }
+  form.addEventListener("input", (e) => {
+    const campo = e.target.closest(".campo");
+    if (campo?.classList.contains("mal")) { campo.classList.remove("mal"); $(".error", campo).textContent = ""; }
+  });
 
-  let archivoPedido = null;
+  // ---------- Paso 3: imagen del pedido ----------
+  let pedido = null;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const boton = form.querySelector("[type=submit]");
+    const f = Object.fromEntries(new FormData(form));
+    if (!validar(f)) return;
+    localStorage.setItem("galmor_cliente", JSON.stringify(f));
+    const boton = $("[type=submit]", form);
     boton.disabled = true;
     boton.textContent = "Generando…";
-    const f = Object.fromEntries(new FormData(form));
-    const d = new Date(), dd = (n) => String(n).padStart(2, "0");
-    const numero = `G-${String(d.getFullYear()).slice(2)}${dd(d.getMonth() + 1)}${dd(d.getDate())}-${dd(d.getHours())}${dd(d.getMinutes())}`;
     try {
-      const blob = await imagenPedido(f, numero);
-      archivoPedido = new File([blob], `pedido-${numero}.png`, { type: "image/png" });
-      $("#pedido-imagen").src = URL.createObjectURL(blob);
-      $("#abrir-chat").href = wsp(`Hola Galmor, te envío mi pedido ${numero}.`);
+      const ahora = new Date();
+      const parte = (o) => new Intl.DateTimeFormat("en-GB", { timeZone: "America/Lima", ...o }).format(ahora);
+      const numero = `GT-${parte({ year: "2-digit" })}${parte({ month: "2-digit" })}${parte({ day: "2-digit" })}-${parte({ hour: "2-digit", hour12: false })}${parte({ minute: "2-digit" }).padStart(2, "0")}`;
+      const items = carrito.map((i) => ({ ...i }));
+      const blob = await imagenPedido(f, numero, ahora, items);
+      pedido = { numero, total: total(items), piezas: piezas(items), archivo: new File([blob], `pedido-${numero}.png`, { type: "image/png" }) };
+      $("#pedido-img").src = URL.createObjectURL(blob);
+      $("#abrir-chat").href = wsp(`Hola, envío mi pedido ${numero}`);
+      carrito = [];
+      guardar();
+      pintarCarrito();
       paso(3);
     } finally {
       boton.disabled = false;
@@ -363,30 +383,133 @@
     }
   });
 
-  // En celular la imagen se comparte directo a WhatsApp; en computadora se descarga y se abre el chat para adjuntarla.
+  // Celular: se comparte la imagen directo a WhatsApp. Computadora: se descarga y se abre el chat con el resumen.
   $("#enviar-imagen").onclick = async () => {
-    if (navigator.canShare && navigator.canShare({ files: [archivoPedido] })) {
-      try { return await navigator.share({ files: [archivoPedido] }); } catch { /* cancelado: se descarga */ }
+    const archivo = pedido.archivo;
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      try { return await navigator.share({ files: [archivo], text: `Pedido ${pedido.numero}` }); } catch (err) { if (err.name === "AbortError") return; }
     }
-    Object.assign(document.createElement("a"), { href: URL.createObjectURL(archivoPedido), download: archivoPedido.name }).click();
-    window.open($("#abrir-chat").href, "_blank");
-  };
-  $("#nuevo-pedido").onclick = () => {
-    carrito = [];
-    guardar();
-    pintarCarrito();
-    form.reset();
-    cerrarCarrito();
+    Object.assign(document.createElement("a"), { href: URL.createObjectURL(archivo), download: archivo.name }).click();
+    window.open(wsp(`Hola Galmor, envío mi pedido ${pedido.numero}: ${pedido.piezas} prenda(s), total ${soles(pedido.total)}. Adjunto la imagen del pedido y la captura de mi pago.`), "_blank");
   };
 
+  const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+
+  async function imagenPedido(f, numero, fecha, items) {
+    const FT = '"Big Shoulders Display"', FX = '"Work Sans"';
+    await Promise.all([`900 40px ${FT}`, `800 40px ${FT}`, `500 20px ${FX}`, `600 20px ${FX}`, `400 20px ${FX}`].map((x) => document.fonts.load(x)));
+    const fotos = await Promise.all(items.map((i) => cargarImg(fotoColor(producto(i.id), i.color))));
+    const W = 1080, P = 56, FILA = 196;
+    const cv = document.createElement("canvas");
+    const x = cv.getContext("2d");
+
+    const envio = f.envio === "lima"
+      ? [["Envío", "Lima · Motorizado (llega mañana)"], ["Dirección", `${f.direccion}, ${f.distrito}`]]
+      : [["Envío", `Provincia · ${f.agencia} (2 a 4 días)`], ["Destino", `${f.ciudad}, ${f.departamento}`], ["Sede", f.sede]];
+    const datos = [["Cliente", f.nombre], ["DNI", f.dni], ["Celular", f.celular], ...(f.correo ? [["Correo", f.correo]] : []),
+      ["Comprobante", `${f.comprobante} · ${f.pago}`], ...envio];
+
+    // Medidas: se ajusta el alto a la cantidad de datos y prendas.
+    x.font = `400 24px ${FX}`;
+    const partir = (texto, ancho) => {
+      const lineas = [""];
+      for (const palabra of String(texto).split(" ")) {
+        const prueba = (lineas.at(-1) + " " + palabra).trim();
+        if (x.measureText(prueba).width > ancho && lineas.at(-1)) lineas.push(palabra);
+        else lineas[lineas.length - 1] = prueba;
+      }
+      return lineas;
+    };
+    const datosLineas = datos.map(([k, v]) => [k, partir(v, W - P - 300)]);
+    const altoDatos = datosLineas.reduce((s, [, l]) => s + l.length * 34 + 12, 0);
+    const H = 300 + altoDatos + 40 + items.length * FILA + 330 + 120;
+    cv.width = W;
+    cv.height = H;
+
+    const texto = (t, px, py, fuente, color, alin = "left", espacio = "0px") => {
+      x.font = fuente; x.fillStyle = color; x.textAlign = alin; x.letterSpacing = espacio; x.fillText(t, px, py);
+    };
+    const caja = (px, py, w, h, color) => { x.fillStyle = color; x.fillRect(px, py, w, h); };
+
+    caja(0, 0, W, H, "#EFE8DC");
+    // Cabecera
+    caja(0, 0, W, 250, "#1E2430");
+    texto("GALMOR TEXTILES", P, 104, `900 76px ${FT}`, "#EFE8DC", "left", "2px");
+    texto("DESDE 1988 · LIMA", P, 146, `500 20px ${FX}`, "#9B9384", "left", "6px");
+    texto(`PEDIDO N.° ${numero}`, P, 212, `800 40px ${FT}`, "#C2553A", "left", "1px");
+    const fechaTxt = `${fecha.toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric" })} · ${fecha.toLocaleTimeString("es-PE", { timeZone: "America/Lima", hour: "numeric", minute: "2-digit", hour12: true })}`;
+    texto(fechaTxt, W - P, 212, `500 22px ${FX}`, "#EFE8DC", "right");
+
+    // Datos del cliente
+    let y = 306;
+    for (const [k, lineas] of datosLineas) {
+      texto(k.toUpperCase(), P, y, `600 18px ${FX}`, "#6A6355", "left", "2px");
+      lineas.forEach((l, j) => texto(l, 300, y + j * 34, `400 24px ${FX}`, "#1E2430"));
+      y += lineas.length * 34 + 12;
+    }
+    y += 8;
+    caja(P, y, W - 2 * P, 3, "#1E2430");
+    y += 28;
+
+    // Prendas
+    items.forEach((i, k) => {
+      const p = producto(i.id), foto = fotos[k];
+      caja(P, y, 128, 160, "#E2DACB");
+      if (foto) {
+        const esc = Math.max(128 / foto.width, 160 / foto.height);
+        const sw = 128 / esc, sh = 160 / esc;
+        x.drawImage(foto, (foto.width - sw) / 2, 0, sw, sh, P, y, 128, 160);
+      }
+      const nombre = partir(p.nombre.toUpperCase(), 560);
+      x.font = `800 30px ${FT}`;
+      nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `800 30px ${FT}`, "#1E2430"));
+      const yDet = y + 34 + Math.min(nombre.length, 2) * 32 + 8;
+      texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${FX}`, "#4A4438");
+      texto(soles(p.precio * i.cant), W - P, y + 40, `800 34px ${FT}`, "#1E2430", "right");
+      y += FILA;
+      caja(P, y - 18, W - 2 * P, 1, "#D9D0C0");
+    });
+
+    // Totales
+    const t = total(items), b = base(t);
+    y += 22;
+    for (const [k, v] of [["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
+      texto(k, W - 380, y, `400 24px ${FX}`, "#4A4438");
+      texto(v, W - P, y, `500 24px ${FX}`, "#4A4438", "right");
+      y += 40;
+    }
+    caja(P, y, W - 2 * P, 130, "#E9E2D5");
+    texto("TOTAL", P + 28, y + 86, `900 48px ${FT}`, "#1E2430", "left", "1px");
+    texto(soles(t), W - P - 28, y + 92, `900 84px ${FT}`, "#C2553A", "right");
+    texto(`${piezas(items)} prenda(s) · precios con IGV`, P + 28, y + 116, `400 18px ${FX}`, "#6A6355");
+
+    // Pie
+    caja(0, H - 120, W, 120, "#C2553A");
+    texto("ENVÍA ESTA IMAGEN Y LA CAPTURA DE TU PAGO AL 983 573 288", W / 2, H - 50, `800 34px ${FT}`, "#FFFFFF", "center", "1px");
+    return new Promise((ok) => cv.toBlob(ok, "image/png"));
+  }
+
   // ---------- Inicio ----------
-  const cinta = ["Envío a todo el Perú", "Lima: pide hoy, llega mañana", "Precios con IGV", "Yape · Plin · Transferencia", "Boleta o ticket", "Zoroz 77 Urban Jeans"];
-  $("#cinta").innerHTML = [...cinta, ...cinta].map((t) => `<span>${t} ★</span>`).join("");
+  const cinta = "Envío a todo el Perú ★ Lima: pide hoy, llega mañana ★ Precios con IGV ★ Yape · Plin · Transferencia ★";
+  $("#cinta").innerHTML = `<span>${cinta}</span>`.repeat(4);
   $("#wsp-flotante").href = wsp("Hola Galmor, quiero información de sus productos.");
-  $("#redes").innerHTML = [["Facebook", C.redes.facebook], ["Instagram", C.redes.instagram], ["TikTok", C.redes.tiktok], ["WhatsApp", wsp()]]
-    .map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join("");
-  $("#anio").textContent = new Date().getFullYear();
-  pintarFiltros();
+  const ICONOS = {
+    Facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z"/>',
+    Instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/>',
+    TikTok: '<path d="M14 3v11.5A3.5 3.5 0 1 1 10.5 11"/><path d="M14 3c.6 2.6 2.4 4.4 5 5"/>',
+    WhatsApp: '<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 1.8.8"/>',
+  };
+  const enlaces = { Facebook: C.redes.facebook, Instagram: C.redes.instagram, TikTok: C.redes.tiktok, WhatsApp: wsp() };
+  $("#redes").innerHTML = Object.entries(ICONOS).map(([n, svg]) =>
+    `<a href="${enlaces[n]}" target="_blank" rel="noopener" aria-label="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></a>`).join("");
+  $("#pie-texto").innerHTML = `<a href="${wsp()}" target="_blank" rel="noopener">WhatsApp 983 573 288</a> · `
+    + `<a href="${wsp("Hola, quiero información sobre cambios y devoluciones.")}" target="_blank" rel="noopener">Cambios y devoluciones</a> · `
+    + `<a href="${wsp("Hola, necesito ayuda con mi talla.")}" target="_blank" rel="noopener">Guía de tallas</a> · © ${new Date().getFullYear()} Galmor Textiles`;
+
+  pintarPestanas();
   pintarCatalogo();
   pintarCarrito();
+  // Enlace directo a un producto y color: ?producto=jogger-cargo&color=negro
+  const q = new URLSearchParams(location.search);
+  if (q.get("producto")) abrirProducto(q.get("producto"), q.get("color"));
 })();

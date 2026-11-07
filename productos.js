@@ -2,8 +2,8 @@
 // Precios DE EJEMPLO; ya incluyen IGV.
 //
 // Fotos: van solas por nombre, sin escribirlas aquí.
-//   fotos/<id>/<color>.jpg     una por color (ej. fotos/jogger-cargo/verde-militar.jpg)
-//   fotos/<id>/modelo-N.jpg    fotos con modelo; "modelos" dice cuántas hay. La 1 es la portada.
+//   fotos/<id>/<color>.webp     una por color (ej. fotos/jogger-cargo/verde-militar.webp)
+//   fotos/<id>/modelo-N.webp    fotos con modelo; "modelos" dice cuántas hay. La 1 es la portada.
 window.CATALOGO = {
   whatsapp: "51983573288", // 51 = Perú + celular, sin espacios
 
@@ -21,7 +21,7 @@ window.CATALOGO = {
   // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
   productos: [
     {
-      id: "drill-semi-pitillo", marca: "zoroz", precio: 70, modelos: 4,
+      id: "drill-semi-pitillo", marca: "zoroz", precio: 69.9, modelos: 4,
       nombre: "Pantalón Drill Strech Semi Pitillo",
       descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
       colores: {
@@ -30,11 +30,11 @@ window.CATALOGO = {
         "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
         "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
       },
-      tallas: ["28", "30", "32", "34", "36"],
+      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
       ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
-      id: "jean-semi-pitillo", marca: "zoroz", precio: 80, modelos: 4,
+      id: "jean-semi-pitillo", marca: "zoroz", precio: 79.9, modelos: 4,
       nombre: "Pantalón Jean Strech Semi Pitillo",
       descripcion: "Denim strech de la línea Black Collection: cómodo desde el primer uso, corte semi pitillo y 10 lavados distintos.",
       colores: {
@@ -42,33 +42,33 @@ window.CATALOGO = {
         "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
         "Plomo oscuro": "#2a2c31", "Negro": "#141416",
       },
-      tallas: ["28", "30", "32", "34", "36"],
+      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
       ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
-      id: "jogger-cargo", marca: "zoroz", precio: 60, modelos: 1,
+      id: "jogger-cargo", marca: "zoroz", precio: 64.9, modelos: 1,
       nombre: "Pantalón Jogger Cargo Tacto Papel",
       descripcion: "Tela tacto papel, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
       colores: {
         "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
         "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
       },
-      tallas: ["28", "30", "32", "34", "36"],
+      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
       ficha: { "Tela": "Tacto papel", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "doble-cargo", marca: "zoroz", precio: 80, modelos: 1,
+      id: "doble-cargo", marca: "zoroz", precio: 74.9, modelos: 1,
       nombre: "Pantalón Doble Cargo Tela Carbón",
       descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
       colores: {
         "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
         "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
       },
-      tallas: ["28", "30", "32", "34", "36"],
+      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
       ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "bermuda-cargo", marca: "zoroz", precio: 50, modelos: 1,
+      id: "bermuda-cargo", marca: "zoroz", precio: 54.9, modelos: 1,
       nombre: "Bermuda Cargo Cintura Elástico Tacto Papel",
       descripcion: "Fresca para el verano: tela tacto papel, cintura elástica con cordón y bolsillos cargo. 13 colores.",
       colores: {
@@ -77,7 +77,7 @@ window.CATALOGO = {
         "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
         "Negro": "#161616",
       },
-      tallas: ["28", "30", "32", "34", "36"],
+      tallas: ["28", "29", "30", "31", "32", "33", "34", "36"],
       ficha: { "Tela": "Tacto papel", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],

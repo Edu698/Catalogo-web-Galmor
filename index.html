@@ -1,123 +1,169 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-PE">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Galmor Textiles — Tienda</title>
-  <meta name="description" content="Pantalones y bermudas Zoroz 77 y Galmor. Envíos a Lima y todo el Perú. Precios con IGV.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Galmor Textiles — Hecho en Lima desde 1988</title>
+  <meta name="description" content="Pantalones y bermudas Zoroz 77 y Galmor. Hecho en Lima desde 1988. Envío a todo el Perú, precios con IGV.">
+  <meta name="theme-color" content="#1E2430">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="fotos/jean-semi-pitillo/modelo-1.webp">
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <div id="splash" aria-hidden="true">
-    <div class="splash-marca">GALMOR</div>
-    <div class="splash-sub">TEXTILES</div>
-    <div class="splash-bienvenida">Bienvenido</div>
+  <!-- 1. Bienvenida -->
+  <div id="splash" class="splash" aria-hidden="true">
+    <p class="splash-hola">Bienvenido</p>
+    <p class="splash-marca">Galmor<br class="solo-movil"> Textiles</p>
+    <p class="splash-desde">Desde 1988</p>
+    <div class="splash-barra"><span></span></div>
+    <p class="splash-marcas"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
   </div>
 
-  <header class="cabecera">
-    <a class="logo" href="#">GALMOR<span>TEXTILES</span></a>
-    <nav class="filtros" id="filtros"></nav>
+  <!-- 2. Cabecera -->
+  <header class="cab">
+    <nav class="pestanas" id="pestanas" aria-label="Marcas"></nav>
+    <a class="logo" href="./" aria-label="Galmor Textiles, inicio">
+      <span>Galmor Textiles</span><small>Taller limeño · 1988</small>
+    </a>
     <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito">Carrito <span id="contador">0</span></button>
   </header>
 
   <div class="cinta" aria-hidden="true"><div class="cinta-pista" id="cinta"></div></div>
 
-  <section class="portada">
-    <div class="portada-texto">
-      <p class="antetitulo">Nueva colección · Zoroz 77</p>
-      <h1>Estilo<br>que se<br><em>mueve</em><br>contigo.</h1>
-      <p>Pantalones y bermudas para el día a día. Pide hoy, en Lima te llega mañana.</p>
-      <a class="btn btn-naranja" href="#catalogo">Ver catálogo</a>
-    </div>
-    <div class="portada-fotos">
-      <img src="fotos/jean-semi-pitillo/modelo-1.jpg" alt="Modelo con jean Zoroz 77">
-      <img src="fotos/jogger-cargo/modelo-1.jpg" alt="Jogger cargo Zoroz 77">
-    </div>
-  </section>
+  <main>
+    <!-- 3. Portada -->
+    <section class="hero">
+      <div class="hero-foto"><img src="fotos/jean-semi-pitillo/modelo-1.webp" alt="Modelo con jean Zoroz 77 en el taller" fetchpriority="high"></div>
+      <div class="hero-texto">
+        <p class="ceja">Nuestra historia</p>
+        <h1>Hecho en Lima desde 1988</h1>
+        <p class="solo-escritorio">Cosemos cada pantalón en nuestro taller: Zoroz 77 para la calle y Galmor para el día a día clásico.</p>
+        <p class="solo-movil">Cosemos cada pantalón en nuestro taller. Del corte a tu puerta, sin intermediarios.</p>
+        <div class="hero-botones">
+          <a class="btn btn-denim solo-movil" href="#catalogo">Ver la colección</a>
+          <a class="btn btn-denim solo-escritorio" href="#catalogo" data-filtro="zoroz">Comprar Zoroz 77</a>
+          <a class="btn btn-borde solo-escritorio" href="#catalogo" data-filtro="galmor">Galmor · Pronto</a>
+        </div>
+      </div>
+    </section>
 
-  <h2 class="titulo-seccion" id="catalogo">Catálogo</h2>
-  <main class="rejilla" id="rejilla"></main>
+    <!-- 4. Marcas (celular y tablet) -->
+    <section class="marcas">
+      <a class="marca-tile marca-zoroz" href="#catalogo" data-filtro="zoroz"><small>Urban jeans</small><b>Zoroz 77</b></a>
+      <a class="marca-tile marca-galmor" href="#catalogo" data-filtro="galmor"><small>Classic men · Pronto</small><b>Galmor</b></a>
+    </section>
 
-  <section class="confianza">
-    <div><b>01</b><h3>Envío rápido</h3><p>Lima en motorizado: pides hoy, llega mañana. Provincias por Shalom, Olva u otra agencia.</p></div>
-    <div><b>02</b><h3>Pago simple</h3><p>Transferencia, Yape o Plin. Envías tu pedido y la captura por WhatsApp.</p></div>
-    <div><b>03</b><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Te enviamos tu comprobante.</p></div>
-  </section>
+    <!-- 5. Catálogo -->
+    <section class="catalogo" id="catalogo">
+      <h2 id="titulo-catalogo">Lo más pedido</h2>
+      <div class="rejilla" id="rejilla"></div>
+    </section>
 
+    <!-- 6. Confianza -->
+    <section class="confianza">
+      <div><b>01</b><h3>Envío rápido</h3><p>Lima: pide hoy, llega mañana. Provincias por Shalom u Olva.</p></div>
+      <div><b>02</b><h3>Pago simple</h3><p>Yape, Plin o transferencia. Sin tarjeta ni registro.</p></div>
+      <div><b>03</b><h3>Boleta o ticket</h3><p>Tú eliges el comprobante. Todos los precios incluyen IGV.</p></div>
+    </section>
+  </main>
+
+  <!-- 7. Pie -->
   <footer class="pie">
-    <div class="logo">GALMOR<span>TEXTILES</span></div>
+    <div class="pie-marcas">
+      <div class="logo logo-claro"><span>Galmor Textiles</span><small>Taller limeño · 1988</small></div>
+      <p class="pie-sub"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
+    </div>
     <div class="redes" id="redes"></div>
-    <small>© <span id="anio"></span> Galmor Textiles · Lima, Perú</small>
+    <p class="pie-texto" id="pie-texto"></p>
   </footer>
 
-  <a class="wsp-flotante" id="wsp-flotante" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">WhatsApp</a>
-  <div class="aviso-flotante" id="aviso-flotante" role="status"></div>
+  <a class="wsp-flotante" id="wsp-flotante" target="_blank" rel="noopener">WhatsApp</a>
 
-  <dialog id="detalle" class="detalle"></dialog>
+  <!-- Aviso "Agregado" -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <aside id="carrito" class="carrito" aria-hidden="true">
+  <!-- Producto -->
+  <dialog class="producto" id="producto" aria-label="Producto"></dialog>
+
+  <!-- Foto ampliada -->
+  <dialog class="lupa" id="lupa" aria-label="Foto ampliada">
+    <button class="cerrar" id="cerrar-lupa" aria-label="Cerrar">×</button>
+    <div class="lupa-marco"><img id="lupa-img" alt=""></div>
+  </dialog>
+
+  <!-- Carrito en 3 pasos -->
+  <div class="velo" id="velo"></div>
+  <aside class="carrito" id="carrito" aria-hidden="true" aria-labelledby="carrito-titulo">
     <div class="carrito-cab">
       <h2 id="carrito-titulo">Tu carrito</h2>
       <button class="cerrar" id="cerrar-carrito" aria-label="Cerrar">×</button>
     </div>
+    <div class="pasos" id="pasos">
+      <div class="pasos-barra"><i></i><i></i><i></i></div>
+      <div class="pasos-nombres"><span>1 Tu carrito</span><span>2 Datos y pago</span><span>3 Pedido listo</span></div>
+    </div>
 
-    <!-- Paso 1: lo que llevas -->
-    <section id="paso-carrito">
+    <!-- Paso 1 -->
+    <section class="paso" id="paso-1">
       <div id="carrito-items"></div>
-      <div id="carrito-totales" class="totales"></div>
-      <button class="btn btn-bloque" id="ir-pagar">Ir a pagar</button>
-      <button class="btn-texto" id="seguir-comprando">Seguir comprando</button>
+      <div id="carrito-resumen"></div>
     </section>
 
-    <!-- Paso 2: datos y pago -->
-    <form id="form-pedido" class="form-pedido" hidden>
-      <button type="button" class="btn-texto" id="volver-carrito">← Volver al carrito</button>
+    <!-- Paso 2 -->
+    <form class="paso form" id="paso-2" novalidate hidden>
       <h3>Tus datos</h3>
-      <input name="nombre" placeholder="Nombre completo" required autocomplete="name">
-      <input name="dni" placeholder="DNI" required inputmode="numeric" pattern="[0-9]{8}" title="8 dígitos">
-      <input name="celular" placeholder="Celular / WhatsApp" required inputmode="tel" pattern="9[0-9]{8}" title="9 dígitos, empieza con 9" autocomplete="tel">
-      <input name="correo" type="email" placeholder="Correo (opcional, para tu comprobante)" autocomplete="email">
+      <label class="campo">Nombre completo<input name="nombre" autocomplete="name" placeholder="Ej. Luis Alberto Quispe Rojas"><small class="error"></small></label>
+      <div class="fila-2">
+        <label class="campo">DNI<input name="dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"><small class="error"></small></label>
+        <label class="campo">Celular / WhatsApp<input name="celular" inputmode="tel" maxlength="9" autocomplete="tel" placeholder="9 dígitos"><small class="error"></small></label>
+      </div>
+      <label class="campo">Correo (opcional)<input name="correo" type="email" autocomplete="email" placeholder="Para enviarte tu comprobante"><small class="error"></small></label>
 
       <h3>Envío</h3>
-      <div class="opciones">
-        <label><input type="radio" name="envio" value="Lima (motorizado)" checked> Lima — motorizado</label>
-        <label><input type="radio" name="envio" value="Provincia (agencia)"> Provincia — agencia</label>
+      <div class="opciones-envio">
+        <label class="opcion"><input type="radio" name="envio" value="lima" checked><b>Lima · Motorizado</b><small>Llega mañana</small></label>
+        <label class="opcion"><input type="radio" name="envio" value="provincia"><b>Provincia · Agencia</b><small>Shalom u Olva · 2 a 4 días</small></label>
       </div>
-      <div id="envio-lima"><input name="direccion" placeholder="Distrito y dirección"></div>
+      <div id="envio-lima">
+        <label class="campo">Dirección<input name="direccion" autocomplete="street-address" placeholder="Av., calle, número, referencia"><small class="error"></small></label>
+        <label class="campo">Distrito<select name="distrito" id="distritos"></select><small class="error"></small></label>
+      </div>
       <div id="envio-provincia" hidden>
-        <input name="destino" placeholder="Ciudad / departamento">
-        <select name="agencia"><option>Shalom</option><option>Olva</option><option>Otra agencia</option></select>
+        <div class="segmento"><label><input type="radio" name="agencia" value="Shalom" checked><span>Shalom</span></label><label><input type="radio" name="agencia" value="Olva"><span>Olva</span></label></div>
+        <div class="fila-2">
+          <label class="campo">Departamento<select name="departamento" id="departamentos"></select><small class="error"></small></label>
+          <label class="campo">Provincia / Ciudad<input name="ciudad"><small class="error"></small></label>
+        </div>
+        <label class="campo">Sede de agencia<input name="sede" placeholder="Ej. Shalom Av. Ejército"><small class="error"></small></label>
       </div>
 
       <h3>Comprobante</h3>
-      <div class="opciones">
-        <label><input type="radio" name="comprobante" value="Boleta" checked> Boleta</label>
-        <label><input type="radio" name="comprobante" value="Ticket"> Ticket</label>
-      </div>
+      <div class="segmento"><label><input type="radio" name="comprobante" value="Boleta" checked><span>Boleta</span></label><label><input type="radio" name="comprobante" value="Ticket"><span>Ticket</span></label></div>
 
-      <h3>Pago</h3>
-      <div class="opciones">
-        <label><input type="radio" name="pago" value="Transferencia" checked> Transferencia</label>
-        <label><input type="radio" name="pago" value="Yape"> Yape</label>
-        <label><input type="radio" name="pago" value="Plin"> Plin</label>
+      <h3>Método de pago</h3>
+      <div class="pagos">
+        <label><input type="radio" name="pago" value="Transferencia"><span>Transferencia</span></label>
+        <label><input type="radio" name="pago" value="Yape" checked><span>Yape</span></label>
+        <label><input type="radio" name="pago" value="Plin"><span>Plin</span></label>
       </div>
-      <div id="datos-pago" class="datos-pago"></div>
+      <div class="datos-pago" id="datos-pago"></div>
 
-      <button class="btn btn-bloque btn-naranja" type="submit">Generar mi pedido</button>
+      <button class="btn btn-denim btn-alto" type="submit">Generar mi pedido</button>
+      <p class="nota">Tu pedido se confirma cuando recibimos la captura de pago.</p>
+      <button class="btn-texto" type="button" id="volver-1">← Volver al carrito</button>
     </form>
 
-    <!-- Paso 3: pedido en imagen listo para enviar -->
-    <section id="paso-listo" hidden>
-      <p class="nota-listo">Tu pedido está listo. Envía esta imagen y la captura de tu pago al <b>983 573 288</b>.</p>
-      <img id="pedido-imagen" class="pedido-imagen" alt="Imagen de tu pedido">
-      <button class="btn btn-bloque btn-naranja" id="enviar-imagen">Enviar imagen por WhatsApp</button>
-      <a class="btn btn-bloque btn-borde" id="abrir-chat" target="_blank" rel="noopener">Abrir chat de Galmor</a>
-      <button class="btn-texto" id="nuevo-pedido">Hacer otro pedido</button>
+    <!-- Paso 3 -->
+    <section class="paso" id="paso-3" hidden>
+      <div class="pedido-vista"><img id="pedido-img" alt="Imagen de tu pedido"></div>
+      <p class="nota-fuerte">Envía la imagen y la captura de tu pago. Te confirmamos por WhatsApp.</p>
+      <button class="btn btn-wsp btn-alto" id="enviar-imagen">Enviar imagen por WhatsApp</button>
+      <a class="btn btn-borde" id="abrir-chat" target="_blank" rel="noopener">Abrir chat de Galmor</a>
     </section>
   </aside>
-  <div id="velo" class="velo"></div>
 
   <script src="productos.js"></script>
   <script src="app.js"></script>

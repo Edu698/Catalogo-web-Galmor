@@ -191,13 +191,17 @@ def mejorar(im, caja):
 
 def guardar(im, ruta):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    im.save(ruta, "JPEG", quality=80, optimize=True, progressive=True)
+    # Reason: WebP pesa ~40 % menos que JPEG con la misma calidad; la tienda carga rápido en celular.
+    for calidad in (80, 72, 64, 56):  # máximo ~150 KB por foto (el denim tiene mucho detalle)
+        im.save(ruta, "WEBP", quality=calidad, method=6)
+        if os.path.getsize(ruta) <= 150 * 1024:
+            break
     print(f"{os.path.relpath(ruta, REPO)}  {im.width}x{im.height}  {os.path.getsize(ruta) // 1024} KB")
 
 
 for prod, colores in RECORTES.items():
     for color, (clave, caja) in colores.items():
-        guardar(mejorar(foto(clave).crop(caja), (960, 1280)), f"{SAL}/{prod}/{slug(color)}.jpg")
+        guardar(mejorar(foto(clave).crop(caja), (960, 1280)), f"{SAL}/{prod}/{slug(color)}.webp")
 for prod, claves in MODELOS.items():
     for i, clave in enumerate(claves, 1):
-        guardar(mejorar(limpiar(clave, foto(clave).copy()), (1000, 1500)), f"{SAL}/{prod}/modelo-{i}.jpg")
+        guardar(mejorar(limpiar(clave, foto(clave).copy()), (1000, 1500)), f"{SAL}/{prod}/modelo-{i}.webp")
