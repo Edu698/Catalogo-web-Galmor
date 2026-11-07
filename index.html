@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galmor Textiles — Catálogo</title>
+  <meta name="description" content="Pantalones y bermudas Galmor y Zoroz 77. Envíos a Lima y todo el Perú. Precios con IGV.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div id="splash" aria-hidden="true">
+    <div class="splash-marca">GALMOR</div>
+    <div class="splash-sub">TEXTILES</div>
+    <div class="splash-bienvenida">Bienvenido</div>
+  </div>
+
+  <header class="cabecera">
+    <a class="logo" href="#">GALMOR <span>TEXTILES</span></a>
+    <nav class="filtros" id="filtros"></nav>
+    <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito">
+      Carrito <span id="contador">0</span>
+    </button>
+  </header>
+
+  <div class="cinta">
+    Lima: compra hoy, recíbelo mañana en motorizado · Provincias por Shalom, Olva y más · Todos los precios incluyen IGV
+  </div>
+
+  <section class="portada">
+    <p class="antetitulo">Nueva colección</p>
+    <h1>Hecho para durar.<br>Hecho para verse bien.</h1>
+    <p>Pantalones y bermudas de nuestras marcas <strong>Galmor</strong> y <strong>Zoroz 77</strong>.</p>
+    <a class="btn" href="#catalogo">Ver catálogo</a>
+  </section>
+
+  <main id="catalogo" class="rejilla"></main>
+
+  <section class="confianza">
+    <div><h3>Envío rápido</h3><p>Lima en motorizado: compras hoy, llega mañana. Provincias por Shalom, Olva u otra agencia.</p></div>
+    <div><h3>Pago simple</h3><p>Transferencia, Yape o Plin. Confirmas por WhatsApp y listo.</p></div>
+    <div><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Te enviamos tu comprobante.</p></div>
+  </section>
+
+  <footer class="pie">
+    <div class="logo">GALMOR <span>TEXTILES</span></div>
+    <div class="redes" id="redes"></div>
+    <small>© <span id="anio"></span> Galmor Textiles · Lima, Perú</small>
+  </footer>
+
+  <a class="wsp-flotante" id="wsp-flotante" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">WhatsApp</a>
+
+  <!-- Detalle de producto -->
+  <dialog id="detalle" class="detalle"></dialog>
+
+  <!-- Carrito y pedido -->
+  <aside id="carrito" class="carrito" aria-hidden="true">
+    <div class="carrito-cab">
+      <h2>Tu pedido</h2>
+      <button class="cerrar" id="cerrar-carrito" aria-label="Cerrar">×</button>
+    </div>
+    <div id="carrito-items"></div>
+    <div id="carrito-totales" class="totales"></div>
+
+    <form id="form-pedido" class="form-pedido">
+      <h3>Tus datos</h3>
+      <input name="nombre" placeholder="Nombre completo" required autocomplete="name">
+      <input name="dni" placeholder="DNI" required inputmode="numeric" pattern="[0-9]{8}" title="8 dígitos">
+      <input name="celular" placeholder="Celular / WhatsApp" required inputmode="tel" pattern="9[0-9]{8}" title="9 dígitos, empieza con 9" autocomplete="tel">
+      <input name="correo" type="email" placeholder="Correo (opcional, para tu comprobante)" autocomplete="email">
+
+      <h3>Envío</h3>
+      <div class="opciones">
+        <label><input type="radio" name="envio" value="Lima (motorizado)" checked> Lima — motorizado</label>
+        <label><input type="radio" name="envio" value="Provincia (agencia)"> Provincia — agencia</label>
+      </div>
+      <div id="envio-lima">
+        <input name="direccion" placeholder="Distrito y dirección">
+      </div>
+      <div id="envio-provincia" hidden>
+        <input name="destino" placeholder="Ciudad / departamento">
+        <select name="agencia">
+          <option>Shalom</option><option>Olva</option><option>Otra agencia</option>
+        </select>
+      </div>
+
+      <h3>Comprobante</h3>
+      <div class="opciones">
+        <label><input type="radio" name="comprobante" value="Boleta" checked> Boleta</label>
+        <label><input type="radio" name="comprobante" value="Ticket"> Ticket</label>
+      </div>
+
+      <h3>Pago</h3>
+      <div class="opciones">
+        <label><input type="radio" name="pago" value="Transferencia" checked> Transferencia</label>
+        <label><input type="radio" name="pago" value="Yape"> Yape</label>
+        <label><input type="radio" name="pago" value="Plin"> Plin</label>
+      </div>
+      <div id="datos-pago" class="datos-pago"></div>
+
+      <button class="btn btn-bloque" type="submit">Enviar pedido por WhatsApp</button>
+      <small class="nota">Se abrirá WhatsApp con tu pedido listo. Envíanos la captura de tu pago y despachamos.</small>
+    </form>
+  </aside>
+  <div id="velo" class="velo"></div>
+
+  <script src="productos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
