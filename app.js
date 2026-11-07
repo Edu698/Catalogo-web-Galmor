@@ -14,46 +14,12 @@
     setTimeout(() => splash.remove(), 3300);
   }
 
-  // ---------- Dibujo provisional del pantalón (mientras no haya foto real) ----------
-  function oscurecer(hex, f) {
-    const n = parseInt(hex.slice(1), 16);
-    const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * f));
-    return `rgb(${c.join(",")})`;
-  }
-  const SILUETAS = {
-    clasico: "M50 36 L150 36 L162 280 L112 280 L100 110 L88 280 L38 280 Z",
-    jean: "M50 36 L150 36 L160 280 L112 280 L100 110 L88 280 L40 280 Z",
-    cargo: "M50 36 L150 36 L164 280 L110 280 L100 110 L90 280 L36 280 Z",
-    jogger: "M50 36 L150 36 L146 268 L112 268 L100 110 L88 268 L54 268 Z",
-    baggy: "M48 36 L152 36 L174 282 L108 282 L100 116 L92 282 L26 282 Z",
-    bermuda: "M50 36 L150 36 L160 168 L106 168 L100 110 L94 168 L40 168 Z",
-    "bermuda-cargo": "M50 36 L150 36 L162 168 L106 168 L100 110 L94 168 L38 168 Z",
-  };
-  function dibujo(tipo, hex, vista) {
-    const borde = oscurecer(hex, 0.7);
-    const lineas = vista === "frente"
-      ? `<path d="M100 36 V104" /><path d="M60 38 Q72 66 52 78" /><path d="M140 38 Q128 66 148 78" />`
-      : `<path d="M52 52 Q100 66 148 52" /><rect x="62" y="62" width="28" height="32" rx="3"/><rect x="110" y="62" width="28" height="32" rx="3"/>`;
-    const cargo = tipo.includes("cargo")
-      ? `<rect x="42" y="124" width="26" height="34" rx="3"/><rect x="132" y="124" width="26" height="34" rx="3"/><path d="M42 132 H68 M132 132 H158"/>`
-      : "";
-    const punos = tipo === "jogger" ? `<rect x="54" y="258" width="34" height="12"/><rect x="112" y="258" width="34" height="12"/>` : "";
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
-      <defs><linearGradient id="l" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".18"/>
-      <stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>
-      <path d="${SILUETAS[tipo]}" fill="${hex}"/><path d="${SILUETAS[tipo]}" fill="url(#l)"/>
-      <rect x="50" y="20" width="100" height="16" fill="${hex}"/>
-      <g fill="none" stroke="${borde}" stroke-width="1.6"><path d="${SILUETAS[tipo]}"/><rect x="50" y="20" width="100" height="16"/>
-      ${lineas}${cargo}${punos}</g></svg>`;
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-  }
-  // Fotos reales si existen; si no, frente y espalda dibujados en el color.
-  function vistas(p, color) {
-    const reales = p.fotos && p.fotos[color];
-    if (reales && reales.length) return reales;
-    const hex = C.colores[color] || "#888888";
-    return [dibujo(p.tipo, hex, "frente"), dibujo(p.tipo, hex, "espalda")];
-  }
+  // ---------- Fotos: fotos/<id>/<color>.jpg y fotos/<id>/modelo-N.jpg ----------
+  const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.jpg`;
+  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.jpg`);
+  const vistas = (p, color) => [fotoColor(p, color), ...modelos(p)];
+  const nombresColor = (p) => Object.keys(p.colores);
   const marcaAgua = (p) =>
     `<div class="marca-agua"><span>${C.marcas[p.marca].toUpperCase()}</span></div><div class="sello">GALMOR TEXTILES</div>`;
 
@@ -69,16 +35,17 @@
     $("#catalogo").innerHTML = C.productos
       .filter((p) => filtro === "todos" || p.marca === filtro)
       .map((p) => {
-        const [a, b] = vistas(p, p.colores[0]);
+        const b = fotoColor(p, nombresColor(p)[0]);
+        const a = modelos(p)[0] || b;
         return `<article class="tarjeta" data-id="${p.id}">
           <div class="foto"><img src="${a}" alt="${p.nombre}" loading="lazy"><img src="${b || a}" alt="" loading="lazy">${marcaAgua(p)}</div>
           <div class="marca">${C.marcas[p.marca]}</div>
           <h3>${p.nombre}</h3>
           <div class="precio">${soles(p.precio)}</div>
-          <div class="puntos">${p.colores.map((c) => `<span class="punto" title="${c}" style="background:${C.colores[c]}"></span>`).join("")}</div>
+          <div class="puntos">${nombresColor(p).map((c) => `<span class="punto" title="${c}" style="background:${p.colores[c]}"></span>`).join("")}</div>
         </article>`;
       })
-      .join("");
+      .join("") || `<p class="vacio">Próximamente: nueva colección ${C.marcas[filtro]}.</p>`;
   }
   $("#filtros").addEventListener("click", (e) => {
     const b = e.target.closest("button");
@@ -96,7 +63,7 @@
   const dlg = $("#detalle");
   function abrirDetalle(id) {
     const p = producto(id);
-    const sel = { color: p.colores[0], talla: null, cant: 1, vista: 0 };
+    const sel = { color: nombresColor(p)[0], talla: null, cant: 1, vista: 0 };
 
     dlg.innerHTML = `<button class="cerrar" aria-label="Cerrar">×</button>
       <div class="detalle-cuerpo">
@@ -112,7 +79,7 @@
           <div class="igv">Precio incluye IGV</div>
           <p>${p.descripcion}</p>
           <div class="etiqueta">Color: <b class="nombre-color"></b></div>
-          <div class="muestras">${p.colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" style="background:${C.colores[c]}"></button>`).join("")}</div>
+          <div class="muestras">${nombresColor(p).map((c) => `<button class="muestra" data-color="${c}" title="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
           <div class="etiqueta">Talla</div>
           <div class="tallas">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
           <div class="etiqueta">Cantidad</div>
@@ -141,9 +108,10 @@
       sel.color = c;
       $(".nombre-color", dlg).textContent = c;
       dlg.querySelectorAll(".muestra").forEach((m) => m.classList.toggle("activa", m.dataset.color === c));
-      mostrar(sel.vista);
+      mostrar(0); // la foto de ese color
     }
     elegirColor(sel.color);
+    if (p.modelos) mostrar(1); // al abrir, primero la foto con modelo
 
     // Giro: arrastrar a los lados cambia de vista. Zoom: tocar sin arrastrar; mover el dedo/ratón recorre la foto.
     let x0 = null, arrastro = false, zoom = false;

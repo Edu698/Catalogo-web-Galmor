@@ -45,8 +45,9 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0 0 .4em; }
 /* Rejilla de productos */
 .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 36px 24px; padding: 0 5vw 80px; }
 .tarjeta { cursor: pointer; }
+.rejilla .vacio { grid-column: 1 / -1; }
 .tarjeta .foto { position: relative; aspect-ratio: 3 / 4; background: var(--blanco); overflow: hidden; }
-.tarjeta .foto img { width: 100%; height: 100%; object-fit: contain; transition: opacity .5s, transform .8s; position: absolute; inset: 0; }
+.tarjeta .foto img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transition: opacity .5s, transform .8s; position: absolute; inset: 0; }
 .tarjeta .foto img + img { opacity: 0; }
 .tarjeta:hover .foto img:first-child { opacity: 0; }
 .tarjeta:hover .foto img + img { opacity: 1; transform: scale(1.03); }

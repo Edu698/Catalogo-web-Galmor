@@ -13,13 +13,14 @@ Todo está en [`productos.js`](productos.js). Los precios, fichas técnicas y da
 ## Subir fotos
 
 Las fotos originales van en `fotos-originales/`, tal como salen de la cámara (por producto, modelos, etc.).
-Desde ahí se preparan las versiones web en `fotos/`:
+Desde ahí se preparan las versiones web en `fotos/<id-producto>/`, que la tienda encuentra por nombre:
 
-1. Crear una carpeta por producto: `fotos/<id-producto>/` (ej. `fotos/cargo/`).
-2. Nombrar las fotos por color y orden de giro: `negro-1.jpg` (frente), `negro-2.jpg` (lado), `negro-3.jpg` (espalda)…
-3. En `productos.js`, en ese producto: `fotos: { "Negro": ["fotos/cargo/negro-1.jpg", "fotos/cargo/negro-2.jpg", "fotos/cargo/negro-3.jpg"] }`.
+- `<color>.jpg` — una por color, en minúsculas y con guiones (ej. `fotos/jogger-cargo/verde-militar.jpg`).
+- `modelo-1.jpg`, `modelo-2.jpg`… — fotos con modelo; en `productos.js`, `modelos` indica cuántas hay.
 
-Mientras un color no tenga fotos se muestra un dibujo del pantalón en ese color. Más fotos por color = giro más fluido.
+[`herramientas/preparar_fotos.py`](herramientas/preparar_fotos.py) genera `fotos/` desde los originales: recorta un
+pantalón por color de las fotos grupales, limpia marcas ajenas (ej. "PhotoRoom") y mejora nitidez y niveles
+sin cambiar el color. Requiere Pillow: `python3 herramientas/preparar_fotos.py .`
 
 ## Ver en local
 

@@ -1,5 +1,9 @@
-// Catálogo Galmor Textiles — ÚNICO archivo que hay que editar para cambiar productos, precios, colores o fotos.
-// Los precios son DE EJEMPLO (S/ 50–80) y ya incluyen IGV.
+// Catálogo Galmor Textiles — ÚNICO archivo que hay que editar para cambiar productos, precios, colores o datos de pago.
+// Precios DE EJEMPLO; ya incluyen IGV.
+//
+// Fotos: van solas por nombre, sin escribirlas aquí.
+//   fotos/<id>/<color>.jpg     una por color (ej. fotos/jogger-cargo/verde-militar.jpg)
+//   fotos/<id>/modelo-N.jpg    fotos con modelo; "modelos" dice cuántas hay. La 1 es la portada.
 window.CATALOGO = {
   whatsapp: "51983573288", // 51 = Perú + celular, sin espacios
 
@@ -12,90 +16,69 @@ window.CATALOGO = {
 
   redes: { facebook: "#", instagram: "#", tiktok: "#" }, // pegar los enlaces cuando estén las páginas
 
-  marcas: { galmor: "Galmor", zoroz: "Zoroz 77" },
+  marcas: { zoroz: "Zoroz 77", galmor: "Galmor" },
 
-  // Color → tono para la muestra y para el dibujo cuando aún no hay foto.
-  colores: {
-    "Negro": "#1f1f22", "Azul noche": "#1e2a44", "Beige": "#d6c2a1", "Camello": "#b58a5a", "Caqui": "#a89a6e",
-    "Verde militar": "#4b5136", "Plomo oscuro": "#4a4d52", "Cocoa": "#6b4b3a", "Hueso": "#ece5d6",
-    "Celeste": "#8fb3d6", "Azul acero": "#4d6a8a", "Celeste oscuro": "#3f6489", "Marrón": "#5c3d2e",
-  },
-
-  // tipo = silueta del dibujo provisional: clasico | jean | cargo | jogger | baggy | bermuda | bermuda-cargo
-  // fotos (opcional): por color, lista de fotos en orden de giro (frente, lado, espalda...). Ejemplo:
-  //   fotos: { "Negro": ["fotos/drill-strech/negro-1.jpg", "fotos/drill-strech/negro-2.jpg"] }
+  // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
   productos: [
     {
-      id: "drill-strech", marca: "galmor", tipo: "clasico", precio: 70,
-      nombre: "Pantalón Drill Strech",
-      descripcion: "El clásico de todos los días: drill con elasticidad que se mueve contigo y mantiene la forma lavado tras lavado.",
-      colores: ["Negro", "Azul noche", "Beige", "Camello", "Plomo oscuro", "Verde militar"],
-      tallas: ["28", "30", "32", "34", "36", "38"],
-      ficha: { "Tela": "Drill strech", "Composición": "97 % algodón · 3 % spandex", "Calce": "Slim recto", "Bolsillos": "2 delanteros · 2 traseros", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar a máquina en frío, del revés" },
-      fotos: {},
-    },
-    {
-      id: "jean-strech", marca: "galmor", tipo: "jean", precio: 80,
-      nombre: "Pantalón Jean Strech",
-      descripcion: "Denim strech de lavado uniforme y costuras reforzadas. Cómodo desde el primer uso.",
-      colores: ["Celeste", "Azul acero", "Celeste oscuro", "Negro"],
-      tallas: ["28", "30", "32", "34", "36", "38"],
-      ficha: { "Tela": "Denim strech", "Composición": "98 % algodón · 2 % spandex", "Calce": "Slim", "Bolsillos": "5 bolsillos", "Cierre": "Cierre metálico y botón", "Cuidado": "Lavar en frío, no usar lejía" },
-      fotos: {},
-    },
-    {
-      id: "cargo", marca: "zoroz", tipo: "cargo", precio: 80,
-      nombre: "Pantalón Cargo",
-      descripcion: "Bolsillos laterales con tapa, tela resistente y caída moderna. Estilo urbano que aguanta todo.",
-      colores: ["Negro", "Verde militar", "Caqui", "Beige"],
+      id: "drill-semi-pitillo", marca: "zoroz", precio: 70, modelos: 4,
+      nombre: "Pantalón Drill Strech Semi Pitillo",
+      descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
+      colores: {
+        "Negro": "#1a1a1c", "Azul noche": "#171c2e", "Azul acero": "#1f3a73", "Plomo oscuro": "#262b33",
+        "Plomo intermedio": "#4a5258", "Plomo plata": "#8d97a5", "Beige": "#d6c4a6", "Caqui": "#c9ad84",
+        "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
+        "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
+      },
       tallas: ["28", "30", "32", "34", "36"],
-      ficha: { "Tela": "Drill pesado", "Composición": "100 % algodón", "Calce": "Recto", "Bolsillos": "6 bolsillos (2 cargo con tapa)", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
-      fotos: {},
+      ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
-      id: "jogger", marca: "zoroz", tipo: "jogger", precio: 60,
-      nombre: "Pantalón Jogger",
-      descripcion: "Pretina elástica con cordón y puño en la basta. Para moverte cómodo sin perder estilo.",
-      colores: ["Negro", "Plomo oscuro", "Verde militar", "Cocoa"],
-      tallas: ["S", "M", "L", "XL"],
-      ficha: { "Tela": "Drill strech", "Composición": "97 % algodón · 3 % spandex", "Calce": "Jogger con puño", "Bolsillos": "2 delanteros · 1 trasero", "Cintura": "Elástica con cordón", "Cuidado": "Lavar en frío, del revés" },
-      fotos: {},
-    },
-    {
-      id: "baggy", marca: "zoroz", tipo: "baggy", precio: 80,
-      nombre: "Pantalón Baggy",
-      descripcion: "Corte amplio y relajado, tendencia de temporada. Combina con zapatillas y polos oversize.",
-      colores: ["Celeste", "Negro", "Beige"],
+      id: "jean-semi-pitillo", marca: "zoroz", precio: 80, modelos: 4,
+      nombre: "Pantalón Jean Strech Semi Pitillo",
+      descripcion: "Denim strech de la línea Black Collection: cómodo desde el primer uso, corte semi pitillo y 10 lavados distintos.",
+      colores: {
+        "Grafito azul": "#1b2440", "Madera": "#2c3a58", "Azul cristal": "#2e4a7c", "Azul acero": "#2b4f8f",
+        "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
+        "Plomo oscuro": "#2a2c31", "Negro": "#141416",
+      },
       tallas: ["28", "30", "32", "34", "36"],
-      ficha: { "Tela": "Denim rígido", "Composición": "100 % algodón", "Calce": "Baggy (amplio)", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío" },
-      fotos: {},
+      ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
-      id: "chino-tacto", marca: "galmor", tipo: "clasico", precio: 70,
-      nombre: "Pantalón Chino Tacto",
-      descripcion: "Acabado suave al tacto, ideal para oficina o salidas. Elegancia sin esfuerzo.",
-      colores: ["Azul noche", "Hueso", "Camello", "Plomo oscuro"],
-      tallas: ["28", "30", "32", "34", "36", "38"],
-      ficha: { "Tela": "Chino acabado tacto durazno", "Composición": "97 % algodón · 3 % spandex", "Calce": "Slim", "Bolsillos": "2 sesgados · 2 traseros con botón", "Cierre": "Cierre y botón", "Cuidado": "Planchar a temperatura media" },
-      fotos: {},
-    },
-    {
-      id: "bermuda-chino", marca: "galmor", tipo: "bermuda", precio: 50,
-      nombre: "Bermuda Clásico Chino",
-      descripcion: "Fresca y bien acabada, para el verano limeño. Largo sobre la rodilla.",
-      colores: ["Beige", "Azul noche", "Camello", "Negro"],
+      id: "jogger-cargo", marca: "zoroz", precio: 60, modelos: 1,
+      nombre: "Pantalón Jogger Cargo Tacto Papel",
+      descripcion: "Tela tacto papel, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
+      colores: {
+        "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
+        "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
+      },
       tallas: ["28", "30", "32", "34", "36"],
-      ficha: { "Tela": "Drill strech", "Composición": "97 % algodón · 3 % spandex", "Calce": "Recto, sobre la rodilla", "Bolsillos": "4 bolsillos", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío" },
-      fotos: {},
+      ficha: { "Tela": "Tacto papel", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "bermuda-cargo", marca: "zoroz", tipo: "bermuda-cargo", precio: 50,
-      nombre: "Bermuda Cargo",
-      descripcion: "Bolsillos cargo laterales y tela resistente. Práctica para todo el día.",
-      colores: ["Verde militar", "Caqui", "Negro"],
+      id: "doble-cargo", marca: "zoroz", precio: 80, modelos: 1,
+      nombre: "Pantalón Doble Cargo Tela Carbón",
+      descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
+      colores: {
+        "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
+        "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
+      },
       tallas: ["28", "30", "32", "34", "36"],
-      ficha: { "Tela": "Drill", "Composición": "100 % algodón", "Calce": "Recto", "Bolsillos": "6 bolsillos", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío" },
-      fotos: {},
+      ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
+    },
+    {
+      id: "bermuda-cargo", marca: "zoroz", precio: 50, modelos: 1,
+      nombre: "Bermuda Cargo Cintura Elástico Tacto Papel",
+      descripcion: "Fresca para el verano: tela tacto papel, cintura elástica con cordón y bolsillos cargo. 13 colores.",
+      colores: {
+        "Verde arena": "#5a5f50", "Verde militar": "#2f3229", "Beige": "#c8b296", "Caqui": "#bfa27c",
+        "Hueso": "#e3d9cf", "Blanco": "#f3f3f3", "Cemento": "#8e9a92", "Plomo plata": "#8f93a3",
+        "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
+        "Negro": "#161616",
+      },
+      tallas: ["28", "30", "32", "34", "36"],
+      ficha: { "Tela": "Tacto papel", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],
 };
