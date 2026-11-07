@@ -19,8 +19,9 @@ Desde ahí se preparan las versiones web en `fotos/<id-producto>/`, que la tiend
 - `modelo-1.jpg`, `modelo-2.jpg`… — fotos con modelo; en `productos.js`, `modelos` indica cuántas hay.
 
 [`herramientas/preparar_fotos.py`](herramientas/preparar_fotos.py) genera `fotos/` desde los originales: recorta un
-pantalón por color de las fotos grupales, limpia marcas ajenas (ej. "PhotoRoom") y mejora nitidez y niveles
-sin cambiar el color. Requiere Pillow: `python3 herramientas/preparar_fotos.py .`
+pantalón por color de las fotos grupales, borra el nombre del color escrito encima de la prenda y limpia marcas
+ajenas (ej. "PhotoRoom"), sin cambiar brillo ni color. Requiere `pip install pillow numpy opencv-python-headless`;
+se ejecuta con `python3 herramientas/preparar_fotos.py .`
 
 ## Ver en local
 
