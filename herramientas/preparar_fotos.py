@@ -102,13 +102,18 @@ def limpiar(clave, im):
 
 
 def mejorar(im, caja):
-    """Ajusta a la caja (agranda hasta 2.2x), corrige niveles sin tocar el tono y afina suave."""
+    """Ajusta a la caja (agranda hasta 2.2x) y, solo si se agrandó, recupera nitidez muy suave.
+
+    Reason: no se tocan brillo, contraste ni color. Un ajuste de niveles cambiaba el tono de piel
+    entre modelos y quemaba los blancos; la prenda debe verse igual que en la foto original.
+    """
     esc = min(caja[0] / im.width, caja[1] / im.height, 2.2)
-    if abs(esc - 1) > 0.01:
-        im = im.resize((round(im.width * esc), round(im.height * esc)), Image.LANCZOS)
-    im = ImageOps.autocontrast(im, cutoff=0.4, preserve_tone=True)
-    radio = 1.2 + max(0, esc - 1)  # más agrandada = afinado un poco más amplio
-    return im.filter(ImageFilter.UnsharpMask(radius=radio, percent=60, threshold=3))
+    if abs(esc - 1) <= 0.01:
+        return im
+    im = im.resize((round(im.width * esc), round(im.height * esc)), Image.Resampling.LANCZOS)
+    if esc > 1:
+        im = im.filter(ImageFilter.UnsharpMask(radius=1.0, percent=35, threshold=4))
+    return im
 
 
 def guardar(im, ruta):
