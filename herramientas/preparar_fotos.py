@@ -38,6 +38,14 @@ TEXTOS = {
               (1010, 690, 1121, 946, "claro")],
     "jog-2": [(334, 716, 438, 931, "claro"), (504, 729, 609, 910, "claro"), (770, 722, 874, 920, "claro"),
               (1051, 730, 1151, 920, "claro")],
+    # Etiquetas rojas con el nombre del color (Formato 2 del Drill y bermudas).
+    "f2-2": [(753, 371, 1175, 487, "rojo"), (150, 1331, 521, 1443, "rojo")],
+    "ber-1": [(367, 57, 869, 171, "rojo"), (642, 1400, 1172, 1535, "rojo")],
+    "ber-3": [(329, 11, 795, 142, "rojo"), (676, 1391, 1186, 1521, "rojo")],
+    "ber-4": [(393, 25, 677, 158, "rojo"), (862, 1297, 1138, 1429, "rojo")],
+    "ber-5": [(677, 89, 924, 223, "rojo"), (894, 335, 1157, 468, "rojo"), (815, 1365, 1122, 1500, "rojo")],
+    "ber-6": [(367, 30, 645, 162, "rojo"), (809, 1324, 1129, 1460, "rojo")],
+    "ber-7": [(357, 34, 788, 165, "rojo"), (853, 1308, 1200, 1441, "rojo")],
     "jean-4": [(860, 755, 1210, 870, "sombra"), (775, 2305, 1490, 2440, "sombra")],
     "jean-6": [(690, 830, 1460, 965, "sombra"), (793, 2380, 1240, 2515, "sombra")],
     "jean-7": [(520, 792, 1335, 927, "sombra"), (585, 2323, 1345, 2458, "sombra")],
@@ -52,6 +60,9 @@ def borrar_texto(im, cajas):
     mascara = np.zeros(rgb.shape[:2], np.uint8)
     for x1, y1, x2, y2, tipo in cajas:
         zona = rgb[y1:y2, x1:x2]
+        if tipo == "rojo":  # etiqueta roja rectangular: se reemplaza completa, con margen para su borde
+            mascara[max(0, y1 - 16):y2 + 16, max(0, x1 - 16):x2 + 16] = 255
+            continue
         if tipo == "oscuro":
             letras = zona.max(axis=2) < 95
         else:
@@ -65,12 +76,15 @@ def borrar_texto(im, cajas):
     mascara = cv2.dilate(mascara, np.ones((7, 7), np.uint8))
     sale = cv2.inpaint(rgb, mascara, 9, cv2.INPAINT_TELEA).astype(np.int16)
     for x1, y1, x2, y2, tipo in cajas:
-        if tipo != "sombra" or y1 < (y2 - y1):
+        if tipo not in ("sombra", "rojo"):
             continue
-        # Reason: el relleno queda liso; se le suma el grano del denim de la franja de arriba.
+        # Reason: el relleno queda liso; se le suma el grano (tela o piso) de la franja vecina.
         h = y2 - y1
-        arriba = rgb[y1 - h:y1, x1:x2].astype(np.int16)
-        grano = arriba - cv2.GaussianBlur(arriba, (0, 0), 3)
+        vecina = rgb[y1 - h:y1, x1:x2] if y1 >= h else rgb[y2:y2 + h, x1:x2]
+        if vecina.shape[0] != h:
+            continue
+        vecina = vecina.astype(np.int16)
+        grano = vecina - cv2.GaussianBlur(vecina, (0, 0), 3)
         m = mascara[y1:y2, x1:x2, None] > 0
         sale[y1:y2, x1:x2] = np.where(m, sale[y1:y2, x1:x2] + grano, sale[y1:y2, x1:x2])
     return Image.fromarray(np.clip(sale, 0, 255).astype(np.uint8))
@@ -94,17 +108,18 @@ def slug(s):
 # Recorte (x1, y1, x2, y2) en píxeles de la foto original, una prenda por color.
 RECORTES = {
     "drill-semi-pitillo": {
-        "Cocoa": ("f1-1", (140, 320, 620, 960)), "Caqui": ("f1-1", (520, 320, 1000, 960)),
-        "Verde arena": ("f1-1", (910, 320, 1390, 960)),
-        "Verde militar": ("f1-2", (130, 300, 610, 940)), "Blanco": ("f1-2", (480, 300, 960, 940)),
-        "Camello": ("f1-2", (890, 300, 1370, 940)),
-        "Negro": ("f1-3", (130, 320, 610, 960)), "Plomo plata": ("f1-3", (520, 320, 1000, 960)),
-        "Plomo oscuro": ("f1-3", (900, 320, 1380, 960)),
-        "Azul acero": ("f1-4", (170, 340, 650, 980)), "Hueso": ("f1-4", (530, 340, 1010, 980)),
-        "Azul noche": ("f1-4", (890, 340, 1370, 980)),
-        "Canela": ("f1-5", (180, 320, 660, 960)), "Beige": ("f1-5", (550, 320, 1030, 960)),
-        "Marrón": ("f1-5", (900, 320, 1380, 960)),
-        "Plomo intermedio": ("f2-2", (100, 420, 550, 1020)),
+        # Reason: los de la derecha suben 50 px para no cortar la punta del logo de abajo a la derecha.
+        "Cocoa": ("f1-1", (110, 290, 650, 1010)), "Caqui": ("f1-1", (490, 290, 1030, 1010)),
+        "Verde arena": ("f1-1", (880, 240, 1420, 960)),
+        "Verde militar": ("f1-2", (100, 270, 640, 990)), "Blanco": ("f1-2", (450, 270, 990, 990)),
+        "Camello": ("f1-2", (860, 220, 1400, 940)),
+        "Negro": ("f1-3", (100, 290, 640, 1010)), "Plomo plata": ("f1-3", (490, 290, 1030, 1010)),
+        "Plomo oscuro": ("f1-3", (870, 240, 1410, 960)),
+        "Azul acero": ("f1-4", (140, 310, 680, 1030)), "Hueso": ("f1-4", (500, 310, 1040, 1030)),
+        "Azul noche": ("f1-4", (860, 260, 1400, 980)),
+        "Canela": ("f1-5", (150, 290, 690, 1010)), "Beige": ("f1-5", (520, 290, 1060, 1010)),
+        "Marrón": ("f1-5", (870, 240, 1410, 960)),
+        "Plomo intermedio": ("f2-2", (0, 370, 855, 1510)),
     },
     "jogger-cargo": {
         "Caqui": ("jog-1", (190, 255, 590, 955)), "Verde militar": ("jog-1", (440, 255, 840, 955)),
@@ -113,26 +128,27 @@ RECORTES = {
         "Cocoa": ("jog-2", (660, 280, 1060, 980)), "Negro": ("jog-2", (900, 280, 1300, 980)),
     },
     "doble-cargo": {
-        "Beige": ("dc-5", (450, 650, 1450, 1983)), "Negro": ("dc-5", (1300, 630, 2350, 2030)),
-        "Cocoa": ("dc-5", (2300, 560, 3350, 1960)),
-        "Hueso": ("dc-1", (800, 400, 1900, 1867)), "Plomo oscuro": ("dc-1", (1600, 450, 2800, 2050)),
-        "Camello": ("dc-2", (400, 400, 1700, 2133)), "Verde arena": ("dc-2", (1550, 420, 2750, 2020)),
+        # Reason: encuadre abierto para ver el pantalón casi completo (las prendas van en diagonal).
+        "Beige": ("dc-5", (50, 620, 1625, 2720)), "Negro": ("dc-5", (960, 620, 2560, 2753)),
+        "Cocoa": ("dc-5", (1790, 520, 3310, 2547)),
+        "Hueso": ("dc-1", (480, 340, 2430, 2940)), "Plomo oscuro": ("dc-1", (1300, 440, 3100, 2840)),
+        "Camello": ("dc-2", (250, 350, 2200, 2950)), "Verde arena": ("dc-2", (1350, 400, 3150, 2800)),
     },
     "bermuda-cargo": {
-        "Plomo plata": ("ber-1", (320, 200, 920, 1000)), "Plomo oscuro": ("ber-1", (500, 500, 1100, 1300)),
-        "Verde arena": ("ber-3", (320, 150, 920, 950)), "Verde militar": ("ber-3", (500, 520, 1100, 1320)),
-        "Cocoa": ("ber-4", (100, 370, 700, 1170)), "Hueso": ("ber-4", (520, 400, 1120, 1200)),
-        "Beige": ("ber-5", (320, 220, 680, 700)), "Caqui": ("ber-5", (300, 380, 900, 1180)),
-        "Canela": ("ber-5", (550, 560, 1150, 1360)),
-        "Negro": ("ber-6", (150, 370, 750, 1170)), "Blanco": ("ber-6", (550, 450, 1150, 1250)),
-        "Acero oscuro": ("ber-7", (200, 370, 800, 1170)), "Cemento": ("ber-7", (580, 400, 1180, 1200)),
+        "Plomo plata": ("ber-1", (0, 100, 870, 1260)), "Plomo oscuro": ("ber-1", (330, 400, 1200, 1560)),
+        "Verde arena": ("ber-3", (0, 80, 870, 1240)), "Verde militar": ("ber-3", (330, 400, 1200, 1560)),
+        "Cocoa": ("ber-4", (0, 130, 870, 1290)), "Hueso": ("ber-4", (330, 400, 1200, 1560)),
+        "Beige": ("ber-5", (0, 100, 780, 1140)), "Caqui": ("ber-5", (60, 260, 930, 1420)),
+        "Canela": ("ber-5", (330, 400, 1200, 1560)),
+        "Negro": ("ber-6", (0, 100, 870, 1260)), "Blanco": ("ber-6", (330, 400, 1200, 1560)),
+        "Acero oscuro": ("ber-7", (0, 120, 870, 1280)), "Cemento": ("ber-7", (330, 400, 1200, 1560)),
     },
     "jean-semi-pitillo": {
-        "Verde": ("jean-4", (300, 100, 1650, 1900)), "Azul cristal": ("jean-4", (100, 1600, 1950, 4067)),
-        "Celeste claro": ("jean-6", (300, 100, 1650, 1900)), "Madera": ("jean-6", (100, 1600, 1950, 4067)),
-        "Celeste oscuro": ("jean-7", (300, 100, 1650, 1900)), "Grafito azul": ("jean-7", (100, 1600, 1950, 4067)),
-        "Plomo claro": ("jean-8", (300, 100, 1650, 1900)), "Plomo oscuro": ("jean-8", (100, 1600, 1950, 4067)),
-        "Negro": ("jean-9", (300, 100, 1650, 1900)), "Azul acero": ("jean-9", (100, 1600, 1950, 4067)),
+        "Verde": ("jean-4", (150, 0, 1950, 2400)), "Azul cristal": ("jean-4", (50, 1700, 1850, 4100)),
+        "Celeste claro": ("jean-6", (150, 0, 1950, 2400)), "Madera": ("jean-6", (50, 1700, 1850, 4100)),
+        "Celeste oscuro": ("jean-7", (150, 0, 1950, 2400)), "Grafito azul": ("jean-7", (50, 1700, 1850, 4100)),
+        "Plomo claro": ("jean-8", (150, 0, 1950, 2400)), "Plomo oscuro": ("jean-8", (50, 1700, 1850, 4100)),
+        "Negro": ("jean-9", (150, 0, 1950, 2400)), "Azul acero": ("jean-9", (50, 1700, 1850, 4100)),
     },
 }
 
