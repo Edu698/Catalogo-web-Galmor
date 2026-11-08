@@ -92,3 +92,12 @@
 .buscador { display: flex; align-items: center; gap: 10px; border: 1px solid var(--linea); border-radius: 26px; padding: 0 16px; margin-bottom: 20px; background: #fff; max-width: 520px; }
 .buscador svg { width: 20px; height: 20px; color: var(--tinta-3); flex: none; }
 .buscador input { border: 0; outline: 0; height: 48px; width: 100%; font: 400 16px var(--texto); background: none; }
+
+/* Portada: banner del dueño (2026-11-08), sin recortar ni deformar; el fondo continúa su azul. */
+.hero-portada { display: flex; align-items: center; justify-content: center; background: #18213e; overflow: hidden; }
+.hero-portada img { width: 100%; height: auto; image-rendering: auto; }
+@media (min-width: 768px) {
+  .hero { height: auto !important; align-items: center; }
+  .hero-portada { align-self: center; background: none; }
+}
+@media (min-width: 1200px) { .hero { grid-template-columns: 3fr 2fr !important; padding-bottom: 24px; } }
