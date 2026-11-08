@@ -18,8 +18,8 @@ window.CATALOGO = {
   // Hora de corte (hora de Lima): pedidos antes de esta hora se despachan mañana; desde esta hora, pasado mañana.
   horaCorte: 17,
 
-  // Cada pedido se guarda en la app Galmor (servidor Hetzner). Se ven en Ventas → Pedidos tienda web.
-  registro: "https://galmor.2-31-21-41.sslip.io/api/pedidos-web",
+  // Cada pedido se guarda en el servidor de la tienda y se ve en el panel (pedidos.html).
+  registro: "/api/pedidos",
 
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
