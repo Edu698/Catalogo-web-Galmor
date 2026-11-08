@@ -18,9 +18,8 @@ window.CATALOGO = {
   // Hora de corte (hora de Lima): pedidos antes de esta hora se despachan mañana; desde esta hora, pasado mañana.
   horaCorte: 17,
 
-  // Dirección de la hoja de Google que guarda los pedidos para el panel (pedidos.html).
-  // Se obtiene al publicar herramientas/registro-pedidos.gs; mientras esté vacía, los pedidos no llegan al panel.
-  registro: "",
+  // Cada pedido se guarda en la app Galmor (servidor Hetzner). Se ven en Ventas → Pedidos tienda web.
+  registro: "https://galmor.2-31-21-41.sslip.io/api/pedidos-web",
 
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
