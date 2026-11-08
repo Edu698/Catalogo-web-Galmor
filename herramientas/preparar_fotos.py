@@ -92,7 +92,7 @@ def lab(hexa):
     return cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
 
 
-def mascara_pantalon(im, sesion):
+def mascara_pantalon(im, sesion, fuelle=False):
     """Pantalón detectado por la IA, recortado a la tela (sin piel, zapatillas, etiquetas ni cordones blancos)."""
     from rembg import remove
 
@@ -101,12 +101,32 @@ def mascara_pantalon(im, sesion):
     ia = (np.maximum(m[im.height:2 * im.height], m[2 * im.height:]) if m.shape[0] == 3 * im.height else m) > 127
     lab_im = cv2.cvtColor(np.asarray(im), cv2.COLOR_RGB2LAB).astype(np.float32)
     mediana = np.median(lab_im[ia], axis=0)
-    # Reason: la IA a veces toma algo de piel o zapatilla en el borde; se queda solo lo que se parece a la tela.
-    distancia = np.sqrt(((lab_im[..., 1:] - mediana[1:]) ** 2).sum(-1) + (0.35 * (lab_im[..., 0] - mediana[0])) ** 2)
-    tela = ia & (distancia < 28)
-    tela = cv2.morphologyEx(tela.astype(np.uint8) * 255, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    # Reason (dueño, 2026-11-08: bastas, entrepierna y forros quedaban sin pintar): se toma toda la prenda que
+    # marca la IA, incluso las zonas en sombra, y solo se quitan la piel y las zapatillas (por color, no por luz).
+    L, a, b = lab_im[..., 0], lab_im[..., 1] - 128, lab_im[..., 2] - 128
+    piel = (a > 8) & (b > 12) & (a > mediana[1] - 128 + 6) & (L > 90)
+    # La piel (cintura, manos) solo aparece en la parte alta del pantalón; más abajo, un tono parecido es forro de bolsillo.
+    filas = np.where(ia.any(axis=1))[0]
+    piel[int(filas[0] + 0.33 * (filas[-1] - filas[0])):] = False
+    zapatilla = (L > 215) & (np.hypot(a, b) < 10) & (L > mediana[0] + 25)
+    # Partes que sobresalen del borde (fuelle del bolsillo cargo): tela vecina del mismo color que el pantalón.
+    # Reason: solo en el Doble Cargo; en las demás fotos el piso de madera tiene un color parecido a la tela.
+    if fuelle:
+        cerca = cv2.dilate(ia.astype(np.uint8), np.ones((1, 45), np.uint8)) > 0  # solo hacia los costados
+        distancia = np.sqrt(((lab_im[..., 1:] - mediana[1:]) ** 2).sum(-1) + (0.4 * (L - mediana[0])) ** 2)
+        ia = ia | (cerca & (distancia < 9) & (np.hypot(a, b) > 6))
+        # Fuelle del bolsillo derecho de la foto dc-4 (más iluminado que el resto): tela beige dentro de esa zona.
+        zona = np.zeros_like(ia)
+        zona[530:780, 690:775] = True
+        ia = ia | (zona & (b > 4))
+    tela = (ia & ~piel & ~zapatilla).astype(np.uint8) * 255
+    tela = cv2.morphologyEx(tela, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
+    # Rellena huecos encerrados (bolsillos, forros, etiquetas pequeñas) para que no queden manchas del color original.
+    relleno = tela.copy()
+    cv2.floodFill(relleno, np.zeros((tela.shape[0] + 2, tela.shape[1] + 2), np.uint8), (0, 0), 255)
+    tela = tela | cv2.bitwise_not(relleno)
     tela = cv2.morphologyEx(tela, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    alfa = cv2.GaussianBlur(tela.astype(np.float32) / 255, (0, 0), 1.6)  # borde suave, sin halo
+    alfa = cv2.GaussianBlur(tela.astype(np.float32) / 255, (0, 0), 1.4)  # borde suave, sin halo
     return alfa, lab_im, mediana
 
 
@@ -130,15 +150,22 @@ def pintar(im, alfa, lab_im, mediana, hexa):
     orig = a_lineal(np.asarray(im).astype(np.float32))
     luz = orig @ np.array([0.2126, 0.7152, 0.0722], np.float32)
     ref = np.median(luz[alfa > 0.5])
-    sombra = np.clip(luz / max(ref, 1e-4), 0, 3)[..., None]
+    sombra = np.clip(luz / max(ref, 1e-4), 0, 3)
     meta = a_lineal(np.array([int(hexa[i:i + 2], 16) for i in (1, 3, 5)], np.float32))
     # Telas de algodón: el tono real es algo menos saturado que la muestra.
     gris = meta @ np.array([0.2126, 0.7152, 0.0722], np.float32)
     meta = gris + (meta - gris) * 0.85
-    nuevo = meta * sombra
-    # Brillo de la tela: los puntos muy iluminados se aclaran hacia el gris (sheen), igual que en la foto.
-    brillo = np.clip(luz - ref * 1.25, 0, None)[..., None] * 0.35
-    nuevo = nuevo + brillo
+    # Reason (dueño: "negro demasiado intenso"): una tela negra real se ve gris carbón muy oscuro, no negro puro.
+    if gris < 0.03:
+        meta = meta + (0.03 - gris)
+        gris = 0.03
+    # Reason (dueño: "el blanco brilla mucho"): en telas claras las zonas iluminadas se comprimen para no quemarse.
+    if gris > 0.35:
+        sombra = np.where(sombra > 1, 1 + (sombra - 1) * 0.45, sombra)
+    nuevo = meta * sombra[..., None]
+    # Brillo de la tela (solo telas oscuras): lo muy iluminado se aclara un poco hacia el gris, como en la foto.
+    if gris < 0.2:
+        nuevo = nuevo + np.clip(luz - ref * 1.3, 0, None)[..., None] * 0.15
     rgb = a_srgb(nuevo)
     salida = np.asarray(im).astype(np.float32) * (1 - alfa[..., None]) + rgb * alfa[..., None]
     return Image.fromarray(np.clip(salida, 0, 255).astype(np.uint8))
@@ -163,7 +190,7 @@ if __name__ == "__main__":
     colores = productos()
     for prod, (clave, color_base) in BASES.items():
         base = ajustar(foto(clave))
-        alfa, lab_im, mediana = mascara_pantalon(base, sesion)
+        alfa, lab_im, mediana = mascara_pantalon(base, sesion, fuelle=prod == "doble-cargo")
         for color, hexa in colores[prod].items():
             im = base if color == color_base else pintar(base, alfa, lab_im, mediana, hexa)
             guardar(im, f"{SAL}/{prod}/{slug(color)}.webp")
