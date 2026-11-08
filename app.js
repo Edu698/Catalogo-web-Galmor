@@ -47,8 +47,12 @@
       <a class="btn" href="${wsp("Hola Galmor, avísenme cuando llegue la colección Galmor.")}" target="_blank" rel="noopener">Avísame por WhatsApp</a></div>`;
   function pintarCatalogo() {
     $("#titulo-catalogo").textContent = filtro === "todos" ? "Nueva colección" : PESTANAS[filtro];
-    const lista = C.productos.filter((p) => filtro === "todos" || p.marca === filtro).map(tarjeta).join("");
-    $("#rejilla").innerHTML = lista + (filtro !== "zoroz" ? tilePronto() : "");
+    const norma = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const busca = norma($("#buscar").value.trim());
+    const lista = C.productos.filter((p) => (filtro === "todos" || p.marca === filtro)
+      && (!busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${Object.keys(p.colores).join(" ")}`).includes(t))))
+      .map(tarjeta).join("") || (busca ? `<p class="vacio">No encontramos «${$("#buscar").value.replace(/[<>&"]/g, "")}». Prueba con jogger, cargo, jean o bermuda.</p>` : "");
+    $("#rejilla").innerHTML = lista + (filtro !== "zoroz" && !$("#buscar").value.trim() ? tilePronto() : "");
   }
   function filtrar(marca) {
     filtro = marca;
@@ -57,6 +61,7 @@
   }
   $("#pestanas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) filtrar(b.dataset.marca); });
   $$("[data-filtro]").forEach((a) => a.addEventListener("click", () => filtrar(a.dataset.filtro)));
+  $("#buscar").addEventListener("input", pintarCatalogo);
   $("#rejilla").addEventListener("click", (e) => { const t = e.target.closest(".tarjeta"); if (t) abrirProducto(t.dataset.id); });
 
   // ---------- 3. Producto ----------

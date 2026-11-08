@@ -2,8 +2,8 @@
 // Precios DE EJEMPLO; ya incluyen IGV.
 //
 // Fotos: van solas por nombre, sin escribirlas aquí.
-//   fotos/<id>/<color>.webp     una por color (ej. fotos/jogger-cargo/verde-militar.webp)
-//   fotos/<id>/modelo-N.webp    fotos con modelo; "modelos" dice cuántas hay. La 1 es la portada.
+//   fotos/<id>/<color>.webp     una por color, el pantalón en el modelo (ej. fotos/jogger-cargo/verde-militar.webp)
+//   fotos/<id>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 window.CATALOGO = {
   whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
 
@@ -38,7 +38,7 @@ window.CATALOGO = {
   // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
   productos: [
     {
-      id: "drill-semi-pitillo", marca: "zoroz", precio: 69.9, modelos: 4,
+      id: "drill-semi-pitillo", marca: "zoroz", precio: 69.9, modelos: 2,
       nombre: "Pantalón Drill Strech Semi Pitillo",
       descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
       colores: {
@@ -51,7 +51,7 @@ window.CATALOGO = {
       ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
-      id: "jean-semi-pitillo", marca: "zoroz", precio: 79.9, modelos: 4,
+      id: "jean-semi-pitillo", marca: "zoroz", precio: 79.9, modelos: 2,
       nombre: "Pantalón Jean Strech Semi Pitillo",
       descripcion: "Denim strech de la línea Black Collection: cómodo desde el primer uso, corte semi pitillo y 10 lavados distintos.",
       colores: {
@@ -63,7 +63,7 @@ window.CATALOGO = {
       ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
-      id: "jogger-cargo", marca: "zoroz", precio: 64.9, modelos: 1,
+      id: "jogger-cargo", marca: "zoroz", precio: 64.9, modelos: 0,
       nombre: "Pantalón Jogger Cargo Paper Touch",
       descripcion: "Tela paper touch, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
       colores: {
@@ -74,7 +74,7 @@ window.CATALOGO = {
       ficha: { "Tela": "Paper touch", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "doble-cargo", marca: "zoroz", precio: 74.9, modelos: 1,
+      id: "doble-cargo", marca: "zoroz", precio: 74.9, modelos: 0,
       nombre: "Pantalón Doble Cargo",
       descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
       colores: {
@@ -85,7 +85,7 @@ window.CATALOGO = {
       ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "bermuda-cargo", marca: "zoroz", precio: 54.9, modelos: 1,
+      id: "bermuda-cargo", marca: "zoroz", precio: 54.9, modelos: 0,
       nombre: "Bermuda Cargo Cintura Elástica Paper Touch",
       descripcion: "Fresca para el verano: tela paper touch, cintura elástica con cordón y bolsillos cargo. 13 colores.",
       colores: {

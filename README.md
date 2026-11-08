@@ -12,16 +12,15 @@ Todo está en [`productos.js`](productos.js). Los precios, fichas técnicas y da
 
 ## Subir fotos
 
-Las fotos originales van en `fotos-originales/`, tal como salen de la cámara (por producto, modelos, etc.).
-Desde ahí se preparan las versiones web en `fotos/<id-producto>/`, que la tienda encuentra por nombre:
+Las fotos originales van en `fotos-originales/`. [`herramientas/preparar_fotos.py`](herramientas/preparar_fotos.py)
+genera `fotos/<id-producto>/`:
 
-- `<color>.jpg` — una por color, en minúsculas y con guiones (ej. `fotos/jogger-cargo/verde-militar.jpg`).
-- `modelo-1.jpg`, `modelo-2.jpg`… — fotos con modelo; en `productos.js`, `modelos` indica cuántas hay.
+- `<color>.webp`: el pantalón en el modelo, en cada color. Se toma la foto "de la cintura para abajo" del producto;
+  la IA (rembg, `u2net_cloth_seg`) detecta el pantalón y solo él se pinta con el tono de `productos.js`.
+- `modelo-N.webp`: fotos de cuerpo entero; en `productos.js`, `modelos` indica cuántas hay.
 
-[`herramientas/preparar_fotos.py`](herramientas/preparar_fotos.py) genera `fotos/` desde los originales: recorta un
-pantalón por color de las fotos grupales, borra el nombre del color escrito encima de la prenda y limpia marcas
-ajenas (ej. "PhotoRoom"), sin cambiar brillo ni color. Requiere `pip install pillow numpy opencv-python-headless`;
-se ejecuta con `python3 herramientas/preparar_fotos.py .`
+Requiere `pip install pillow numpy opencv-python-headless "rembg[cpu]"`; se ejecuta con
+`python3 herramientas/preparar_fotos.py .`
 
 ## Ver en local
 
