@@ -1,0 +1,32 @@
+# Revisión de SOLO LECTURA del servidor Hetzner (dueño, 2026-11-08): muestra qué proyectos hay y cómo se publican,
+# para preparar la publicación automática de la tienda sin tocar los demás. No cambia nada en el servidor.
+# Necesita el secreto HETZNER_SSH_KEY en este repositorio (la misma llave de "Publicar" del repositorio galmor).
+name: Revisar el servidor (solo lectura)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Llave para entrar al servidor
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/servidor && chmod 600 ~/.ssh/servidor
+          # Huella del servidor (la misma del repositorio galmor): solo se conecta al servidor real.
+          echo "2.31.21.41 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIY6L7lblxF5UDaLmKg5+EOuaaoBCQr/eNX0cn8hjR7L" > ~/.ssh/known_hosts
+      - name: Revisar
+        # Solo listados: carpetas, contenedores y la configuración del proxy web. No muestra contraseñas
+        # (los docker-compose y .env no se imprimen; solo los nombres de sus servicios).
+        run: |
+          ssh -i ~/.ssh/servidor -o BatchMode=yes root@2.31.21.41 '
+            echo "== Carpetas en /opt =="; ls -la /opt
+            for d in /opt/*/; do echo "== $d =="; ls -la "$d"; done
+            echo "== Contenedores =="; docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}"
+            for f in /opt/*/docker-compose.y*ml /opt/*/compose.y*ml; do [ -f "$f" ] && { echo "== Servicios de $f =="; docker compose -f "$f" config --services 2>/dev/null; }; done
+            echo "== Proxy web =="
+            for f in /etc/caddy/Caddyfile /opt/*/Caddyfile /opt/*/caddy/Caddyfile /etc/nginx/sites-enabled/*; do [ -f "$f" ] && { echo "--- $f"; cat "$f"; }; done
+            echo "== Disco =="; df -h /
+          '
