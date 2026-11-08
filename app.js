@@ -9,8 +9,9 @@
 
   // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
   const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
-  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.webp`;
-  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.webp`);
+  const V = C.versionFotos ? `?v=${C.versionFotos}` : "";
+  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.webp${V}`;
+  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
 

@@ -110,15 +110,36 @@ def mascara_pantalon(im, sesion):
     return alfa, lab_im, mediana
 
 
+def a_lineal(c):
+    c = c / 255.0
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def a_srgb(c):
+    c = np.clip(c, 0, 1)
+    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055) * 255
+
+
 def pintar(im, alfa, lab_im, mediana, hexa):
-    """Lleva el pantalón al color pedido conservando la luz y la textura de la foto."""
-    meta = lab(hexa)
-    nuevo = lab_im.copy()
-    # Luz: se mantiene el relieve (arrugas, costuras) y se escala según lo claro u oscuro del color nuevo.
-    escala = np.clip((meta[0] + 25) / (mediana[0] + 25), 0.45, 1.5)
-    nuevo[..., 0] = meta[0] + (lab_im[..., 0] - mediana[0]) * escala
-    nuevo[..., 1:] = meta[1:] + (lab_im[..., 1:] - mediana[1:]) * 0.5
-    rgb = cv2.cvtColor(np.clip(nuevo, 0, 255).astype(np.uint8), cv2.COLOR_LAB2RGB).astype(np.float32)
+    """Cambia solo el color de la tela, como si fuera otra tela bajo la misma luz.
+
+    Reason (dueño, 2026-11-08: "se ve artificial"): se conserva la proporción de luz de cada punto
+    (pliegue más oscuro, rodilla más clara) y se multiplica por el color nuevo en luz lineal. Así un
+    pantalón negro conserva sus brillos y un azul no queda plano ni chillón.
+    """
+    orig = a_lineal(np.asarray(im).astype(np.float32))
+    luz = orig @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    ref = np.median(luz[alfa > 0.5])
+    sombra = np.clip(luz / max(ref, 1e-4), 0, 3)[..., None]
+    meta = a_lineal(np.array([int(hexa[i:i + 2], 16) for i in (1, 3, 5)], np.float32))
+    # Telas de algodón: el tono real es algo menos saturado que la muestra.
+    gris = meta @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    meta = gris + (meta - gris) * 0.85
+    nuevo = meta * sombra
+    # Brillo de la tela: los puntos muy iluminados se aclaran hacia el gris (sheen), igual que en la foto.
+    brillo = np.clip(luz - ref * 1.25, 0, None)[..., None] * 0.35
+    nuevo = nuevo + brillo
+    rgb = a_srgb(nuevo)
     salida = np.asarray(im).astype(np.float32) * (1 - alfa[..., None]) + rgb * alfa[..., None]
     return Image.fromarray(np.clip(salida, 0, 255).astype(np.uint8))
 
@@ -149,3 +170,10 @@ if __name__ == "__main__":
     for prod, claves in CUERPO_ENTERO.items():
         for i, clave in enumerate(claves, 1):
             guardar(ajustar(foto(clave)), f"{SAL}/{prod}/modelo-{i}.webp")
+    # Nueva versión: el navegador baja las fotos nuevas en vez de mostrar las que tenía guardadas.
+    import re
+    import time
+
+    ruta = os.path.join(REPO, "productos.js")
+    js = open(ruta, encoding="utf-8").read()
+    open(ruta, "w", encoding="utf-8").write(re.sub(r'versionFotos: "[^"]*"', f'versionFotos: "{time.strftime("%Y%m%d%H%M")}"', js))

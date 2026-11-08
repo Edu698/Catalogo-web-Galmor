@@ -5,6 +5,7 @@
 //   fotos/<id>/<color>.webp     una por color, el pantalón en el modelo (ej. fotos/jogger-cargo/verde-militar.webp)
 //   fotos/<id>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 window.CATALOGO = {
+  versionFotos: "202611081941", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
 
   // Datos para pagar.
@@ -42,7 +43,7 @@ window.CATALOGO = {
       nombre: "Pantalón Drill Strech Semi Pitillo",
       descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
       colores: {
-        "Negro": "#1a1a1c", "Azul noche": "#171c2e", "Azul acero": "#1f3a73", "Plomo oscuro": "#262b33",
+        "Negro": "#1a1a1c", "Azul noche": "#171c2e", "Azul acero": "#2b3a5c", "Plomo oscuro": "#262b33",
         "Plomo intermedio": "#4a5258", "Plomo plata": "#8d97a5", "Beige": "#d6c4a6", "Caqui": "#c9ad84",
         "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
         "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
