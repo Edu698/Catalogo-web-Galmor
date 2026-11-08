@@ -57,11 +57,29 @@ def foto(clave):
         im.paste(im.crop((360, 1190, 590, 1265)), (590, 1190))
         im.paste(im.crop((575, 1185, 605, 1270)).filter(ImageFilter.GaussianBlur(3)), (575, 1185))
         im = im.crop((0, 0, im.width, im.height - 14))  # franja negra del borde inferior
+    if clave.startswith("drill-"):
+        im = borrar_sello(im)
     if clave == "jog-3":
         im = im.crop((140, 0, im.width, im.height))  # texto vertical "PANTALÓN JOGGER CARGO"
     if clave in BRILLO:
         im = ImageEnhance.Brightness(im).enhance(BRILLO[clave])
     return im
+
+
+def borrar_sello(im):
+    """Borra el sello "ZOROZ 77" (zorro, letras y marco) de la esquina inferior izquierda; queda el piso."""
+    rgb = np.asarray(im).copy()
+    h, w = rgb.shape[:2]
+    y1, x2 = int(h * 0.80), int(w * 0.36)
+    zona = rgb[y1:, :x2]
+    gris = cv2.cvtColor(zona, cv2.COLOR_RGB2GRAY).astype(np.int16)
+    fondo = cv2.medianBlur(cv2.cvtColor(zona, cv2.COLOR_RGB2GRAY), 31).astype(np.int16)
+    marca = (np.abs(gris - fondo) > 14).astype(np.uint8) * 255
+    # Reason: no se toca la zapatilla (blanca) que a veces entra en esa esquina.
+    marca[cv2.cvtColor(zona, cv2.COLOR_RGB2GRAY) > 200] = 0
+    mascara = np.zeros((h, w), np.uint8)
+    mascara[y1:, :x2] = cv2.dilate(marca, np.ones((5, 5), np.uint8))
+    return Image.fromarray(cv2.inpaint(rgb, mascara, 7, cv2.INPAINT_TELEA))
 
 
 def slug(s):
@@ -119,12 +137,15 @@ def mascara_pantalon(im, sesion, fuelle=False):
         zona = np.zeros_like(ia)
         zona[530:780, 690:775] = True
         ia = ia | (zona & (b > 4))
-    tela = (ia & ~piel & ~zapatilla).astype(np.uint8) * 255
+    # Reason (dueño, 2026-11-08: la cortina entre las piernas del jean salía azul): fuera lo que no se parece a la tela.
+    lejos = np.sqrt(((lab_im[..., 1:] - mediana[1:]) ** 2).sum(-1) + (0.4 * (L - mediana[0])) ** 2) > 26
+    tela = (ia & ~piel & ~zapatilla & ~lejos).astype(np.uint8) * 255
     tela = cv2.morphologyEx(tela, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
     # Rellena huecos encerrados (bolsillos, forros, etiquetas pequeñas) para que no queden manchas del color original.
-    relleno = tela.copy()
-    cv2.floodFill(relleno, np.zeros((tela.shape[0] + 2, tela.shape[1] + 2), np.uint8), (0, 0), 255)
-    tela = tela | cv2.bitwise_not(relleno)
+    n, etiquetas, datos, _ = cv2.connectedComponentsWithStats(cv2.bitwise_not(tela), connectivity=4)
+    for i in range(1, n):
+        if datos[i, cv2.CC_STAT_AREA] < 15000:
+            tela[etiquetas == i] = 255
     tela = cv2.morphologyEx(tela, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
     alfa = cv2.GaussianBlur(tela.astype(np.float32) / 255, (0, 0), 1.4)  # borde suave, sin halo
     return alfa, lab_im, mediana
