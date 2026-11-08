@@ -15,6 +15,13 @@ window.CATALOGO = {
     plin: { numero: "929 406 608", titular: "Eduardo Fernández" },
   },
 
+  // Hora de corte (hora de Lima): pedidos antes de esta hora se despachan mañana; desde esta hora, pasado mañana.
+  horaCorte: 17,
+
+  // Dirección de la hoja de Google que guarda los pedidos para el panel (pedidos.html).
+  // Se obtiene al publicar herramientas/registro-pedidos.gs; mientras esté vacía, los pedidos no llegan al panel.
+  registro: "",
+
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
 

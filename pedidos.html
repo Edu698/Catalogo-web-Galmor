@@ -70,37 +70,41 @@
 
   <main class="panel">
     <div id="aviso"></div>
-    <div class="panel-cab">
-      <h1>Pedidos</h1>
-      <p id="resumen"></p>
-    </div>
 
-    <form class="importar" id="importar">
-      <input id="enlace" placeholder="Pega aquí el enlace «Registro del pedido» del WhatsApp" autocomplete="off">
-      <button class="btn btn-denim">Agregar</button>
+    <!-- Entrada con clave -->
+    <form class="importar" id="entrar" hidden>
+      <input id="clave" type="password" placeholder="Clave del panel" autocomplete="current-password">
+      <button class="btn btn-denim">Entrar</button>
     </form>
 
-    <div class="filtros" id="filtros">
-      <button data-f="cobrar">Por cobrar</button>
-      <button data-f="rotular">Pagados por rotular</button>
-      <button data-f="despachados">Despachados</button>
-      <button data-f="todos">Todos</button>
-      <label><input type="checkbox" id="solo-hoy"> Solo hoy</label>
+    <div id="contenido" hidden>
+      <div class="panel-cab">
+        <h1>Pedidos</h1>
+        <p id="resumen"></p>
+      </div>
+
+      <div class="filtros" id="filtros">
+        <button data-f="manana">Para despachar mañana</button>
+        <button data-f="cobrar">Por cobrar</button>
+        <button data-f="rotular">Pagados por rotular</button>
+        <button data-f="despachados">Despachados</button>
+        <button data-f="todos">Todos</button>
+        <button id="actualizar" type="button">↻ Actualizar</button>
+      </div>
+
+      <div class="acciones">
+        <button class="btn btn-denim" id="imprimir">Imprimir rótulos (<span id="n-sel">0</span>)</button>
+        <button class="btn btn-borde" id="marcar-despachados">Marcar como despachados</button>
+        <button class="btn btn-borde" id="salir">Salir</button>
+      </div>
+
+      <div id="lista"></div>
+
+      <p class="ayuda"><b>Cómo funciona:</b> cada pedido de la tienda llega aquí solo. Cuando el cliente te envíe la captura,
+        toca <b>Marcar pagado</b>. En <b>Para despachar mañana</b> ves lo que sale mañana: pedidos hechos hasta las 4:59 p.m.
+        salen al día siguiente; desde las 5 p.m., un día después. Toca <b>Imprimir rótulos</b> (salen los pagados de la lista),
+        pégalos en las bolsas y toca <b>Marcar como despachados</b>.</p>
     </div>
-
-    <div class="acciones">
-      <button class="btn btn-denim" id="imprimir">Imprimir rótulos (<span id="n-sel">0</span>)</button>
-      <button class="btn btn-borde" id="marcar-despachados">Marcar como despachados</button>
-      <button class="btn btn-borde" id="respaldo">Descargar respaldo</button>
-      <label class="btn btn-borde">Cargar respaldo<input type="file" id="cargar" accept="application/json" hidden></label>
-    </div>
-
-    <div id="lista"></div>
-
-    <p class="ayuda"><b>Cómo funciona:</b> cada cliente te envía por WhatsApp su pedido con un enlace «Registro del pedido».
-      Ábrelo en este celular o computadora (o pégalo arriba) y el pedido aparece aquí. Cuando veas la captura de pago, marca
-      <b>Pagado</b>. Luego elige los pagados, toca <b>Imprimir rótulos</b>, pégalos en las bolsas y marca <b>Despachados</b>.
-      Los pedidos se guardan solo en este equipo: usa <b>Descargar respaldo</b> de vez en cuando.</p>
   </main>
 
   <section id="rotulos"></section>
@@ -113,54 +117,73 @@
     const soles = (n) => "S/ " + n.toFixed(2);
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const nombre = (id) => (C.productos.find((p) => p.id === id) || { nombre: id }).nombre;
-    const CLAVE = "galmor_pedidos";
-    let pedidos = (() => { try { return JSON.parse(localStorage.getItem(CLAVE)) || []; } catch { return []; } })();
-    const guardar = () => localStorage.setItem(CLAVE, JSON.stringify(pedidos));
-    let filtro = "cobrar";
+    let clave = localStorage.getItem("galmor_clave_panel") || "";
+    let pedidos = [];
+    let filtro = "manana";
     const seleccion = new Set();
+    const avisar = (t) => { $("#aviso").innerHTML = t ? `<p class="aviso-panel">${esc(t)}</p>` : ""; };
 
-    function decodificar(texto) {
-      const m = String(texto).match(/#p=([A-Za-z0-9_-]+)/);
-      if (!m) throw new Error("Ese texto no tiene un enlace de pedido.");
-      const b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
-      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const r = JSON.parse(new TextDecoder().decode(bytes));
-      if (!r.n || !r.c || !Array.isArray(r.i)) throw new Error("El enlace del pedido está incompleto.");
-      return r;
-    }
-    function agregar(texto) {
-      const r = decodificar(texto);
-      if (pedidos.some((p) => p.n === r.n)) return avisar(`El pedido ${r.n} ya estaba registrado.`);
-      pedidos.unshift({ ...r, estado: "nuevo" });
-      guardar();
-      avisar(`Pedido ${r.n} de ${r.c.nombre} agregado.`);
-    }
-    function avisar(t) { $("#aviso").innerHTML = `<p class="aviso-panel">${esc(t)}</p>`; }
-
-    const hoy = () => new Date().toLocaleDateString("es-PE", { timeZone: "America/Lima" });
+    // Fechas en hora de Lima, como AAAA-MM-DD.
+    const diaLima = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(d);
+    const manana = () => { const [a, m, d] = diaLima(new Date()).split("-").map(Number); return new Date(Date.UTC(a, m - 1, d + 1, 12)).toISOString().slice(0, 10); };
+    const fechaLarga = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("es-PE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
     const fecha = (iso) => new Date(iso).toLocaleString("es-PE", { timeZone: "America/Lima", dateStyle: "short", timeStyle: "short" });
-    const total = (p) => p.i.reduce((s, [, , , cant, precio]) => s + cant * precio, 0) - (p.x || 0);
+    const total = (p) => p.t ?? p.i.reduce((s, it) => s + it[3] * it[4], 0) - (p.x || 0);
     const piezas = (p) => p.i.reduce((s, it) => s + it[3], 0);
     const destino = (c) => c.envio === "lima" ? `${c.direccion}, ${c.distrito}` : `${c.agencia} · ${c.sede}, ${c.ciudad}, ${c.departamento}`;
     const ETIQUETA = { nuevo: "Por cobrar", pagado: "Pagado", despachado: "Despachado" };
 
+    async function cargar() {
+      if (!C.registro) {
+        $("#entrar").hidden = true;
+        return avisar("Falta conectar la hoja de Google de pedidos (productos.js → registro). Mientras tanto, los pedidos no llegan aquí.");
+      }
+      if (!clave) { $("#entrar").hidden = false; $("#contenido").hidden = true; return; }
+      avisar("Cargando pedidos…");
+      try {
+        const r = await (await fetch(`${C.registro}?clave=${encodeURIComponent(clave)}`)).json();
+        if (r.error) throw new Error(r.error);
+        pedidos = r.pedidos;
+        localStorage.setItem("galmor_clave_panel", clave);
+        $("#entrar").hidden = true;
+        $("#contenido").hidden = false;
+        avisar("");
+        pintar();
+      } catch (err) {
+        clave = "";
+        localStorage.removeItem("galmor_clave_panel");
+        $("#entrar").hidden = false;
+        $("#contenido").hidden = true;
+        avisar(err.message === "Clave incorrecta" ? "Clave incorrecta." : "No se pudo conectar. Revisa tu internet e intenta de nuevo.");
+      }
+    }
+    function guardarEstado(lista, estado) {
+      lista.forEach((p) => {
+        p.estado = estado;
+        fetch(C.registro, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ accion: "estado", clave, numero: p.n, estado }) }).catch(() => avisar("No se guardó el cambio. Revisa tu internet."));
+      });
+      pintar();
+    }
+
     function visibles() {
       return pedidos.filter((p) =>
-        (filtro === "todos" || (filtro === "cobrar" && p.estado === "nuevo") || (filtro === "rotular" && p.estado === "pagado")
-          || (filtro === "despachados" && p.estado === "despachado"))
-        && (!$("#solo-hoy").checked || new Date(p.d).toLocaleDateString("es-PE", { timeZone: "America/Lima" }) === hoy()));
+        filtro === "todos" || (filtro === "manana" && p.s === manana() && p.estado !== "despachado")
+        || (filtro === "cobrar" && p.estado === "nuevo") || (filtro === "rotular" && p.estado === "pagado")
+        || (filtro === "despachados" && p.estado === "despachado"));
     }
+    const elegidos = () => seleccion.size ? pedidos.filter((p) => seleccion.has(p.n)) : visibles().filter((p) => p.estado === "pagado");
     function pintar() {
-      document.querySelectorAll("#filtros button").forEach((b) => b.classList.toggle("activa", b.dataset.f === filtro));
+      document.querySelectorAll("#filtros [data-f]").forEach((b) => b.classList.toggle("activa", b.dataset.f === filtro));
       const cuenta = (e) => pedidos.filter((p) => p.estado === e).length;
-      $("#resumen").textContent = `${cuenta("nuevo")} por cobrar · ${cuenta("pagado")} por rotular · ${cuenta("despachado")} despachados`;
+      $("#resumen").textContent = `${cuenta("nuevo")} por cobrar · ${cuenta("pagado")} por rotular · mañana ${fechaLarga(manana())}`;
       const lista = visibles();
       $("#lista").innerHTML = lista.length ? lista.map((p) => {
         const c = p.c;
         return `<article class="pedido ${p.estado}">
           <input type="checkbox" data-sel="${esc(p.n)}" ${seleccion.has(p.n) ? "checked" : ""} aria-label="Elegir ${esc(p.n)}">
           <div>
-            <h2>${esc(p.n)} <span class="estado">${ETIQUETA[p.estado]}</span> <small>${fecha(p.d)}</small></h2>
+            <h2>${esc(p.n)} <span class="estado">${ETIQUETA[p.estado] || esc(p.estado)}</span> <small>Pedido: ${fecha(p.d)} · Despacho: <b>${p.s ? fechaLarga(p.s) : "—"}</b></small></h2>
             <dl>
               <dt>Cliente</dt><dd><b>${esc(c.nombre)}</b></dd>
               <dt>DNI</dt><dd>${esc(c.dni)}</dd>
@@ -171,20 +194,16 @@
             <ul>${p.i.map(([id, color, talla, cant, precio]) => `<li>${esc(nombre(id))} · ${esc(color)} · Talla ${esc(talla)} · ${cant} prenda(s) — ${soles(cant * precio)}</li>`).join("")}</ul>
             <span class="total">Total ${soles(total(p))}</span>
             <div class="pedido-botones">
-              ${p.estado === "nuevo" ? `<button class="principal" data-pagado="${esc(p.n)}">✓ Marcar pagado</button>` : ""}
-              ${p.estado === "pagado" ? `<button data-despachado="${esc(p.n)}">Marcar despachado</button><button data-nuevo="${esc(p.n)}">Volver a por cobrar</button>` : ""}
-              ${p.estado === "despachado" ? `<button data-pagado="${esc(p.n)}">Volver a pagados</button>` : ""}
+              ${p.estado === "nuevo" ? `<button class="principal" data-estado="pagado" data-n="${esc(p.n)}">✓ Marcar pagado</button>` : ""}
+              ${p.estado === "pagado" ? `<button data-estado="despachado" data-n="${esc(p.n)}">Marcar despachado</button><button data-estado="nuevo" data-n="${esc(p.n)}">Volver a por cobrar</button>` : ""}
+              ${p.estado === "despachado" ? `<button data-estado="pagado" data-n="${esc(p.n)}">Volver a pagados</button>` : ""}
               <a href="https://wa.me/51${esc(c.celular)}" target="_blank" rel="noopener">WhatsApp del cliente</a>
-              <button class="borrar" data-borrar="${esc(p.n)}">Eliminar</button>
             </div>
           </div>
         </article>`;
       }).join("") : `<p class="vacio-panel">No hay pedidos en esta lista.</p>`;
-      for (const n of [...seleccion]) if (!pedidos.some((p) => p.n === n)) seleccion.delete(n);
-      $("#n-sel").textContent = seleccion.size || pedidos.filter((p) => p.estado === "pagado").length;
+      $("#n-sel").textContent = elegidos().length;
     }
-    // Sin elegir nada, se imprimen todos los pagados por rotular.
-    const elegidos = () => seleccion.size ? pedidos.filter((p) => seleccion.has(p.n)) : pedidos.filter((p) => p.estado === "pagado");
 
     function rotulos(lista) {
       $("#rotulos").innerHTML = lista.map((p) => {
@@ -203,63 +222,33 @@
       }).join("");
     }
 
-    const cambiar = (n, estado) => { const p = pedidos.find((x) => x.n === n); if (p) { p.estado = estado; guardar(); pintar(); } };
     $("#lista").addEventListener("click", (e) => {
       const d = e.target.dataset;
-      if (d.pagado) cambiar(d.pagado, "pagado");
-      if (d.despachado) cambiar(d.despachado, "despachado");
-      if (d.nuevo) cambiar(d.nuevo, "nuevo");
-      if (d.borrar && confirm(`¿Eliminar el pedido ${d.borrar}?`)) { pedidos = pedidos.filter((p) => p.n !== d.borrar); guardar(); pintar(); }
+      if (d.estado) guardarEstado(pedidos.filter((p) => p.n === d.n), d.estado);
     });
     $("#lista").addEventListener("change", (e) => {
       const n = e.target.dataset.sel;
       if (!n) return;
       e.target.checked ? seleccion.add(n) : seleccion.delete(n);
-      $("#n-sel").textContent = seleccion.size || pedidos.filter((p) => p.estado === "pagado").length;
+      $("#n-sel").textContent = elegidos().length;
     });
-    $("#filtros").addEventListener("click", (e) => { if (e.target.dataset.f) { filtro = e.target.dataset.f; pintar(); } });
-    $("#solo-hoy").onchange = pintar;
+    $("#filtros").addEventListener("click", (e) => { if (e.target.dataset.f) { filtro = e.target.dataset.f; seleccion.clear(); pintar(); } });
+    $("#actualizar").onclick = cargar;
     $("#imprimir").onclick = () => {
       const lista = elegidos();
-      if (!lista.length) return avisar("No hay pedidos pagados para rotular.");
+      if (!lista.length) return avisar("No hay pedidos pagados en esta lista para rotular.");
       rotulos(lista);
       print();
     };
     $("#marcar-despachados").onclick = () => {
       const lista = elegidos();
       if (!lista.length || !confirm(`¿Marcar ${lista.length} pedido(s) como despachados?`)) return;
-      lista.forEach((p) => (p.estado = "despachado"));
       seleccion.clear();
-      guardar();
-      pintar();
+      guardarEstado(lista, "despachado");
     };
-    $("#importar").onsubmit = (e) => {
-      e.preventDefault();
-      try { agregar($("#enlace").value); $("#enlace").value = ""; } catch (err) { avisar(err.message); }
-      pintar();
-    };
-    $("#respaldo").onclick = () => {
-      const blob = new Blob([JSON.stringify(pedidos, null, 1)], { type: "application/json" });
-      Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `pedidos-galmor-${new Date().toISOString().slice(0, 10)}.json` }).click();
-    };
-    $("#cargar").onchange = async (e) => {
-      try {
-        const lista = JSON.parse(await e.target.files[0].text());
-        let nuevos = 0;
-        for (const p of lista) if (p.n && !pedidos.some((x) => x.n === p.n)) { pedidos.push(p); nuevos++; }
-        pedidos.sort((a, b) => b.d.localeCompare(a.d));
-        guardar();
-        avisar(`${nuevos} pedido(s) cargados del respaldo.`);
-      } catch { avisar("Ese archivo no es un respaldo válido."); }
-      pintar();
-    };
-
-    // Enlace abierto desde WhatsApp: pedidos.html#p=...
-    if (location.hash.startsWith("#p=")) {
-      try { agregar(location.hash); } catch (err) { avisar(err.message); }
-      history.replaceState(null, "", location.pathname);
-    }
-    pintar();
+    $("#entrar").onsubmit = (e) => { e.preventDefault(); clave = $("#clave").value.trim(); cargar(); };
+    $("#salir").onclick = () => { localStorage.removeItem("galmor_clave_panel"); clave = ""; pedidos = []; cargar(); };
+    cargar();
   })();
   </script>
 </body>

@@ -383,8 +383,10 @@
       const azar = Array.from(crypto.getRandomValues(new Uint8Array(4)), (n) => LETRAS[n % LETRAS.length]).join("");
       const numero = `GT-${parte({ year: "2-digit" })}${parte({ month: "2-digit" })}${parte({ day: "2-digit" })}-${azar}`;
       const items = carrito.map((i) => ({ ...i }));
-      const blob = await imagenPedido(f, numero, ahora, items);
-      const texto = mensajePedido(f, numero, ahora, items);
+      const salida = despacho(ahora);
+      const blob = await imagenPedido(f, numero, ahora, items, salida);
+      const texto = mensajePedido(f, numero, ahora);
+      registrar(f, numero, ahora, items, salida);
       pedido = { numero, texto, archivo: new File([blob], `pedido-${numero}.png`, { type: "image/png" }) };
       $("#pedido-img").src = URL.createObjectURL(blob);
       $("#abrir-chat").href = wsp(texto);
@@ -408,35 +410,35 @@
     window.open(wsp(pedido.texto), "_blank");
   };
 
-  // Mensaje de WhatsApp: saludo con el nombre del cliente, resumen del pedido y enlace que lo registra en pedidos.html.
-  function mensajePedido(f, numero, fecha, items) {
+  // Mensaje de WhatsApp: solo el saludo con los datos del cliente; el detalle va en la imagen.
+  function mensajePedido(f, numero, fecha) {
     const hora = +new Intl.DateTimeFormat("en-GB", { timeZone: "America/Lima", hour: "2-digit", hour12: false }).format(fecha);
     const saludo = hora < 12 ? "buenos días" : hora < 19 ? "buenas tardes" : "buenas noches";
-    const envio = f.envio === "lima" ? `Lima, motorizado: ${f.direccion}, ${f.distrito}`
-      : `Provincia, ${f.agencia}: ${f.sede}, ${f.ciudad}, ${f.departamento}`;
-    const registro = { n: numero, d: fecha.toISOString(), x: descuento(items), c: f, i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
-    const codigo = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(registro)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    const enlace = new URL(`pedidos.html#p=${codigo}`, location.href).href;
-    return [
-      `Hola, ${saludo}. Mi nombre es ${f.nombre} (DNI ${f.dni}, cel. ${f.celular}).`,
-      `Este es el pedido que necesito: *${numero}*`,
-      "",
-      ...items.map((i) => `• ${producto(i.id).nombre} · ${i.color} · Talla ${i.talla} · ${i.cant} prenda(s) — ${soles(producto(i.id).precio * i.cant)}`),
-      "",
-      ...(descuento(items) ? [`Descuento pack ${pack(items).descuento} %: −${soles(descuento(items))}`] : []),
-      `*Total: ${soles(total(items))}* (IGV incluido)`,
-      `Envío: ${envio}`,
-      `Pago: ${f.pago} · Comprobante: ${f.comprobante}`,
-      "",
-      "Adjunto la imagen del pedido y la captura de mi pago.",
-      "",
-      `Registro del pedido: ${enlace}`,
-    ].join("\n");
+    return `Hola, ${saludo}. Mi nombre es ${f.nombre}, DNI ${f.dni}, celular ${f.celular}. Este es el pedido que necesito: *${numero}*`;
+  }
+
+  // Despacho: pedidos hasta las 4:59 p.m. (hora de Lima) salen mañana; desde las 5 p.m., pasado mañana.
+  function despacho(fecha) {
+    const lima = (o) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", ...o }).format(fecha);
+    const [a, m, d] = lima({ year: "numeric", month: "2-digit", day: "2-digit" }).split("-").map(Number);
+    const hora = +lima({ hour: "2-digit", hour12: false });
+    const dia = new Date(Date.UTC(a, m - 1, d + (hora >= C.horaCorte ? 2 : 1), 12));
+    return { iso: dia.toISOString().slice(0, 10), texto: dia.toLocaleDateString("es-PE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }) };
+  }
+
+  // Registro en la hoja de Google del panel de pedidos (si está configurada en productos.js).
+  function registrar(f, numero, fecha, items, salida) {
+    if (!C.registro) return;
+    const datos = { n: numero, d: fecha.toISOString(), s: salida.iso, x: descuento(items), t: total(items), c: f,
+      i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
+    // Reason: "no-cors" + text/plain evita el bloqueo del navegador; la respuesta no se lee.
+    fetch(C.registro, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ accion: "nuevo", pedido: datos }) })
+      .catch(() => {});
   }
 
   const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 
-  async function imagenPedido(f, numero, fecha, items) {
+  async function imagenPedido(f, numero, fecha, items, salida) {
     const FT = '"Barlow Condensed"', FX = '"Inter"';
     await Promise.all([`800 40px ${FT}`, `800 40px ${FT}`, `500 20px ${FX}`, `600 20px ${FX}`, `400 20px ${FX}`].map((x) => document.fonts.load(x)));
     const fotos = await Promise.all(items.map((i) => cargarImg(fotoColor(producto(i.id), i.color))));
@@ -448,7 +450,7 @@
       ? [["Envío", "Lima · Motorizado (llega mañana)"], ["Dirección", `${f.direccion}, ${f.distrito}`]]
       : [["Envío", `Provincia · ${f.agencia} (2 a 4 días)`], ["Destino", `${f.ciudad}, ${f.departamento}`], ["Sede", f.sede]];
     const datos = [["Cliente", f.nombre], ["DNI", f.dni], ["Celular", f.celular], ...(f.correo ? [["Correo", f.correo]] : []),
-      ["Comprobante", `${f.comprobante} · ${f.pago}`], ...envio];
+      ["Comprobante", `${f.comprobante} · ${f.pago}`], ...envio, ["Despacho", salida.texto]];
 
     // Medidas: se ajusta el alto a la cantidad de datos y prendas.
     x.font = `400 24px ${FX}`;
