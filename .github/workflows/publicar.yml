@@ -57,7 +57,11 @@ jobs:
           ssh -i ~/.ssh/servidor -o BatchMode=yes root@2.31.21.41 '
             set -e
             touch /opt/tienda/.env && chmod 600 /opt/tienda/.env
-            RED=$(docker inspect -f "{{range \$k, \$v := .NetworkSettings.Networks}}{{\$k}}{{end}}" galmor-caddy-1)
+            # Red de Galmor (el proxy puede estar en varias redes; p. ej. 2026-11-08 se sumó la de otro proyecto).
+            REDES=$(docker inspect -f "{{range \$k, \$v := .NetworkSettings.Networks}}{{\$k}} {{end}}" galmor-caddy-1)
+            RED=$(printf "%s\n" $REDES | grep -x galmor_default || printf "%s\n" $REDES | head -n 1)
+            # Reason: se comprueba la red ANTES de quitar la tienda anterior; si algo falla, la tienda sigue en línea.
+            docker network inspect "$RED" >/dev/null
             # Se recrea en cada publicación para cargar el servidor nuevo y la clave (los pedidos están en /opt/tienda/datos).
             docker rm -f tienda >/dev/null 2>&1 || true
             docker run -d --name tienda --restart unless-stopped --network "$RED" --env-file /opt/tienda/.env \
