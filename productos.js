@@ -64,18 +64,18 @@ window.CATALOGO = {
     },
     {
       id: "jogger-cargo", marca: "zoroz", precio: 64.9, modelos: 1,
-      nombre: "Pantalón Jogger Cargo Tacto Papel",
-      descripcion: "Tela tacto papel, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
+      nombre: "Pantalón Jogger Cargo Paper Touch",
+      descripcion: "Tela paper touch, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
       colores: {
         "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
         "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
       },
       tallas: ["28", "30", "32", "34", "36", "40"],
-      ficha: { "Tela": "Tacto papel", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
+      ficha: { "Tela": "Paper touch", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
       id: "doble-cargo", marca: "zoroz", precio: 74.9, modelos: 1,
-      nombre: "Pantalón Doble Cargo Tela Carbón",
+      nombre: "Pantalón Doble Cargo",
       descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
       colores: {
         "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
@@ -86,8 +86,8 @@ window.CATALOGO = {
     },
     {
       id: "bermuda-cargo", marca: "zoroz", precio: 54.9, modelos: 1,
-      nombre: "Bermuda Cargo Cintura Elástico Tacto Papel",
-      descripcion: "Fresca para el verano: tela tacto papel, cintura elástica con cordón y bolsillos cargo. 13 colores.",
+      nombre: "Bermuda Cargo Cintura Elástica Paper Touch",
+      descripcion: "Fresca para el verano: tela paper touch, cintura elástica con cordón y bolsillos cargo. 13 colores.",
       colores: {
         "Verde arena": "#5a5f50", "Verde militar": "#2f3229", "Beige": "#c8b296", "Caqui": "#bfa27c",
         "Hueso": "#e3d9cf", "Blanco": "#f3f3f3", "Cemento": "#8e9a92", "Plomo plata": "#8f93a3",
@@ -95,7 +95,7 @@ window.CATALOGO = {
         "Negro": "#161616",
       },
       tallas: ["28", "30", "32", "34", "36", "40"],
-      ficha: { "Tela": "Tacto papel", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
+      ficha: { "Tela": "Paper touch", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],
 };

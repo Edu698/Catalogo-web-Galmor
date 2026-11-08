@@ -309,14 +309,9 @@
   $("#departamentos").innerHTML = opciones(DEPARTAMENTOS, "Elige");
 
   const form = $("#paso-2");
-  // Recordar los datos del cliente para su próxima compra.
-  const cliente = leer("galmor_cliente", {});
-  for (const [k, v] of Object.entries(cliente)) {
-    const campo = form.elements[k];
-    if (!campo) continue;
-    if (campo instanceof RadioNodeList) $$(`[name="${k}"]`, form).forEach((r) => (r.checked = r.value === v));
-    else campo.value = v;
-  }
+  // Reason (dueño, 2026-11-08): DNI, celular y dirección son datos sensibles. Cada pedido empieza en blanco,
+  // aunque otra persona haya comprado antes en el mismo equipo. Se borra lo guardado por versiones anteriores.
+  localStorage.removeItem("galmor_cliente");
   function mostrarEnvio() {
     const lima = form.envio.value === "lima";
     $("#envio-lima").hidden = !lima;
@@ -371,7 +366,6 @@
     e.preventDefault();
     const f = Object.fromEntries(new FormData(form));
     if (!validar(f)) return;
-    localStorage.setItem("galmor_cliente", JSON.stringify(f));
     const boton = $("[type=submit]", form);
     boton.disabled = true;
     boton.textContent = "Generando…";
@@ -393,6 +387,8 @@
       carrito = [];
       guardar();
       pintarCarrito();
+      form.reset();
+      mostrarEnvio();
       paso(3);
     } finally {
       boton.disabled = false;
