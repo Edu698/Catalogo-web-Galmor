@@ -1,0 +1,15 @@
+Pantalón Jean Strech Semi Pitillo
+La foto muestra el color: Grafito azul
+
+Guardar cada foto nueva con este nombre de archivo:
+
+Grafito azul      #1B2440   ->  grafito-azul.jpg
+Madera            #2C3A58   ->  madera.jpg
+Azul cristal      #2E4A7C   ->  azul-cristal.jpg
+Azul acero        #2B4F8F   ->  azul-acero.jpg
+Celeste oscuro    #2F5FA8   ->  celeste-oscuro.jpg
+Celeste claro     #7CA2CF   ->  celeste-claro.jpg
+Verde             #2B4568   ->  verde.jpg
+Plomo claro       #4B4F57   ->  plomo-claro.jpg
+Plomo oscuro      #2A2C31   ->  plomo-oscuro.jpg
+Negro             #141416   ->  negro.jpg

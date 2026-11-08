@@ -1,0 +1,12 @@
+Pantalón Doble Cargo
+La foto muestra el color: Beige
+
+Guardar cada foto nueva con este nombre de archivo:
+
+Beige             #B9A58C   ->  beige.jpg
+Hueso             #CFD0CC   ->  hueso.jpg
+Camello           #9C6431   ->  camello.jpg
+Cocoa             #7B6A5E   ->  cocoa.jpg
+Verde arena       #4A4F40   ->  verde-arena.jpg
+Plomo oscuro      #2C3238   ->  plomo-oscuro.jpg
+Negro             #161616   ->  negro.jpg

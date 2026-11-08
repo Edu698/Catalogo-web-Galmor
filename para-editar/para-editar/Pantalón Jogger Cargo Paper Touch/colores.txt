@@ -1,0 +1,13 @@
+Pantalón Jogger Cargo Paper Touch
+La foto muestra el color: Beige
+
+Guardar cada foto nueva con este nombre de archivo:
+
+Beige             #CBBBA5   ->  beige.jpg
+Caqui             #C9A878   ->  caqui.jpg
+Hueso             #DCD9D2   ->  hueso.jpg
+Plomo plata       #7F8FA3   ->  plomo-plata.jpg
+Cocoa             #6A5548   ->  cocoa.jpg
+Verde arena       #4C5248   ->  verde-arena.jpg
+Verde militar     #2F342C   ->  verde-militar.jpg
+Negro             #19191A   ->  negro.jpg

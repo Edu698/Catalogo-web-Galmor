@@ -1,0 +1,18 @@
+Bermuda Cargo Cintura Elástica Paper Touch
+La foto muestra el color: Verde arena
+
+Guardar cada foto nueva con este nombre de archivo:
+
+Verde arena       #5A5F50   ->  verde-arena.jpg
+Verde militar     #2F3229   ->  verde-militar.jpg
+Beige             #C8B296   ->  beige.jpg
+Caqui             #BFA27C   ->  caqui.jpg
+Hueso             #E3D9CF   ->  hueso.jpg
+Blanco            #F3F3F3   ->  blanco.jpg
+Cemento           #8E9A92   ->  cemento.jpg
+Plomo plata       #8F93A3   ->  plomo-plata.jpg
+Plomo oscuro      #25272B   ->  plomo-oscuro.jpg
+Acero oscuro      #1F2A4D   ->  acero-oscuro.jpg
+Canela            #6E3B1E   ->  canela.jpg
+Cocoa             #4A3426   ->  cocoa.jpg
+Negro             #161616   ->  negro.jpg

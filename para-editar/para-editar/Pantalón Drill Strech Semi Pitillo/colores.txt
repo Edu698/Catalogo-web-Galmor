@@ -1,0 +1,21 @@
+Pantalón Drill Strech Semi Pitillo
+La foto muestra el color: Beige
+
+Guardar cada foto nueva con este nombre de archivo:
+
+Negro             #1A1A1C   ->  negro.jpg
+Azul noche        #171C2E   ->  azul-noche.jpg
+Azul acero        #2B3A5C   ->  azul-acero.jpg
+Plomo oscuro      #262B33   ->  plomo-oscuro.jpg
+Plomo intermedio  #4A5258   ->  plomo-intermedio.jpg
+Plomo plata       #8D97A5   ->  plomo-plata.jpg
+Beige             #D6C4A6   ->  beige.jpg
+Caqui             #C9AD84   ->  caqui.jpg
+Hueso             #DDD6CB   ->  hueso.jpg
+Blanco            #F4F4F2   ->  blanco.jpg
+Camello           #B0742F   ->  camello.jpg
+Canela            #7A3F1F   ->  canela.jpg
+Cocoa             #5A4337   ->  cocoa.jpg
+Marrón            #2E211D   ->  marron.jpg
+Verde arena       #4F5546   ->  verde-arena.jpg
+Verde militar     #2F3329   ->  verde-militar.jpg
