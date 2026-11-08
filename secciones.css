@@ -61,3 +61,29 @@
 .pie-lema { grid-column: 1 / -1; font: 900 clamp(48px, 9vw, 120px)/.88 var(--titulo); text-transform: uppercase; margin-bottom: 8px; }
 .resumen .descuento { color: var(--terracota); font-weight: 600; }
 .pack-aviso { font-size: 13px; color: var(--terracota); font-weight: 600; }
+
+/* Packs y opiniones en tarjetas redondeadas sobre crema, como la referencia. */
+.packs h2 { color: var(--denim); font-weight: 800; }
+.packs .ceja { color: var(--denim); }
+.pack { border-radius: 16px; box-shadow: 0 10px 30px rgba(10, 10, 10, .08); }
+.pack.estrella { box-shadow: 0 18px 40px rgba(30, 42, 82, .35); }
+.pack .pct { color: var(--denim); }
+.pack.estrella .pct { color: #fff; }
+.pack .btn { border-radius: 6px; }
+.pack-tag { background: var(--denim); border-radius: 20px; }
+.pack.estrella .pack-tag { background: #fff; color: var(--denim); }
+.valores h3, .beneficios b { font-weight: 700; }
+.valores h3 { font-weight: 600; }
+.faq-cab h2, .destacado-texto h2 { font-weight: 800; }
+.faq-cab .btn { border-radius: 24px; background: var(--tinta); }
+.opiniones { background: var(--arena-3); padding: 56px var(--margen); text-align: center; }
+.opiniones h2 { font-size: 36px; margin: 8px 0 24px; }
+@media (min-width: 1200px) { .opiniones h2 { font-size: 44px; } }
+.opiniones-lista { display: grid; gap: 16px; max-width: 1100px; margin: 0 auto 24px; text-align: left; }
+@media (min-width: 768px) { .opiniones-lista { grid-template-columns: repeat(3, 1fr); } }
+.opinion { background: #fff; border-radius: 12px; padding: 20px; }
+.opinion .estrellas { color: #f5a623; letter-spacing: 2px; }
+.opinion p { margin: 10px 0 14px; color: var(--tinta-2); }
+.opinion b { font-size: 14px; }
+.opiniones-vacio { color: var(--tinta-2); max-width: 460px; margin: 0 auto 20px; }
+.opiniones .btn { border-radius: 24px; }

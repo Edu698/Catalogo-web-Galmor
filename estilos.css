@@ -1,11 +1,12 @@
-/* Estilo 1d "Denim y Arena" — Galmor Textiles. Celular primero; tablet ≥768, escritorio ≥1200. */
+/* Estilo blanco, azul marino y oliva — Galmor Textiles. Celular primero; tablet ≥768, escritorio ≥1200. */
 :root {
-  --arena: #efe8dc; --arena-2: #e2dacb; --arena-3: #e9e2d5; --linea: #d9d0c0;
-  --tinta: #1e2430; --tinta-2: #4a4438; --tinta-3: #6a6355;
-  --denim: #24395c; --terracota: #c2553a; --error: #b3261e; --wsp: #25d366;
-  --titulo: "Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
-  --texto: "Work Sans", system-ui, sans-serif;
-  --margen: 16px; --sombra: 0 12px 32px rgba(30, 36, 48, .25);
+  /* Nombres heredados; valores nuevos: fondo blanco, crema para secciones, azul marino y oliva de acento. */
+  --arena: #ffffff; --arena-2: #f2f2f2; --arena-3: #f4f0e9; --linea: #e5e5e5;
+  --tinta: #1a1a1a; --tinta-2: #333333; --tinta-3: #6b6b6b;
+  --denim: #1e2a52; --terracota: #3f4a2a; --error: #b3261e; --wsp: #25d366; --negro: #0a0a0a;
+  --titulo: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --texto: Inter, system-ui, sans-serif;
+  --margen: 16px; --sombra: 0 12px 32px rgba(10, 10, 10, .18);
   --suave: cubic-bezier(.2, .8, .2, 1);
 }
 @media (min-width: 768px) { :root { --margen: 32px; } }
@@ -332,3 +333,37 @@ a { color: inherit; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .cinta-pista { animation: none; }
 }
+
+/* ---------- Ajustes de estilo de referencia ---------- */
+body { font-size: 14px; }
+h1, h2, h3 { font-weight: 800; }
+.splash { background: var(--negro); }
+.cinta { background: var(--negro); height: 32px; }
+.cinta-pista { font: 400 11px var(--texto); letter-spacing: .12em; }
+.cab { background: #fff; }
+.logo span { font-weight: 800; }
+.pestanas button { font-weight: 600; }
+.btn { font-weight: 600; font-size: 16px; letter-spacing: .04em; }
+.hero { background: var(--denim); color: #fff; }
+.hero h1 { color: #fff; font-weight: 800; }
+.hero .ceja { color: rgba(255, 255, 255, .85); font: 600 14px var(--titulo); letter-spacing: .18em; }
+.hero-texto p:not(.ceja) { color: rgba(255, 255, 255, .8); }
+.hero .btn-denim { background: #fff; color: var(--tinta); border-color: #fff; }
+.hero .btn-borde { border-color: #fff; color: #fff; }
+.hero .btn-borde:hover { background: #fff; color: var(--tinta); }
+@media (min-width: 1200px) { .hero { padding-bottom: 24px; } }
+.marca-zoroz { background: var(--negro); }
+.catalogo h2 { color: var(--terracota); font-size: 40px; letter-spacing: -.01em; }
+@media (min-width: 1200px) { .catalogo h2 { font-size: 56px; } }
+.tarjeta-foto { background: #f2f2f2; border-radius: 6px; }
+.tarjeta-nombre { font: 600 15px/1.2 var(--titulo); text-transform: uppercase; letter-spacing: .02em; }
+.tarjeta .precio { font: 700 15px var(--texto); color: var(--terracota); }
+.n-colores { color: var(--tinta-3); font-weight: 400; }
+.pronto { border-radius: 6px; }
+.info .precio { font-family: var(--texto); font-weight: 700; color: var(--terracota); }
+.info h2 { font-weight: 800; }
+.pie { background: var(--negro); }
+.pie-lema { font-weight: 800; letter-spacing: -.02em; }
+.btn-carrito span { background: #fff; color: var(--denim); }
+.toast button { background: #fff; color: var(--tinta); }
+.resumen .total { font-weight: 800; }

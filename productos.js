@@ -15,6 +15,9 @@ window.CATALOGO = {
     plin: { numero: "929 406 608", titular: "Eduardo Fernández" },
   },
 
+  // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
+  opiniones: [],
+
   // Packs: descuento automático en el carrito según cuántas prendas se lleven (porcentajes DE EJEMPLO).
   packs: [
     { prendas: 2, descuento: 5 },

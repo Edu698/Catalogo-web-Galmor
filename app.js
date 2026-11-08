@@ -437,8 +437,8 @@
   const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 
   async function imagenPedido(f, numero, fecha, items) {
-    const FT = '"Big Shoulders Display"', FX = '"Work Sans"';
-    await Promise.all([`900 40px ${FT}`, `800 40px ${FT}`, `500 20px ${FX}`, `600 20px ${FX}`, `400 20px ${FX}`].map((x) => document.fonts.load(x)));
+    const FT = '"Barlow Condensed"', FX = '"Inter"';
+    await Promise.all([`800 40px ${FT}`, `800 40px ${FT}`, `500 20px ${FX}`, `600 20px ${FX}`, `400 20px ${FX}`].map((x) => document.fonts.load(x)));
     const fotos = await Promise.all(items.map((i) => cargarImg(fotoColor(producto(i.id), i.color))));
     const W = 1080, P = 56, FILA = 196;
     const cv = document.createElement("canvas");
@@ -473,30 +473,30 @@
     };
     const caja = (px, py, w, h, color) => { x.fillStyle = color; x.fillRect(px, py, w, h); };
 
-    caja(0, 0, W, H, "#EFE8DC");
+    caja(0, 0, W, H, "#FFFFFF");
     // Cabecera
-    caja(0, 0, W, 250, "#1E2430");
-    texto("GALMOR TEXTILES", P, 104, `900 76px ${FT}`, "#EFE8DC", "left", "2px");
-    texto("DESDE 1988 · LIMA", P, 146, `500 20px ${FX}`, "#9B9384", "left", "6px");
-    texto(`PEDIDO N.° ${numero}`, P, 212, `800 40px ${FT}`, "#C2553A", "left", "1px");
+    caja(0, 0, W, 250, "#1E2A52");
+    texto("GALMOR TEXTILES", P, 104, `800 76px ${FT}`, "#FFFFFF", "left", "2px");
+    texto("DESDE 1988 · LIMA", P, 146, `500 20px ${FX}`, "#AEB6D0", "left", "6px");
+    texto(`PEDIDO N.° ${numero}`, P, 212, `800 40px ${FT}`, "#FFFFFF", "left", "1px");
     const fechaTxt = `${fecha.toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric" })} · ${fecha.toLocaleTimeString("es-PE", { timeZone: "America/Lima", hour: "numeric", minute: "2-digit", hour12: true })}`;
-    texto(fechaTxt, W - P, 212, `500 22px ${FX}`, "#EFE8DC", "right");
+    texto(fechaTxt, W - P, 212, `500 22px ${FX}`, "#FFFFFF", "right");
 
     // Datos del cliente
     let y = 306;
     for (const [k, lineas] of datosLineas) {
-      texto(k.toUpperCase(), P, y, `600 18px ${FX}`, "#6A6355", "left", "2px");
-      lineas.forEach((l, j) => texto(l, 300, y + j * 34, `400 24px ${FX}`, "#1E2430"));
+      texto(k.toUpperCase(), P, y, `600 18px ${FX}`, "#6B6B6B", "left", "2px");
+      lineas.forEach((l, j) => texto(l, 300, y + j * 34, `400 24px ${FX}`, "#1E2A52"));
       y += lineas.length * 34 + 12;
     }
     y += 8;
-    caja(P, y, W - 2 * P, 3, "#1E2430");
+    caja(P, y, W - 2 * P, 3, "#1E2A52");
     y += 28;
 
     // Prendas
     items.forEach((i, k) => {
       const p = producto(i.id), foto = fotos[k];
-      caja(P, y, 128, 160, "#E2DACB");
+      caja(P, y, 128, 160, "#F2F2F2");
       if (foto) {
         const esc = Math.max(128 / foto.width, 160 / foto.height);
         const sw = 128 / esc, sh = 160 / esc;
@@ -504,12 +504,12 @@
       }
       const nombre = partir(p.nombre.toUpperCase(), 560);
       x.font = `800 30px ${FT}`;
-      nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `800 30px ${FT}`, "#1E2430"));
+      nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `800 30px ${FT}`, "#1E2A52"));
       const yDet = y + 34 + Math.min(nombre.length, 2) * 32 + 8;
-      texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${FX}`, "#4A4438");
-      texto(soles(p.precio * i.cant), W - P, y + 40, `800 34px ${FT}`, "#1E2430", "right");
+      texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${FX}`, "#333333");
+      texto(soles(p.precio * i.cant), W - P, y + 40, `800 34px ${FT}`, "#1E2A52", "right");
       y += FILA;
-      caja(P, y - 18, W - 2 * P, 1, "#D9D0C0");
+      caja(P, y - 18, W - 2 * P, 1, "#E5E5E5");
     });
 
     // Totales
@@ -517,17 +517,17 @@
     y += 22;
     const lineasTotal = dto ? [["Subtotal", soles(subtotal(items))], [`Pack −${pack(items).descuento} %`, `−${soles(dto)}`]] : [];
     for (const [k, v] of [...lineasTotal, ["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
-      texto(k, W - 380, y, `400 24px ${FX}`, "#4A4438");
-      texto(v, W - P, y, `500 24px ${FX}`, "#4A4438", "right");
+      texto(k, W - 380, y, `400 24px ${FX}`, "#333333");
+      texto(v, W - P, y, `500 24px ${FX}`, "#333333", "right");
       y += 40;
     }
-    caja(P, y, W - 2 * P, 130, "#E9E2D5");
-    texto("TOTAL", P + 28, y + 86, `900 48px ${FT}`, "#1E2430", "left", "1px");
-    texto(soles(t), W - P - 28, y + 92, `900 84px ${FT}`, "#C2553A", "right");
-    texto(`${piezas(items)} prenda(s) · precios con IGV`, P + 28, y + 116, `400 18px ${FX}`, "#6A6355");
+    caja(P, y, W - 2 * P, 130, "#F4F0E9");
+    texto("TOTAL", P + 28, y + 86, `800 48px ${FT}`, "#1E2A52", "left", "1px");
+    texto(soles(t), W - P - 28, y + 92, `800 84px ${FT}`, "#3F4A2A", "right");
+    texto(`${piezas(items)} prenda(s) · precios con IGV`, P + 28, y + 116, `400 18px ${FX}`, "#6B6B6B");
 
     // Pie
-    caja(0, H - 120, W, 120, "#C2553A");
+    caja(0, H - 120, W, 120, "#3F4A2A");
     texto("ENVÍA ESTA IMAGEN Y LA CAPTURA DE TU PAGO AL 983 573 288", W / 2, H - 50, `800 34px ${FT}`, "#FFFFFF", "center", "1px");
     return new Promise((ok) => cv.toBlob(ok, "image/png"));
   }
@@ -543,6 +543,12 @@
   $("#ver-todo").onclick = () => filtrar("todos");
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const opiniones = C.opiniones || [];
+  $("#opiniones").innerHTML = opiniones.length
+    ? opiniones.map((o) => `<div class="opinion"><span class="estrellas">${"★".repeat(o.estrellas || 5)}</span><p>${esc(o.texto)}</p><b>— ${esc(o.nombre)}</b></div>`).join("")
+    : `<p class="opiniones-vacio" style="grid-column:1/-1;text-align:center">¿Ya compraste? Cuéntanos qué te pareció tu pantalón y publicamos tu opinión aquí.</p>`;
+  $("#opinar").href = wsp("Hola Galmor, quiero dejar mi opinión sobre mi compra: ");
 
   // ---------- Inicio ----------
   const cinta = "Envío a todo el Perú ★ Lima: pide hoy, llega mañana ★ Precios con IGV ★ Yape · Plin · Transferencia ★";
