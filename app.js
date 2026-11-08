@@ -46,7 +46,7 @@
       <p>Classic Men · Mejor imposible. Sé el primero en saberlo.</p>
       <a class="btn" href="${wsp("Hola Galmor, avísenme cuando llegue la colección Galmor.")}" target="_blank" rel="noopener">Avísame por WhatsApp</a></div>`;
   function pintarCatalogo() {
-    $("#titulo-catalogo").textContent = filtro === "todos" ? "Lo más pedido" : PESTANAS[filtro];
+    $("#titulo-catalogo").textContent = filtro === "todos" ? "Nueva colección" : PESTANAS[filtro];
     const lista = C.productos.filter((p) => filtro === "todos" || p.marca === filtro).map(tarjeta).join("");
     $("#rejilla").innerHTML = lista + (filtro !== "zoroz" ? tilePronto() : "");
   }
@@ -202,8 +202,16 @@
   const leer = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
   let carrito = leer("galmor_carrito", []).filter((i) => producto(i.id));
   const guardar = () => localStorage.setItem("galmor_carrito", JSON.stringify(carrito));
-  const total = (items = carrito) => items.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
+  const subtotal = (items = carrito) => items.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
   const piezas = (items = carrito) => items.reduce((s, i) => s + i.cant, 0);
+  // Pack: el mayor descuento cuyo mínimo de prendas se alcanza (se mezclan modelos, colores y tallas).
+  const pack = (items = carrito) => [...(C.packs || [])].reverse().find((k) => piezas(items) >= k.prendas);
+  const descuento = (items = carrito) => Math.round(subtotal(items) * (pack(items)?.descuento || 0)) / 100;
+  const total = (items = carrito) => Math.round((subtotal(items) - descuento(items)) * 100) / 100;
+  function siguientePack(items = carrito) {
+    const k = (C.packs || []).find((x) => piezas(items) < x.prendas);
+    return k ? `Agrega ${k.prendas - piezas(items)} prenda(s) más y ahorra ${k.descuento} %.` : "";
+  }
   const base = (t) => Math.round((t / 1.18) * 100) / 100; // Op. gravada; IGV = total − op. gravada
 
   function agregar(p, color, talla, cant) {
@@ -234,11 +242,14 @@
           <button class="quitar" data-quitar="${k}">Quitar</button></div>
         <span class="precio">${soles(p.precio * i.cant)}</span></div>`;
     }).join("");
-    const t = total(), b = base(t);
+    const t = total(), b = base(t), dto = descuento();
     $("#carrito-resumen").innerHTML = `<div class="resumen">
+        ${dto ? `<div><span>Subtotal</span><span>${soles(subtotal())}</span></div>
+        <div class="descuento"><span>Pack ${pack().prendas}+ prendas (−${pack().descuento} %)</span><span>−${soles(dto)}</span></div>` : ""}
         <div><span>Op. gravada</span><span>${soles(b)}</span></div>
         <div><span>IGV (18 %)</span><span>${soles(t - b)}</span></div>
         <div class="total"><span>Total</span><span>${soles(t)}</span></div>
+        ${siguientePack() ? `<p class="pack-aviso">${siguientePack()}</p>` : ""}
         <p>El costo de envío se coordina por WhatsApp.</p></div>
       <button class="btn btn-denim btn-alto" id="ir-pagar">Ir a pagar</button>
       <button class="btn btn-borde" id="seguir">Seguir comprando</button>`;
@@ -403,7 +414,7 @@
     const saludo = hora < 12 ? "buenos días" : hora < 19 ? "buenas tardes" : "buenas noches";
     const envio = f.envio === "lima" ? `Lima, motorizado: ${f.direccion}, ${f.distrito}`
       : `Provincia, ${f.agencia}: ${f.sede}, ${f.ciudad}, ${f.departamento}`;
-    const registro = { n: numero, d: fecha.toISOString(), c: f, i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
+    const registro = { n: numero, d: fecha.toISOString(), x: descuento(items), c: f, i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
     const codigo = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(registro)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     const enlace = new URL(`pedidos.html#p=${codigo}`, location.href).href;
     return [
@@ -412,6 +423,7 @@
       "",
       ...items.map((i) => `• ${producto(i.id).nombre} · ${i.color} · Talla ${i.talla} · ${i.cant} prenda(s) — ${soles(producto(i.id).precio * i.cant)}`),
       "",
+      ...(descuento(items) ? [`Descuento pack ${pack(items).descuento} %: −${soles(descuento(items))}`] : []),
       `*Total: ${soles(total(items))}* (IGV incluido)`,
       `Envío: ${envio}`,
       `Pago: ${f.pago} · Comprobante: ${f.comprobante}`,
@@ -451,7 +463,8 @@
     };
     const datosLineas = datos.map(([k, v]) => [k, partir(v, W - P - 300)]);
     const altoDatos = datosLineas.reduce((s, [, l]) => s + l.length * 34 + 12, 0);
-    const H = 300 + altoDatos + 40 + items.length * FILA + 330 + 120;
+    const dto = descuento(items);
+    const H = 300 + altoDatos + 40 + items.length * FILA + 330 + 120 + (dto ? 80 : 0);
     cv.width = W;
     cv.height = H;
 
@@ -502,7 +515,8 @@
     // Totales
     const t = total(items), b = base(t);
     y += 22;
-    for (const [k, v] of [["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
+    const lineasTotal = dto ? [["Subtotal", soles(subtotal(items))], [`Pack −${pack(items).descuento} %`, `−${soles(dto)}`]] : [];
+    for (const [k, v] of [...lineasTotal, ["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
       texto(k, W - 380, y, `400 24px ${FX}`, "#4A4438");
       texto(v, W - P, y, `500 24px ${FX}`, "#4A4438", "right");
       y += 40;
@@ -517,6 +531,18 @@
     texto("ENVÍA ESTA IMAGEN Y LA CAPTURA DE TU PAGO AL 983 573 288", W / 2, H - 50, `800 34px ${FT}`, "#FFFFFF", "center", "1px");
     return new Promise((ok) => cv.toBlob(ok, "image/png"));
   }
+
+  // ---------- Packs, "Ver todo", destacado y preguntas ----------
+  const fotosPack = C.productos.map((p) => modelos(p)[0] || fotoColor(p, nombresColor(p)[0]));
+  $("#packs-lista").innerHTML = (C.packs || []).map((k, n) => `<div class="pack ${k.etiqueta === "Más popular" ? "estrella" : ""}">
+      ${k.etiqueta ? `<span class="pack-tag">${k.etiqueta}</span>` : ""}
+      <div class="pack-fotos">${fotosPack.slice(n, n + Math.min(k.prendas, 3)).map((f) => `<img src="${f}" alt="" loading="lazy">`).join("")}</div>
+      <b>${k.prendas}${n === C.packs.length - 1 ? "+" : ""} prendas</b><span class="pct">−${k.descuento} %</span>
+      <small>Mezcla modelos, colores y tallas</small>
+      <a class="btn btn-denim" href="#catalogo">Elegir prendas</a></div>`).join("");
+  $("#ver-todo").onclick = () => filtrar("todos");
+  $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
+  $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
 
   // ---------- Inicio ----------
   const cinta = "Envío a todo el Perú ★ Lima: pide hoy, llega mañana ★ Precios con IGV ★ Yape · Plin · Transferencia ★";

@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="marca/logo-zoroz77.webp">
   <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="secciones.css">
 </head>
 <body>
   <!-- 1. Bienvenida -->
@@ -53,6 +54,22 @@
       </div>
     </section>
 
+
+    <!-- Barra de beneficios -->
+    <section class="beneficios" aria-label="Beneficios">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg><p><b>Envío a todo el Perú</b><small>Lima en motorizado · provincias por agencia</small></p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p><b>Despacho en 24 h</b><small>Lima: pide hoy, llega mañana</small></p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg><p><b>Cambios fáciles</b><small>Coordínalos por WhatsApp</small></p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M3 10h18M7 15h4"/></svg><p><b>Paga como quieras</b><small>Yape · Plin · Transferencia</small></p></div>
+    </section>
+
+    <!-- Lo que nos diferencia -->
+    <section class="valores">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 18 6M15 3l6 6M9 15l-3 3"/><circle cx="18.5" cy="5.5" r="1"/></svg><h3>Taller propio</h3><p>Cortamos y cosemos en Lima desde 1988. Del taller a tu puerta, sin intermediarios.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg><h3>Tallas 28 a 40</h3><p>Corte pensado para el hombre peruano. ¿Dudas con tu talla? Te ayudamos por WhatsApp.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Tú eliges tu comprobante.</p></div>
+    </section>
+
     <!-- 4. Marcas (celular y tablet) -->
     <section class="marcas">
       <a class="marca-tile marca-zoroz" href="#catalogo" data-filtro="zoroz"><small>Urban jeans</small><b>Zoroz 77</b></a>
@@ -61,20 +78,50 @@
 
     <!-- 5. Catálogo -->
     <section class="catalogo" id="catalogo">
-      <h2 id="titulo-catalogo">Lo más pedido</h2>
+      <div class="seccion-cab"><h2 id="titulo-catalogo">Nueva colección</h2><button class="btn btn-borde btn-chico" id="ver-todo">Ver todo</button></div>
       <div class="rejilla" id="rejilla"></div>
     </section>
 
-    <!-- 6. Confianza -->
-    <section class="confianza">
-      <div><b>01</b><h3>Envío rápido</h3><p>Lima: pide hoy, llega mañana. Provincias por Shalom u Olva.</p></div>
-      <div><b>02</b><h3>Pago simple</h3><p>Yape, Plin o transferencia. Sin tarjeta ni registro.</p></div>
-      <div><b>03</b><h3>Boleta o ticket</h3><p>Tú eliges el comprobante. Todos los precios incluyen IGV.</p></div>
+    <!-- Arma tu pack -->
+    <section class="packs" id="packs">
+      <p class="ceja">Más prendas, mejor precio</p>
+      <h2>Arma tu pack</h2>
+      <p class="packs-sub">Mientras más prendas lleves, menos pagas por cada una. Mezcla modelos, colores y tallas.</p>
+      <div class="packs-lista" id="packs-lista"></div>
+    </section>
+
+    <!-- Destacado -->
+    <section class="destacado">
+      <div class="destacado-foto"><img src="fotos/doble-cargo/hueso.webp" alt="Pantalón Doble Cargo Tela Carbón color hueso" loading="lazy"></div>
+      <div class="destacado-texto">
+        <p class="ceja">Lo mejor del taller</p>
+        <h2>Calidad que se siente</h2>
+        <p>Telas resistentes, costuras firmes y acabados revisados prenda por prenda. Hechos para el día a día de Lima.</p>
+        <button class="btn btn-denim" data-abrir="doble-cargo">Ver Doble Cargo</button>
+      </div>
+    </section>
+
+    <!-- Preguntas frecuentes -->
+    <section class="faq">
+      <div class="faq-cab">
+        <h2>Resolvemos tus dudas</h2>
+        <p>Aquí están las preguntas más comunes. Si no encuentras lo que buscas, escríbenos.</p>
+        <a class="btn btn-denim" id="faq-wsp" target="_blank" rel="noopener">Escríbenos →</a>
+      </div>
+      <div class="faq-lista">
+        <details><summary>¿Cuánto tarda el envío?</summary><p>En Lima despachamos en motorizado: si pides hoy (hasta las 6 p.m.), te llega mañana. A provincias enviamos por Shalom u Olva y llega en 2 a 4 días. El costo del envío lo coordinamos por WhatsApp.</p></details>
+        <details><summary>¿Cómo pago mi pedido?</summary><p>Por Yape, Plin o transferencia bancaria. Al terminar tu pedido ves los datos y el monto exacto. Envías la imagen del pedido y la captura de tu pago por WhatsApp, y te confirmamos.</p></details>
+        <details><summary>¿Cómo elijo mi talla?</summary><p>Tenemos tallas 28, 30, 32, 34, 36 y 40. Si dudas entre dos tallas, escríbenos por WhatsApp con tu medida de cintura y te recomendamos la mejor.</p></details>
+        <details><summary>¿Puedo cambiar mi prenda?</summary><p>Sí. Escríbenos por WhatsApp con tu número de pedido y coordinamos el cambio de talla o modelo. La prenda debe estar sin uso y con sus etiquetas.</p></details>
+        <details><summary>¿Me dan boleta?</summary><p>Sí. Al hacer tu pedido eliges boleta o ticket. Todos los precios ya incluyen IGV.</p></details>
+        <details><summary>¿Cómo funciona el pack?</summary><p>El descuento se aplica solo en el carrito según la cantidad de prendas que lleves. Puedes mezclar modelos, colores y tallas.</p></details>
+      </div>
     </section>
   </main>
 
   <!-- 7. Pie -->
   <footer class="pie">
+    <p class="pie-lema">Hecho en Lima<br>desde 1988</p>
     <div class="pie-marcas">
       <div class="logo logo-claro"><span>Galmor Textiles</span><small>Taller limeño · 1988</small></div>
       <p class="pie-sub"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>

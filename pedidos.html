@@ -139,7 +139,7 @@
 
     const hoy = () => new Date().toLocaleDateString("es-PE", { timeZone: "America/Lima" });
     const fecha = (iso) => new Date(iso).toLocaleString("es-PE", { timeZone: "America/Lima", dateStyle: "short", timeStyle: "short" });
-    const total = (p) => p.i.reduce((s, [, , , cant, precio]) => s + cant * precio, 0);
+    const total = (p) => p.i.reduce((s, [, , , cant, precio]) => s + cant * precio, 0) - (p.x || 0);
     const piezas = (p) => p.i.reduce((s, it) => s + it[3], 0);
     const destino = (c) => c.envio === "lima" ? `${c.direccion}, ${c.distrito}` : `${c.agencia} · ${c.sede}, ${c.ciudad}, ${c.departamento}`;
     const ETIQUETA = { nuevo: "Por cobrar", pagado: "Pagado", despachado: "Despachado" };

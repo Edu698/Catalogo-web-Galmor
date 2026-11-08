@@ -5,14 +5,22 @@
 //   fotos/<id>/<color>.webp     una por color (ej. fotos/jogger-cargo/verde-militar.webp)
 //   fotos/<id>/modelo-N.webp    fotos con modelo; "modelos" dice cuántas hay. La 1 es la portada.
 window.CATALOGO = {
-  whatsapp: "51983573288", // 51 = Perú + celular, sin espacios
+  whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
 
-  // Datos para pagar. Reemplazar "POR DEFINIR" con los datos reales.
+  // Datos para pagar.
   pago: {
-    transferencia: { banco: "POR DEFINIR", cuenta: "POR DEFINIR", cci: "POR DEFINIR", titular: "Galmor Textiles" },
-    yape: { numero: "983 573 288", titular: "Eduardo Fernández" },
-    plin: { numero: "983 573 288", titular: "POR DEFINIR" },
+    transferencia: { banco: "BCP · Cuenta en soles", cuenta: "1919410266090", cci: "00219100941026609052", titular: "Galmor Textiles" },
+    yape: { numero: "929 406 608", titular: "Eduardo Fernández" },
+    // Reason: Yape y Plin son interoperables; se paga por Plin al mismo número de Yape.
+    plin: { numero: "929 406 608", titular: "Eduardo Fernández" },
   },
+
+  // Packs: descuento automático en el carrito según cuántas prendas se lleven (porcentajes DE EJEMPLO).
+  packs: [
+    { prendas: 2, descuento: 5 },
+    { prendas: 3, descuento: 10, etiqueta: "Más popular" },
+    { prendas: 4, descuento: 15, etiqueta: "Mejor precio" },
+  ],
 
   redes: { facebook: "#", instagram: "#", tiktok: "#" }, // pegar los enlaces cuando estén las páginas
 
