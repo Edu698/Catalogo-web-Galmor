@@ -5,7 +5,7 @@
 //   fotos/<id>/<color>.webp     una por color, el pantalón en el modelo (ej. fotos/jogger-cargo/verde-militar.webp)
 //   fotos/<id>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 window.CATALOGO = {
-  versionFotos: "202611082005", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
+  versionFotos: "202611082348", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
 
   // Datos para pagar.

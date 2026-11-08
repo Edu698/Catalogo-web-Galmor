@@ -96,6 +96,17 @@ def ajustar(im, caja=(1000, 1500)):
     return im.filter(ImageFilter.UnsharpMask(radius=1.0, percent=35, threshold=4)) if esc > 1 else im
 
 
+def agrandar(im, alto=1500):
+    """Agranda una foto pequeña (recorte de cuadrícula de Gemini) a tamaño web: limpia el ruido de compresión,
+    agranda con Lanczos y enfoca suave. No cambia colores ni proporción."""
+    rgb = np.asarray(im)
+    if im.height < 800:
+        rgb = cv2.fastNlMeansDenoisingColored(rgb, None, 3, 3, 7, 21)
+    esc = min(alto / im.height, 5)
+    salida = Image.fromarray(rgb).resize((round(im.width * esc), round(im.height * esc)), Image.Resampling.LANCZOS)
+    return salida.filter(ImageFilter.UnsharpMask(radius=1.6, percent=55, threshold=3))
+
+
 def guardar(im, ruta):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     for calidad in (80, 72, 64, 56):  # máximo ~150 KB por foto
@@ -213,7 +224,11 @@ if __name__ == "__main__":
         base = ajustar(foto(clave))
         alfa, lab_im, mediana = mascara_pantalon(base, sesion, fuelle=prod == "doble-cargo")
         for color, hexa in colores[prod].items():
-            im = base if color == color_base else pintar(base, alfa, lab_im, mediana, hexa)
+            gemini = os.path.join(REPO, "fotos-gemini", prod, slug(color) + ".png")
+            if os.path.exists(gemini):
+                im = agrandar(Image.open(gemini).convert("RGB"))  # foto hecha por Gemini (dueño, 2026-11-08)
+            else:
+                im = base if color == color_base else pintar(base, alfa, lab_im, mediana, hexa)
             guardar(im, f"{SAL}/{prod}/{slug(color)}.webp")
     for prod, claves in CUERPO_ENTERO.items():
         for i, clave in enumerate(claves, 1):
