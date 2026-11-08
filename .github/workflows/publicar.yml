@@ -1,0 +1,67 @@
+# Publica la tienda en el servidor Hetzner (dueño, 2026-11-08), separada de los demás proyectos:
+#   - Archivos en /opt/tienda/sitio (carpeta propia). Lo de la publicación anterior queda en /opt/tienda/anterior.
+#   - Contenedor propio "tienda" (Caddy que solo sirve archivos), igual que drogueria-jaen.
+#   - Dirección https://tienda.2-31-21-41.sslip.io: se agrega UNA entrada al Caddyfile compartido de /opt/galmor
+#     (las entradas de galmor, caudal, marcaya y drogueria-jaen no se tocan) y solo la primera vez.
+# Necesita el secreto HETZNER_SSH_KEY (llave de publicación).
+name: Publicar en el servidor
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Revisar que la tienda esté completa
+        run: |
+          for f in index.html app.js productos.js estilos.css secciones.css pedidos.html; do test -s "$f" || { echo "Falta $f"; exit 1; }; done
+          test -d fotos && test -d marca
+      - name: Llave para entrar al servidor
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/servidor && chmod 600 ~/.ssh/servidor
+          echo "2.31.21.41 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIY6L7lblxF5UDaLmKg5+EOuaaoBCQr/eNX0cn8hjR7L" > ~/.ssh/known_hosts
+      - name: Copiar archivos
+        # Se sube a una carpeta nueva y luego se cambia de golpe: la tienda nunca queda a medias.
+        run: |
+          tar -czf - index.html app.js productos.js estilos.css secciones.css pedidos.html fotos marca \
+            | ssh -i ~/.ssh/servidor -o BatchMode=yes root@2.31.21.41 '
+                set -e
+                mkdir -p /opt/tienda && rm -rf /opt/tienda/nuevo && mkdir /opt/tienda/nuevo
+                tar -xz -C /opt/tienda/nuevo
+                rm -rf /opt/tienda/anterior
+                [ -d /opt/tienda/sitio ] && mv /opt/tienda/sitio /opt/tienda/anterior
+                mv /opt/tienda/nuevo /opt/tienda/sitio'
+      - name: Contenedor y dirección (solo la primera vez)
+        run: |
+          ssh -i ~/.ssh/servidor -o BatchMode=yes root@2.31.21.41 '
+            set -e
+            if ! docker ps -a --format "{{.Names}}" | grep -qx tienda; then
+              RED=$(docker inspect -f "{{range \$k, \$v := .NetworkSettings.Networks}}{{\$k}}{{end}}" galmor-caddy-1)
+              docker run -d --name tienda --restart unless-stopped --network "$RED" -v /opt/tienda:/srv:ro \
+                caddy:2-alpine caddy file-server --root /srv/sitio --listen :80
+            fi
+            CF=/opt/galmor/Caddyfile
+            if ! grep -q "^tienda.2-31-21-41.sslip.io" "$CF"; then
+              cp "$CF" /opt/galmor/Caddyfile.antes-de-tienda.bak
+              printf "\ntienda.2-31-21-41.sslip.io {\n\tencode gzip\n\treverse_proxy tienda:80\n}\n" >> "$CF"
+              if docker exec galmor-caddy-1 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
+                docker exec galmor-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+              else
+                cp /opt/galmor/Caddyfile.antes-de-tienda.bak "$CF"; echo "Caddyfile inválido: se dejó como estaba"; exit 1
+              fi
+            fi'
+      - name: Revisar que la tienda responde
+        run: |
+          for i in 1 2 3 4 5 6; do
+            curl -fsS -o /dev/null https://tienda.2-31-21-41.sslip.io/ && { echo "Tienda en línea"; exit 0; }
+            sleep 10
+          done
+          echo "La tienda no responde"; exit 1
