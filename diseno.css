@@ -175,5 +175,29 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 .pie { background: #2a1c12; }
 .pie .logo { align-items: flex-start; color: #fff; }
 .pie .logo small { color: #cbbcae; }
-.splash { background: #2a1c12; }
-.splash-marcas b, .pie-sub b { color: #e3cfbd; }
+.splash-marcas b { color: #fff; }
+.pie-sub b { color: #e3cfbd; }
+
+/* Ventanas: dejar opinión y mi pedido */
+.ventana { border: 0; border-radius: 14px; padding: 28px 24px 24px; width: min(440px, 92vw); max-height: 90dvh; background: #fff; color: var(--tinta); }
+.ventana::backdrop { background: rgba(0, 0, 0, .55); }
+.ventana .cerrar { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: 0; background: none; font-size: 28px; cursor: pointer; }
+.ventana h2 { font: 600 28px var(--titulo); text-transform: uppercase; margin-bottom: 6px; }
+.ventana-sub { color: var(--tinta-2); font-size: 15px; margin: 0 0 16px; }
+.ventana form { display: grid; gap: 4px; }
+.ventana .btn { width: 100%; margin-top: 8px; }
+.campo textarea { width: 100%; padding: 12px; border: 1px solid var(--linea); border-radius: 6px; font: 400 16px var(--texto); resize: vertical; margin-top: 6px; }
+.ventana-gracias { font: 500 18px var(--texto); padding: 20px 0 6px; }
+.estrellas-elegir { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; margin-bottom: 12px; }
+.estrellas-elegir input { position: absolute; opacity: 0; }
+.estrellas-elegir span { font-size: 34px; color: #d9d0c7; cursor: pointer; line-height: 1; }
+/* Reason: orden invertido; marcar una estrella pinta esa y las anteriores con el selector ~ */
+.estrellas-elegir label:has(input:checked) span, .estrellas-elegir label:has(input:checked) ~ label span { color: #f5a623; }
+.estrellas-elegir input:focus-visible + span { outline: 2px solid var(--tinta); }
+.seguimiento { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 0; }
+.seguimiento li { position: relative; padding: 0 0 18px 34px; color: var(--tinta-3); }
+.seguimiento li::before { content: ""; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d9d0c7; background: #fff; }
+.seguimiento li:not(:last-child)::after { content: ""; position: absolute; left: 10px; top: 22px; bottom: 0; width: 2px; background: #e6ddd4; }
+.seguimiento li.hecho { color: var(--tinta); }
+.seguimiento li.hecho::before { background: var(--denim); border-color: var(--denim); }
+.seguimiento small { display: block; color: var(--tinta-2); }

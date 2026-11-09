@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Galmor Textiles — Hecho en Lima desde 1988</title>
   <meta name="description" content="Pantalones y bermudas Zoroz 77 y Galmor. Hecho en Lima desde 1988. Envío a todo el Perú, precios con IGV.">
-  <meta name="theme-color" content="#765743">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" type="image/png" sizes="32x32" href="marca/icono-32.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="marca/icono-512.png">
+  <link rel="apple-touch-icon" href="marca/icono-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,10 +20,10 @@
 <body>
   <!-- 1. Bienvenida -->
   <div id="splash" class="splash" aria-hidden="true">
-    <p class="splash-hola">Bienvenido</p>
-    <p class="splash-marca">Galmor<br class="solo-movil"> Textiles</p>
-    <p class="splash-desde">Desde 1988</p>
-    <div class="splash-barra"><span></span></div>
+    <p class="splash-hola">Bienvenido a</p>
+    <p class="splash-marca"><span style="--i:0">G</span><span style="--i:1">A</span><span style="--i:2">L</span><span style="--i:3">M</span><span style="--i:4">O</span><span style="--i:5">R</span></p>
+    <p class="splash-textiles"><i></i>Textiles<i></i></p>
+    <p class="splash-desde">Hecho en Lima · Desde 1988</p>
     <p class="splash-marcas"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
   </div>
 
@@ -36,7 +39,7 @@
     <a class="logo" href="./" aria-label="Galmor Textiles, inicio"><span>Galmor</span><small>Textiles</small></a>
     <div class="cab-iconos">
       <button id="abrir-buscar" aria-label="Buscar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg></button>
-      <a id="asesoria" target="_blank" rel="noopener" aria-label="Te asesoramos por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg></a>
+      <button id="abrir-seguimiento" aria-label="Mi pedido: ver el estado de mi compra" title="Mi pedido"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg></button>
       <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg><span id="contador">0</span></button>
     </div>
     <label class="buscador" id="buscador" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
@@ -99,7 +102,7 @@
       <p class="ceja">Opiniones reales</p>
       <h2>Lo que dicen nuestros clientes</h2>
       <div class="opiniones-lista" id="opiniones"></div>
-      <a class="btn btn-denim" id="opinar" target="_blank" rel="noopener">Deja tu opinión</a>
+      <button class="btn btn-denim" id="opinar">Deja tu opinión</button>
     </section>
 
     <!-- Preguntas frecuentes -->
@@ -135,6 +138,37 @@
 
   <!-- Aviso "Agregado" -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Dejar una opinión: se publica cuando el dueño la aprueba en el panel -->
+  <dialog class="ventana" id="ventana-opinion" aria-labelledby="titulo-opinion">
+    <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    <form id="form-opinion" novalidate>
+      <h2 id="titulo-opinion">Tu opinión</h2>
+      <p class="ventana-sub">Cuéntanos qué te pareció tu compra. La publicamos después de revisarla.</p>
+      <div class="estrellas-elegir" role="radiogroup" aria-label="Estrellas">
+        <label><input type="radio" name="estrellas" value="5" checked aria-label="5 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="4" aria-label="4 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="3" aria-label="3 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="2" aria-label="2 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="1" aria-label="1 estrella"><span>★</span></label>
+      </div>
+      <label class="campo">Tu nombre<input name="nombre" maxlength="40" placeholder="Ej. Carlos M."></label>
+      <label class="campo">Tu comentario<textarea name="texto" maxlength="500" rows="4" placeholder="¿Cómo te quedó el pantalón? ¿Qué tal la tela?"></textarea></label>
+      <p class="aviso-talla" id="error-opinion" role="alert"></p>
+      <button class="btn btn-cafe btn-alto" type="submit">Enviar opinión</button>
+    </form>
+    <p class="ventana-gracias" id="gracias-opinion" hidden>¡Gracias! Tu opinión se publica en cuanto la revisemos.</p>
+  </dialog>
+
+  <!-- Mi pedido: el cliente ve en qué va su compra con su número de pedido y DNI -->
+  <dialog class="ventana" id="ventana-seguimiento" aria-labelledby="titulo-seguimiento">
+    <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    <form id="form-seguimiento" novalidate>
+      <h2 id="titulo-seguimiento">Mi pedido</h2>
+      <p class="ventana-sub">Escribe el número que sale en la imagen de tu pedido y tu DNI.</p>
+      <label class="campo">Número de pedido<input name="n" placeholder="GT-261109-AB12" autocapitalize="characters" autocomplete="off"></label>
+      <label class="campo">DNI<input name="dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos" autocomplete="off"></label>
+      <p class="aviso-talla" id="error-seguimiento" role="alert"></p>
+      <button class="btn btn-cafe btn-alto" type="submit">Ver estado</button>
+    </form>
+    <div id="resultado-seguimiento"></div>
+  </dialog>
 
   <!-- Producto -->
   <dialog class="producto" id="producto" aria-label="Producto"></dialog>

@@ -3,7 +3,12 @@
 //   POST /api/pedidos            la tienda registra un pedido (público, validado, sin duplicados)
 //   GET  /api/panel/pedidos      panel: lista de pedidos            (cabecera x-clave)
 //   POST /api/panel/estado       panel: {numero, estado}            (cabecera x-clave)
-// Datos en DATOS/pedidos.json. La clave del panel llega en la variable PANEL_CLAVE.
+//   GET  /api/seguimiento?n=&dni=  el cliente ve el estado de su pedido (número + DNI)
+//   POST /api/opiniones          el cliente deja una opinión; queda oculta hasta aprobarla
+//   GET  /api/opiniones          opiniones aprobadas (se muestran en la tienda)
+//   GET  /api/panel/opiniones    panel: todas las opiniones          (cabecera x-clave)
+//   POST /api/panel/opinion      panel: {id, accion: aprobar|ocultar|borrar} (cabecera x-clave)
+// Datos en DATOS/pedidos.json y DATOS/opiniones.json. La clave del panel llega en la variable PANEL_CLAVE.
 "use strict";
 const http = require("node:http");
 const fs = require("node:fs");
@@ -13,22 +18,27 @@ const crypto = require("node:crypto");
 const SITIO = process.env.SITIO || path.join(__dirname, "..");
 const DATOS = process.env.DATOS || "/data";
 const ARCHIVO = path.join(DATOS, "pedidos.json");
+const ARCHIVO_OPINIONES = path.join(DATOS, "opiniones.json");
+const MAX_PENDIENTES = 200; // Reason: tope de opiniones sin revisar para que nadie llene el disco
 const CLAVE = process.env.PANEL_CLAVE || "";
 const PUERTO = +(process.env.PUERTO || 80);
 const HORA_CORTE = 17; // pedidos desde las 5 p.m. (hora de Lima) salen un día después
 const ESTADOS = ["nuevo", "pagado", "despachado"];
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
-  ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".json": "application/json" };
+  ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".json": "application/json" };
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
 
-let pedidos = [];
-try { pedidos = JSON.parse(fs.readFileSync(ARCHIVO, "utf8")); } catch { pedidos = []; }
-function guardar() {
+const leer = (archivo) => { try { return JSON.parse(fs.readFileSync(archivo, "utf8")); } catch { return []; } };
+let pedidos = leer(ARCHIVO);
+let opiniones = leer(ARCHIVO_OPINIONES);
+function escribir(archivo, datos) {
   fs.mkdirSync(DATOS, { recursive: true });
-  const tmp = ARCHIVO + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(pedidos));
-  fs.renameSync(tmp, ARCHIVO); // escritura atómica: nunca queda un archivo a medias
+  const tmp = archivo + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(datos));
+  fs.renameSync(tmp, archivo); // escritura atómica: nunca queda un archivo a medias
 }
+const guardar = () => escribir(ARCHIVO, pedidos);
+const guardarOpiniones = () => escribir(ARCHIVO_OPINIONES, opiniones);
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
 function lima(fecha) { return new Date(fecha.getTime() - 5 * 3600e3); }
@@ -55,6 +65,14 @@ function validar(p) {
   if (!(total > 0 && total <= bruto + 0.01)) throw new Error("total inválido");
   const campos = ["nombre", "dni", "celular", "correo", "envio", "direccion", "distrito", "agencia", "departamento", "ciudad", "sede", "comprobante", "pago"];
   return { n: p.n, c: Object.fromEntries(campos.map((k) => [k, texto(c[k], 160)])), i: limpias, t: Math.round(total * 100) / 100, x: Math.round((+p.x || 0) * 100) / 100 };
+}
+
+function validarOpinion(o) {
+  const nombre = texto(o.nombre, 40), comentario = texto(o.texto, 500), estrellas = Math.round(+o.estrellas);
+  if (nombre.length < 2) throw new Error("falta tu nombre");
+  if (comentario.length < 10) throw new Error("escribe un comentario un poco más largo");
+  if (!(estrellas >= 1 && estrellas <= 5)) throw new Error("elige de 1 a 5 estrellas");
+  return { nombre, texto: comentario, estrellas };
 }
 
 function responder(res, codigo, datos, extra = {}) {
@@ -105,6 +123,25 @@ const servidor = http.createServer(async (req, res) => {
       }
       return responder(res, 200, { ok: true }, CORS);
     }
+    if (ruta === "/api/seguimiento" && req.method === "GET") {
+      const q = new URL(req.url, "http://x").searchParams;
+      const p = pedidos.find((x) => x.n === String(q.get("n") || "").trim().toUpperCase() && x.c.dni === String(q.get("dni") || "").trim());
+      if (!p) return responder(res, 404, { ok: false });
+      return responder(res, 200, { ok: true, estado: p.estado, pedido: p.d, despacho: p.s, envio: p.c.envio, total: p.t });
+    }
+    if (ruta === "/api/opiniones") {
+      if (req.method === "GET") return responder(res, 200, { opiniones: opiniones.filter((o) => o.ok).reverse().map(({ nombre, texto, estrellas }) => ({ nombre, texto, estrellas })) });
+      if (req.method !== "POST") return responder(res, 405, { ok: false });
+      let o;
+      try { o = validarOpinion(JSON.parse(await leerCuerpo(req, 3000))); }
+      catch (e) { return responder(res, 400, { ok: false, error: e.message }); }
+      if (opiniones.filter((x) => !x.ok).length >= MAX_PENDIENTES) return responder(res, 429, { ok: false, error: "intenta más tarde" });
+      if (!opiniones.some((x) => x.texto === o.texto)) {
+        opiniones.push({ ...o, id: crypto.randomUUID(), d: new Date().toISOString(), ok: false });
+        guardarOpiniones();
+      }
+      return responder(res, 200, { ok: true });
+    }
     if (ruta.startsWith("/api/panel/")) {
       if (!claveOk(req)) return responder(res, 401, { error: "Clave incorrecta" });
       if (ruta === "/api/panel/pedidos" && req.method === "GET") return responder(res, 200, { pedidos: [...pedidos].reverse() });
@@ -118,6 +155,16 @@ const servidor = http.createServer(async (req, res) => {
         guardar();
         return responder(res, 200, { ok: true });
       }
+      if (ruta === "/api/panel/opiniones" && req.method === "GET") return responder(res, 200, { opiniones: [...opiniones].reverse() });
+      if (ruta === "/api/panel/opinion" && req.method === "POST") {
+        const { id, accion } = JSON.parse(await leerCuerpo(req, 2000));
+        const o = opiniones.find((x) => x.id === id);
+        if (!o || !["aprobar", "ocultar", "borrar"].includes(accion)) return responder(res, 400, { ok: false });
+        if (accion === "borrar") opiniones = opiniones.filter((x) => x !== o);
+        else o.ok = accion === "aprobar";
+        guardarOpiniones();
+        return responder(res, 200, { ok: true });
+      }
       return responder(res, 404, { ok: false });
     }
     if (req.method === "GET" || req.method === "HEAD") return servirArchivo(req, res);
@@ -129,4 +176,4 @@ const servidor = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) servidor.listen(PUERTO, () => console.log(`Tienda en el puerto ${PUERTO}`));
-module.exports = { servidor, validar, despacho };
+module.exports = { servidor, validar, validarOpinion, despacho };

@@ -15,13 +15,13 @@
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
 
-  // ---------- 1. Bienvenida: una vez por visita, se va sola a los 2 s ----------
+  // ---------- 1. Bienvenida: una vez por visita; pantalla negra 3 s y sube como telón ----------
   const splash = $("#splash");
   if (sessionStorage.getItem("galmor_visto")) splash.remove();
   else {
     sessionStorage.setItem("galmor_visto", "1");
-    setTimeout(() => splash.classList.add("fuera"), quieto ? 600 : 2000);
-    setTimeout(() => splash.remove(), quieto ? 700 : 2350);
+    setTimeout(() => splash.classList.add("fuera"), quieto ? 900 : 3000);
+    setTimeout(() => splash.remove(), quieto ? 1000 : 3900);
   }
 
   // ---------- 2. Cabecera, filtros y catálogo ----------
@@ -138,7 +138,6 @@
     $("#abrir-buscar").setAttribute("aria-expanded", !caja.hidden);
     if (!caja.hidden) { $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" }); $("#buscar").focus({ preventScroll: true }); }
   };
-  $("#asesoria").href = wsp("Hola Galmor, quiero que me asesoren con mi compra.");
 
   $("#rejilla").addEventListener("click", (e) => {
     const b = e.target.closest("button");
@@ -651,11 +650,66 @@
       <a class="btn btn-cafe" href="#catalogo">Elegir prendas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
-  const opiniones = C.opiniones || [];
-  $("#opiniones").innerHTML = opiniones.length
-    ? opiniones.map((o) => `<div class="opinion"><span class="estrellas">${"★".repeat(o.estrellas || 5)}</span><p>${esc(o.texto)}</p><b>— ${esc(o.nombre)}</b></div>`).join("")
-    : `<p class="opiniones-vacio" style="grid-column:1/-1;text-align:center">¿Ya compraste? Cuéntanos qué te pareció tu pantalón y publicamos tu opinión aquí.</p>`;
-  $("#opinar").href = wsp("Hola Galmor, quiero dejar mi opinión sobre mi compra: ");
+  // ---------- Opiniones: las aprobadas en el panel (servidor) + las escritas en productos.js ----------
+  function pintarOpiniones(lista) {
+    $("#opiniones").innerHTML = lista.length
+      ? lista.slice(0, 9).map((o) => `<div class="opinion"><span class="estrellas">${"★".repeat(o.estrellas || 5)}</span><p>${esc(o.texto)}</p><b>— ${esc(o.nombre)}</b></div>`).join("")
+      : `<p class="opiniones-vacio" style="grid-column:1/-1;text-align:center">¿Ya compraste? Cuéntanos qué te pareció tu pantalón y publicamos tu opinión aquí.</p>`;
+  }
+  pintarOpiniones(C.opiniones || []);
+  fetch("/api/opiniones").then((r) => r.json()).then((d) => pintarOpiniones([...d.opiniones, ...(C.opiniones || [])])).catch(() => {});
+
+  // Ventanas de "Deja tu opinión" y "Mi pedido".
+  $$(".ventana").forEach((v) => v.addEventListener("click", (e) => { if (e.target === v || e.target.dataset.cerrar !== undefined) v.close(); }));
+  async function enviarJSON(url, datos) {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
+    return { ok: r.ok, ...(await r.json().catch(() => ({}))) };
+  }
+  $("#opinar").onclick = () => {
+    $("#form-opinion").reset();
+    $("#form-opinion").hidden = false;
+    $("#gracias-opinion").hidden = true;
+    $("#error-opinion").textContent = "";
+    $("#ventana-opinion").showModal();
+  };
+  $("#form-opinion").onsubmit = async (e) => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    const boton = $("button[type=submit]", e.target);
+    boton.disabled = true;
+    try {
+      const r = await enviarJSON("/api/opiniones", f);
+      if (!r.ok) throw new Error(r.error || "No se pudo enviar. Intenta otra vez.");
+      e.target.hidden = true;
+      $("#gracias-opinion").hidden = false;
+    } catch (err) {
+      $("#error-opinion").textContent = err.message.startsWith("Failed") ? "Sin conexión. Intenta otra vez." : err.message[0].toUpperCase() + err.message.slice(1) + ".";
+    } finally { boton.disabled = false; }
+  };
+
+  const PASOS_PEDIDO = [["nuevo", "Recibido", "Esperamos la captura de tu pago."], ["pagado", "Pagado", "Estamos preparando tu pedido."], ["despachado", "Despachado", "Tu pedido ya salió."]];
+  $("#abrir-seguimiento").onclick = () => {
+    $("#resultado-seguimiento").innerHTML = "";
+    $("#error-seguimiento").textContent = "";
+    $("#ventana-seguimiento").showModal();
+  };
+  $("#form-seguimiento").onsubmit = async (e) => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    $("#error-seguimiento").textContent = "";
+    $("#resultado-seguimiento").innerHTML = "";
+    try {
+      const r = await fetch(`/api/seguimiento?n=${encodeURIComponent(f.n.trim().toUpperCase())}&dni=${encodeURIComponent(f.dni.trim())}`);
+      if (!r.ok) throw new Error(r.status === 404 ? "No encontramos ese pedido. Revisa el número y el DNI." : "Sin conexión. Intenta otra vez.");
+      const d = await r.json();
+      const actual = PASOS_PEDIDO.findIndex(([k]) => k === d.estado);
+      const dia = new Date(d.despacho + "T12:00:00Z").toLocaleDateString("es-PE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+      $("#resultado-seguimiento").innerHTML = `<ol class="seguimiento">${PASOS_PEDIDO.map(([, n, t], i) =>
+        `<li class="${i <= actual ? "hecho" : ""}"><b>${n}</b>${i === actual ? `<small>${t}</small>` : ""}</li>`).join("")}</ol>
+        ${actual < 2 ? `<p class="ventana-sub">Despacho previsto: <b>${dia}</b>${d.envio === "lima" ? " (Lima, motorizado)" : " (agencia a provincia)"}.</p>` : ""}
+        <a class="btn btn-borde" href="${wsp(`Hola Galmor, consulto por mi pedido ${f.n.trim().toUpperCase()}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>`;
+    } catch (err) { $("#error-seguimiento").textContent = err.message.startsWith("Failed") ? "Sin conexión. Intenta otra vez." : err.message; }
+  };
 
   // ---------- Inicio ----------
   $("#wsp-flotante").href = wsp("Hola Galmor, quiero información de sus productos.");

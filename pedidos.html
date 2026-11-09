@@ -7,6 +7,7 @@
   <title>Pedidos — Galmor Textiles</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" sizes="32x32" href="marca/icono-32.png">
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="diseno.css">
   <style>
@@ -23,9 +24,16 @@
     .dato b { display: block; font: 800 34px/1.1 var(--titulo); margin: 4px 0 2px; }
     .dato span { font-size: 13px; color: var(--tinta-2); }
     .dato.azul { background: var(--denim); color: #fff; } .dato.azul small, .dato.azul span { color: rgba(255,255,255,.8); }
-    .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-    .filtros button { min-height: 44px; padding: 0 14px; border: 1px solid var(--linea); background: #fff; border-radius: 22px; font: 600 14px var(--texto); }
-    .filtros button.activa { background: var(--tinta); color: #fff; border-color: var(--tinta); }
+    .filtros-panel, .secciones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .secciones button { min-height: 48px; padding: 0 20px; border: 0; border-bottom: 3px solid transparent; background: none; font: 600 18px var(--texto); text-transform: uppercase; color: var(--tinta-3); cursor: pointer; }
+    .secciones button.activa { color: var(--tinta); border-bottom-color: var(--tinta); }
+    .secciones b { background: #b23a2e; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 13px; margin-left: 4px; }
+    .opinion-panel { background: #fff; border-radius: 12px; border-left: 6px solid #c9c2b4; padding: 16px; margin-bottom: 12px; }
+    .opinion-panel.publicada { border-left-color: var(--denim); }
+    .opinion-panel .estrellas { color: #f5a623; letter-spacing: 2px; }
+    .opinion-panel p { margin: 6px 0; }
+    .filtros-panel button { min-height: 44px; padding: 0 14px; border: 1px solid var(--linea); background: #fff; border-radius: 22px; font: 600 14px var(--texto); }
+    .filtros-panel button.activa { background: var(--tinta); color: #fff; border-color: var(--tinta); }
     .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .acciones .btn { min-height: 46px; font-size: 16px; border-radius: 6px; }
     .pedido { background: #fff; border-radius: 12px; border-left: 6px solid #c9c2b4; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 26px 1fr; gap: 12px; }
@@ -76,7 +84,9 @@
   <main class="panel" id="contenido" hidden>
     <div id="aviso"></div>
     <div class="tablero" id="tablero"></div>
-    <div class="filtros" id="filtros">
+    <nav class="secciones" id="secciones"><button data-s="pedidos" class="activa">Pedidos</button><button data-s="opiniones">Opiniones <b id="n-pendientes" hidden></b></button></nav>
+    <div id="vista-pedidos">
+    <div class="filtros-panel" id="filtros">
       <button data-f="cobrar">Por cobrar</button>
       <button data-f="manana">Pagados · despachar mañana</button>
       <button data-f="pagados">Pagados · todos por despachar</button>
@@ -89,6 +99,11 @@
       <button class="btn btn-borde" id="actualizar">↻ Actualizar</button>
     </div>
     <div id="lista"></div>
+    </div>
+    <div id="vista-opiniones" hidden>
+      <p class="ventana-sub">Los clientes dejan su opinión en la tienda. Solo se publica cuando tocas <b>Publicar</b>.</p>
+      <div id="lista-opiniones"></div>
+    </div>
   </main>
 
   <section id="rotulos"></section>
@@ -102,7 +117,7 @@
     const soles = (n) => "S/ " + n.toFixed(2);
     const nombre = (id) => (C.productos.find((p) => p.id === id) || { nombre: id }).nombre;
     let clave = sessionStorage.getItem("galmor_panel") || "";
-    let pedidos = [], filtro = "cobrar";
+    let pedidos = [], opiniones = [], filtro = "cobrar";
     const seleccion = new Set();
 
     // Fechas en español y hora de Lima: "sábado, 7 de noviembre de 2026, 7:24 p. m."
@@ -125,7 +140,7 @@
     async function cargar() {
       if (!clave) return mostrarEntrada();
       try {
-        pedidos = (await api("/api/panel/pedidos")).pedidos;
+        [pedidos, opiniones] = await Promise.all([api("/api/panel/pedidos").then((d) => d.pedidos), api("/api/panel/opiniones").then((d) => d.opiniones)]);
         sessionStorage.setItem("galmor_panel", clave);
         $("#entrar").hidden = true; $("#contenido").hidden = false;
         pintar();
@@ -178,7 +193,32 @@
         </article>`;
       }).join("") : `<p class="vacio-panel">No hay pedidos en esta lista.</p>`;
       $("#n-sel").textContent = elegidos().length;
+      pintarOpiniones();
     }
+    function pintarOpiniones() {
+      const pendientes = opiniones.filter((o) => !o.ok).length;
+      $("#n-pendientes").hidden = !pendientes;
+      $("#n-pendientes").textContent = pendientes;
+      $("#lista-opiniones").innerHTML = opiniones.length ? opiniones.map((o) => `<article class="opinion-panel ${o.ok ? "publicada" : ""}">
+          <span class="estado">${o.ok ? "Publicada" : "Por revisar"}</span> <span class="estrellas">${"★".repeat(o.estrellas)}</span>
+          <p><b>${esc(o.nombre)}</b> · <small>${esc(fechaHora(o.d))}</small></p><p>${esc(o.texto)}</p>
+          <div class="botones">${o.ok ? `<button data-op="ocultar" data-id="${esc(o.id)}">Ocultar</button>` : `<button class="si" data-op="aprobar" data-id="${esc(o.id)}">✓ Publicar</button>`}
+            <button data-op="borrar" data-id="${esc(o.id)}">Borrar</button></div></article>`).join("")
+        : `<p class="vacio-panel">Todavía no hay opiniones.</p>`;
+    }
+    $("#lista-opiniones").addEventListener("click", async (e) => {
+      const d = e.target.dataset;
+      if (!d.op || (d.op === "borrar" && !confirm("¿Borrar esta opinión para siempre?"))) return;
+      try { await api("/api/panel/opinion", { id: d.id, accion: d.op }); await cargar(); }
+      catch { $("#aviso").innerHTML = `<p class="aviso-panel">No se guardó el cambio. Revisa tu internet y vuelve a intentar.</p>`; }
+    });
+    $("#secciones").addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      document.querySelectorAll("#secciones button").forEach((x) => x.classList.toggle("activa", x === b));
+      $("#vista-pedidos").hidden = b.dataset.s !== "pedidos";
+      $("#vista-opiniones").hidden = b.dataset.s !== "opiniones";
+    });
     function visibles() {
       const m = manana();
       return pedidos.filter((p) => filtro === "todos" || (filtro === "cobrar" && p.estado === "nuevo")

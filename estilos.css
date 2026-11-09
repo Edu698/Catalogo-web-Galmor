@@ -41,18 +41,24 @@ a { color: inherit; }
 .btn-texto { border: 0; background: none; padding: 14px 0; text-decoration: underline; color: var(--tinta-3); width: 100%; min-height: 48px; }
 .ceja { font: 500 12px var(--texto); letter-spacing: .24em; text-transform: uppercase; color: var(--terracota); }
 
-/* 1. Bienvenida */
-.splash { position: fixed; inset: 0; z-index: 100; background: var(--tinta); color: var(--arena); display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center; padding: 24px; transition: opacity .3s ease-out; }
-.splash.fuera { opacity: 0; pointer-events: none; }
-.splash-hola { font: 600 14px var(--texto); letter-spacing: .34em; text-transform: uppercase; }
-.splash-marca { font: 900 86px/.88 var(--titulo); text-transform: uppercase; margin: 18px 0 14px; }
-@media (min-width: 1200px) { .splash-marca { font-size: 160px; } }
-.splash-desde { font: 500 12px var(--texto); letter-spacing: .3em; text-transform: uppercase; color: #9b9384; }
-.splash-barra { width: 120px; height: 3px; background: rgba(239, 232, 220, .2); margin-top: 28px; overflow: hidden; }
-.splash-barra span { display: block; height: 100%; background: var(--terracota); animation: carga 1.8s ease-out forwards; }
-@keyframes carga { from { width: 0; } to { width: 100%; } }
-.splash-marcas { position: absolute; bottom: 36px; display: flex; gap: 14px; align-items: center; }
+/* 1. Bienvenida: pantalla negra, letras que aparecen una a una y sube como telón */
+.splash { position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle at 50% 45%, #1b1b1b, #000 62%); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px;
+  transition: transform .85s cubic-bezier(.75, 0, .2, 1); }
+.splash.fuera { transform: translateY(-100%); pointer-events: none; }
+.splash-hola, .splash-textiles, .splash-desde, .splash-marcas { opacity: 0; animation: aparece .9s ease-out forwards; }
+.splash-hola { font: 400 13px Jost, sans-serif; letter-spacing: .6em; margin-right: -.6em; text-transform: uppercase; color: #bdbdbd; animation-delay: .2s; }
+.splash-marca { display: flex; font: 500 clamp(64px, 17vw, 200px)/1 Jost, sans-serif; letter-spacing: .16em; margin: 22px -.16em 16px 0; }
+.splash-marca span { display: inline-block; opacity: 0; transform: translateY(.35em); filter: blur(10px);
+  animation: letra 1s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(.45s + var(--i) * .1s); }
+.splash-textiles { display: flex; align-items: center; gap: 20px; font: 400 clamp(13px, 1.8vw, 22px) Jost, sans-serif; letter-spacing: .75em;
+  margin-right: -.75em; text-transform: uppercase; animation-delay: 1.25s; }
+.splash-textiles i { display: block; width: 0; height: 1px; background: #fff; animation: linea 1s 1.3s cubic-bezier(.2, .8, .2, 1) forwards; }
+.splash-desde { margin-top: 36px; font: 400 11px Jost, sans-serif; letter-spacing: .4em; text-transform: uppercase; color: #8d8d8d; animation-delay: 1.75s; }
+.splash-marcas { position: absolute; bottom: 40px; display: flex; gap: 14px; align-items: center; animation-delay: 2.05s; }
+@keyframes aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes letra { to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes linea { to { width: clamp(36px, 8vw, 110px); } }
 .splash-marcas b, .pie-sub b { font: 900 18px var(--titulo); letter-spacing: .06em; color: var(--terracota); }
 .splash-marcas em, .pie-sub em { font: italic 600 18px Georgia, serif; }
 .splash-marcas i, .pie-sub i { width: 1px; height: 18px; background: currentColor; opacity: .4; }
@@ -253,7 +259,6 @@ a { color: inherit; }
 /* ---------- Ajustes de estilo de referencia ---------- */
 body { font-size: 14px; }
 h1, h2, h3 { font-weight: 800; }
-.splash { background: var(--negro); }
 .btn { font-weight: 600; font-size: 16px; letter-spacing: .04em; }
 .info .precio { font-family: var(--texto); font-weight: 700; color: var(--terracota); }
 .info h2 { font-weight: 800; }
