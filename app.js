@@ -24,46 +24,152 @@
     setTimeout(() => splash.remove(), quieto ? 700 : 2350);
   }
 
-  // ---------- 2. Pestañas de marca y catálogo ----------
-  const PESTANAS = { todos: "Todos", zoroz: "Zoroz 77", galmor: "Galmor" };
-  let filtro = "todos";
-  function pintarPestanas() {
-    $("#pestanas").innerHTML = Object.entries(PESTANAS)
-      .map(([id, n]) => `<button data-marca="${id}" class="${id === filtro ? "activa" : ""}" aria-pressed="${id === filtro}">${n}</button>`)
-      .join("");
+  // ---------- 2. Cabecera, filtros y catálogo ----------
+  const PESTANAS = { todos: "Todos", galmor: "Galmor", zoroz: "Zoroz 77" };
+  const rango = (n) => (n < 60 ? "Hasta S/ 60" : n <= 75 ? "S/ 60 a S/ 75" : "Más de S/ 75");
+  // Cada grupo del panel "Filtrar por": qué valores tiene cada producto.
+  const GRUPOS = [
+    { k: "marca", n: "Marca", abierto: true, de: (p) => [marcaDe(p)], fijos: Object.keys(PESTANAS).slice(1).map((m) => C.marcas[m]) },
+    { k: "tipo", n: "Tipo de pantalón", abierto: true, de: (p) => [p.tipo] },
+    { k: "color", n: "Color", de: (p) => nombresColor(p) },
+    { k: "talla", n: "Talla", de: (p) => p.tallas },
+    { k: "corte", n: "Corte", de: (p) => [p.ficha.Calce] },
+    { k: "material", n: "Material", de: (p) => [p.ficha.Tela] },
+    { k: "precio", n: "Precio", de: (p) => [rango(p.precio)], fijos: ["Hasta S/ 60", "S/ 60 a S/ 75", "Más de S/ 75"] },
+  ];
+  const elegidos = Object.fromEntries(GRUPOS.map((g) => [g.k, new Set()]));
+  const tono = (c) => C.productos.find((p) => p.colores[c])?.colores[c];
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+  function pintarFiltros() {
+    $("#grupos").innerHTML = GRUPOS.map((g) => {
+      const valores = [...new Set([...(g.fijos || []), ...C.productos.flatMap(g.de)])];
+      const opciones = valores.map((v) => {
+        const n = C.productos.filter((p) => g.de(p).includes(v)).length;
+        const punto = g.k === "color" ? `<i style="background:${tono(v)}"></i>` : "";
+        return `<label><input type="checkbox" data-grupo="${g.k}" value="${esc(v)}" ${elegidos[g.k].has(v) ? "checked" : ""}>${punto}${esc(v)} <small>(${n})</small></label>`;
+      }).join("");
+      return `<details ${g.abierto ? "open" : ""}><summary>${g.n}</summary><div class="opciones opciones-${g.k}">${opciones}</div></details>`;
+    }).join("") + `<button class="btn-texto" id="limpiar-filtros">Limpiar filtros</button>`;
   }
+  function pintarPestanas() {
+    const m = elegidos.marca;
+    const activa = m.size === 1 ? Object.keys(C.marcas).find((k) => m.has(C.marcas[k])) : m.size ? "" : "todos";
+    $("#pestanas").innerHTML = Object.entries(PESTANAS)
+      .map(([id, n]) => `<button data-marca="${id}" class="${id === activa ? "activa" : ""}" aria-pressed="${id === activa}">${n}</button>`)
+      .join("") + `<a href="#descubre">Descubre</a>`;
+  }
+
+  const leerLS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  let favoritos = leerLS("galmor_favoritos", []);
+  const ICONO_BOLSA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg>`;
   function tarjeta(p) {
     const colores = nombresColor(p);
-    const a = modelos(p)[0] || fotoColor(p, colores[0]);
-    const puntos = colores.slice(0, 5).map((c) => `<i style="background:${p.colores[c]}" title="${c}"></i>`).join("");
-    return `<button class="tarjeta" data-id="${p.id}">
-      <span class="tarjeta-foto"><img src="${a}" alt="${p.nombre}" loading="lazy"><img src="${fotoColor(p, colores[0])}" alt="" loading="lazy"></span>
-      <span class="tarjeta-nombre">${p.nombre}</span>
-      <span class="tarjeta-pie"><span class="precio">${soles(p.precio)}</span><span class="n-colores">${colores.length} colores</span></span>
-      <span class="puntos">${puntos}${colores.length > 5 ? `<small>+${colores.length - 5}</small>` : ""}</span>
-    </button>`;
+    // Si se filtró por color, la tarjeta abre en ese color.
+    const c0 = colores.find((c) => elegidos.color.has(c)) || colores[0];
+    const fav = favoritos.includes(p.id);
+    const puntos = colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
+    return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
+      <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
+      <button class="corazon ${fav ? "activo" : ""}" data-fav aria-pressed="${fav}" aria-label="Guardar en favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9-9.2C2 7.6 4 5 6.8 5c2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5 20 5 22 7.6 21 10.8 19.5 15.4 12 20 12 20z"/></svg></button>
+      <div class="tarjeta-info">
+        <button class="tarjeta-nombre" data-ver>${p.nombre}</button>
+        <span class="tarjeta-marca">${marcaDe(p)}</span>
+        <span class="precio">${soles(p.precio)}</span>
+        <div class="puntos">${puntos}${colores.length > 5 ? `<button class="mas" data-ver aria-label="Ver los ${colores.length} colores">+${colores.length - 5}</button>` : ""}</div>
+        <div class="tallas-mini">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
+        <p class="aviso-talla" role="alert"></p>
+        <button class="btn-agregar" data-agregar>${ICONO_BOLSA}Agregar al carrito</button>
+      </div></article>`;
   }
   const tilePronto = () => `<div class="pronto"><small>Próximamente</small><b>Galmor</b>
       <p>Classic Men · Mejor imposible. Sé el primero en saberlo.</p>
       <a class="btn" href="${wsp("Hola Galmor, avísenme cuando llegue la colección Galmor.")}" target="_blank" rel="noopener">Avísame por WhatsApp</a></div>`;
+  const ORDEN = { menor: (a, b) => a.precio - b.precio, mayor: (a, b) => b.precio - a.precio, nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es") };
   function pintarCatalogo() {
-    $("#titulo-catalogo").textContent = filtro === "todos" ? "Nueva colección" : PESTANAS[filtro];
+    const m = elegidos.marca;
+    $("#titulo-catalogo").textContent = m.size === 1 ? [...m][0] : "Nuestra colección";
     const norma = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    const busca = norma($("#buscar").value.trim());
-    const lista = C.productos.filter((p) => (filtro === "todos" || p.marca === filtro)
-      && (!busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${Object.keys(p.colores).join(" ")}`).includes(t))))
-      .map(tarjeta).join("") || (busca ? `<p class="vacio">No encontramos «${$("#buscar").value.replace(/[<>&"]/g, "")}». Prueba con jogger, cargo, jean o bermuda.</p>` : "");
-    $("#rejilla").innerHTML = lista + (filtro !== "zoroz" && !$("#buscar").value.trim() ? tilePronto() : "");
+    const texto = $("#buscar").value.trim(), busca = norma(texto);
+    const lista = C.productos
+      .filter((p) => GRUPOS.every((g) => !elegidos[g.k].size || g.de(p).some((v) => elegidos[g.k].has(v))))
+      .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${nombresColor(p).join(" ")}`).includes(t)));
+    if (ORDEN[$("#orden").value]) lista.sort(ORDEN[$("#orden").value]);
+    // Galmor aún no tiene productos: se muestra el aviso "Próximamente" si no hay otros filtros que lo descarten.
+    const otros = GRUPOS.some((g) => g.k !== "marca" && elegidos[g.k].size) || texto;
+    const pronto = !otros && (!m.size || m.has(C.marcas.galmor));
+    $("#rejilla").innerHTML = lista.map(tarjeta).join("") + (pronto ? tilePronto() : "")
+      || `<p class="vacio">No encontramos productos${texto ? ` para «${esc(texto)}»` : " con esos filtros"}. <button class="btn-texto" data-limpiar>Ver todos</button></p>`;
   }
-  function filtrar(marca) {
-    filtro = marca;
+  function limpiarFiltros() {
+    Object.values(elegidos).forEach((s) => s.clear());
+    $("#buscar").value = "";
+    pintarFiltros();
     pintarPestanas();
     pintarCatalogo();
   }
-  $("#pestanas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) filtrar(b.dataset.marca); });
-  $$("[data-filtro]").forEach((a) => a.addEventListener("click", () => filtrar(a.dataset.filtro)));
+
+  $("#pestanas").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    elegidos.marca.clear();
+    if (b.dataset.marca !== "todos") elegidos.marca.add(C.marcas[b.dataset.marca]);
+    pintarFiltros();
+    pintarPestanas();
+    pintarCatalogo();
+    $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" });
+  });
+  $("#grupos").addEventListener("change", (e) => {
+    const c = e.target;
+    elegidos[c.dataset.grupo][c.checked ? "add" : "delete"](c.value);
+    if (c.dataset.grupo === "marca") pintarPestanas();
+    pintarCatalogo();
+  });
+  $("#grupos").addEventListener("click", (e) => { if (e.target.id === "limpiar-filtros") limpiarFiltros(); });
+  $("#orden").addEventListener("change", pintarCatalogo);
+  $("#btn-filtrar").onclick = () => {
+    const abierto = $("#filtros").classList.toggle("abierto");
+    $("#btn-filtrar").setAttribute("aria-expanded", abierto);
+  };
   $("#buscar").addEventListener("input", pintarCatalogo);
-  $("#rejilla").addEventListener("click", (e) => { const t = e.target.closest(".tarjeta"); if (t) abrirProducto(t.dataset.id); });
+  $("#abrir-buscar").onclick = () => {
+    const caja = $("#buscador");
+    caja.hidden = !caja.hidden;
+    $("#abrir-buscar").setAttribute("aria-expanded", !caja.hidden);
+    if (!caja.hidden) { $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" }); $("#buscar").focus({ preventScroll: true }); }
+  };
+  $("#asesoria").href = wsp("Hola Galmor, quiero que me asesoren con mi compra.");
+
+  $("#rejilla").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b?.dataset.limpiar !== undefined) return limpiarFiltros();
+    const t = e.target.closest(".tarjeta");
+    if (!b || !t) return;
+    const p = producto(t.dataset.id);
+    if (b.dataset.ver !== undefined) return abrirProducto(p.id, slug(t.dataset.color));
+    if (b.dataset.punto) {
+      t.dataset.color = b.dataset.punto;
+      $(".tarjeta-foto img", t).src = fotoColor(p, b.dataset.punto);
+      $$(".puntos [data-punto]", t).forEach((x) => x.classList.toggle("activo", x === b));
+    } else if (b.dataset.fav !== undefined) {
+      favoritos = favoritos.includes(p.id) ? favoritos.filter((x) => x !== p.id) : [...favoritos, p.id];
+      localStorage.setItem("galmor_favoritos", JSON.stringify(favoritos));
+      b.classList.toggle("activo");
+      b.setAttribute("aria-pressed", b.classList.contains("activo"));
+    } else if (b.dataset.talla) {
+      $$(".tallas-mini button", t).forEach((x) => x.classList.toggle("activa", x === b));
+      $(".aviso-talla", t).textContent = "";
+    } else if (b.dataset.agregar !== undefined) {
+      const talla = $(".tallas-mini .activa", t)?.dataset.talla;
+      if (!talla) {
+        const fila = $(".tallas-mini", t);
+        $(".aviso-talla", t).textContent = "Elige tu talla";
+        fila.classList.remove("sacude"); void fila.offsetWidth; fila.classList.add("sacude");
+        return;
+      }
+      agregar(p, t.dataset.color, talla, 1);
+    }
+  });
 
   // ---------- 3. Producto ----------
   const dlg = $("#producto");
@@ -205,8 +311,7 @@
   }
 
   // ---------- 5. Carrito ----------
-  const leer = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
-  let carrito = leer("galmor_carrito", []).filter((i) => producto(i.id));
+  let carrito = leerLS("galmor_carrito", []).filter((i) => producto(i.id));
   const guardar = () => localStorage.setItem("galmor_carrito", JSON.stringify(carrito));
   const subtotal = (items = carrito) => items.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
   const piezas = (items = carrito) => items.reduce((s, i) => s + i.cant, 0);
@@ -537,17 +642,15 @@
   }
 
   // ---------- Packs, "Ver todo", destacado y preguntas ----------
-  const fotosPack = C.productos.map((p) => modelos(p)[0] || fotoColor(p, nombresColor(p)[0]));
+  // Imagen de cada pack: marca/pack-2.webp, pack-3.webp, pack-4.webp (prendas dobladas).
   $("#packs-lista").innerHTML = (C.packs || []).map((k, n) => `<div class="pack ${k.etiqueta === "Más popular" ? "estrella" : ""}">
       ${k.etiqueta ? `<span class="pack-tag">${k.etiqueta}</span>` : ""}
-      <div class="pack-fotos">${fotosPack.slice(n, n + Math.min(k.prendas, 3)).map((f) => `<img src="${f}" alt="" loading="lazy">`).join("")}</div>
+      <img class="pack-foto" src="marca/pack-${Math.min(Math.max(k.prendas, 2), 4)}.webp" alt="" loading="lazy">
       <b>${k.prendas}${n === C.packs.length - 1 ? "+" : ""} prendas</b><span class="pct">−${k.descuento} %</span>
       <small>Mezcla modelos, colores y tallas</small>
-      <a class="btn btn-denim" href="#catalogo">Elegir prendas</a></div>`).join("");
-  $("#ver-todo").onclick = () => filtrar("todos");
+      <a class="btn btn-cafe" href="#catalogo">Elegir prendas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const opiniones = C.opiniones || [];
   $("#opiniones").innerHTML = opiniones.length
     ? opiniones.map((o) => `<div class="opinion"><span class="estrellas">${"★".repeat(o.estrellas || 5)}</span><p>${esc(o.texto)}</p><b>— ${esc(o.nombre)}</b></div>`).join("")
@@ -555,8 +658,6 @@
   $("#opinar").href = wsp("Hola Galmor, quiero dejar mi opinión sobre mi compra: ");
 
   // ---------- Inicio ----------
-  const cinta = "Envío a todo el Perú ★ Lima: pide hoy, llega mañana ★ Precios con IGV ★ Yape · Plin · Transferencia ★";
-  $("#cinta").innerHTML = `<span>${cinta}</span>`.repeat(4);
   $("#wsp-flotante").href = wsp("Hola Galmor, quiero información de sus productos.");
   const ICONOS = {
     Facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z"/>',
@@ -571,6 +672,7 @@
     + `<a href="${wsp("Hola, quiero información sobre cambios y devoluciones.")}" target="_blank" rel="noopener">Cambios y devoluciones</a> · `
     + `<a href="${wsp("Hola, necesito ayuda con mi talla.")}" target="_blank" rel="noopener">Guía de tallas</a> · © ${new Date().getFullYear()} Galmor Textiles`;
 
+  pintarFiltros();
   pintarPestanas();
   pintarCatalogo();
   pintarCarrito();

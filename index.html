@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Galmor Textiles — Hecho en Lima desde 1988</title>
   <meta name="description" content="Pantalones y bermudas Zoroz 77 y Galmor. Hecho en Lima desde 1988. Envío a todo el Perú, precios con IGV.">
-  <meta name="theme-color" content="#1E2A52">
+  <meta name="theme-color" content="#765743">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="marca/portada.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="marca/portada-modelo.webp">
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="secciones.css">
+  <link rel="stylesheet" href="diseno.css">
 </head>
 <body>
   <!-- 1. Bienvenida -->
@@ -23,72 +24,63 @@
     <p class="splash-marcas"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
   </div>
 
-  <!-- 2. Cabecera -->
+  <!-- 2. Barra de beneficios y cabecera -->
+  <div class="barra-top">
+    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>Envíos a todo el Perú</span>
+    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 6.5v11L12 22l9-4.5v-11z"/><path d="m3 6.5 9 4.5 9-4.5M12 11v11M7.5 4.2l9 4.6"/></svg>Despacho ágil</span>
+    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5 5.3 16A8 8 0 1 1 8 18.7z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Te asesoramos en tu compra</span>
+    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M4 3v5h5M20 21v-5h-5"/></svg>Cambios fáciles</span>
+  </div>
   <header class="cab">
     <nav class="pestanas" id="pestanas" aria-label="Marcas"></nav>
-    <a class="logo" href="./" aria-label="Galmor Textiles, inicio">
-      <span>Galmor Textiles</span><small>Taller limeño · 1988</small>
-    </a>
-    <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.8a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/></svg><b>Carrito</b><span id="contador">0</span></button>
+    <a class="logo" href="./" aria-label="Galmor Textiles, inicio"><span>Galmor</span><small>Textiles</small></a>
+    <div class="cab-iconos">
+      <button id="abrir-buscar" aria-label="Buscar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg></button>
+      <a id="asesoria" target="_blank" rel="noopener" aria-label="Te asesoramos por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg></a>
+      <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg><span id="contador">0</span></button>
+    </div>
+    <label class="buscador" id="buscador" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+      <input type="search" id="buscar" placeholder="Buscar: jogger, cargo, jean, bermuda…" autocomplete="off" aria-label="Buscar producto"></label>
   </header>
-
-  <div class="cinta" aria-hidden="true"><div class="cinta-pista" id="cinta"></div></div>
 
   <main>
     <!-- 3. Portada -->
     <section class="hero">
-      <a class="hero-portada" href="#catalogo" aria-label="Ver la nueva colección">
-        <img src="marca/portada.webp" width="1774" height="887" alt="Galmor Textiles: pantalones y bermudas. Comodidad, resistencia y estilo para tu día a día." fetchpriority="high">
-      </a>
+      <img class="hero-foto" src="marca/portada-modelo.webp" width="1600" height="602" alt="Modelo con jean apoyado en una pared crema" fetchpriority="high">
       <div class="hero-texto">
-        <p class="ceja">Nuestra historia</p>
-        <h1>Hecho en Lima desde 1988</h1>
-        <p class="solo-escritorio">Cosemos cada pantalón en nuestro taller: Zoroz 77 para la calle y Galmor para el día a día clásico.</p>
-        <p class="solo-movil">Cosemos cada pantalón en nuestro taller. Del corte a tu puerta, sin intermediarios.</p>
-        <div class="hero-botones">
-          <a class="btn btn-denim solo-movil" href="#catalogo">Ver la colección</a>
-          <a class="btn btn-denim solo-escritorio" href="#catalogo" data-filtro="zoroz">Comprar Zoroz 77</a>
-          <a class="btn btn-borde solo-escritorio" href="#catalogo" data-filtro="galmor">Galmor · Pronto</a>
-        </div>
+        <p class="ceja">Colección de pantalones</p>
+        <h1>El pantalón<br> define<br> tu estilo.</h1>
+        <p>Encuentra el corte, el color y el modelo que van contigo.</p>
+        <a class="btn btn-cafe" href="#catalogo">Explorar colección <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a>
       </div>
     </section>
 
-
-    <!-- Barra de beneficios -->
-    <section class="beneficios" aria-label="Beneficios">
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg><p><b>Envío a todo el Perú</b><small>Lima en motorizado · provincias por agencia</small></p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p><b>Despacho en 24 h</b><small>Lima: pide hoy, llega mañana</small></p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg><p><b>Cambios fáciles</b><small>Coordínalos por WhatsApp</small></p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M3 10h18M7 15h4"/></svg><p><b>Paga como quieras</b><small>Yape · Plin · Transferencia</small></p></div>
-    </section>
-
-    <!-- Lo que nos diferencia -->
-    <section class="valores">
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 18 6M15 3l6 6M9 15l-3 3"/><circle cx="18.5" cy="5.5" r="1"/></svg><h3>Taller propio</h3><p>Cortamos y cosemos en Lima desde 1988. Del taller a tu puerta, sin intermediarios.</p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg><h3>Tallas 28 a 40</h3><p>Corte pensado para el hombre peruano. ¿Dudas con tu talla? Te ayudamos por WhatsApp.</p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Tú eliges tu comprobante.</p></div>
-    </section>
-
-    <!-- 4. Marcas (celular y tablet) -->
-    <section class="marcas">
-      <a class="marca-tile marca-zoroz" href="#catalogo" data-filtro="zoroz"><small>Urban jeans</small><b>Zoroz 77</b></a>
-      <a class="marca-tile marca-galmor" href="#catalogo" data-filtro="galmor"><small>Classic men · Pronto</small><b>Galmor</b></a>
-    </section>
-
-    <!-- 5. Catálogo -->
+    <!-- 4. Catálogo con filtros -->
     <section class="catalogo" id="catalogo">
-      <div class="seccion-cab"><h2 id="titulo-catalogo">Nueva colección</h2><button class="btn btn-borde btn-chico" id="ver-todo">Ver todo</button></div>
-      <label class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-        <input type="search" id="buscar" placeholder="Buscar: jogger, cargo, jean, bermuda…" autocomplete="off" aria-label="Buscar producto"></label>
+      <div class="cat-cab">
+        <div><h2 id="titulo-catalogo">Nuestra colección</h2><p>Descubre pantalones para cada estilo.</p></div>
+        <label class="orden">Ordenar por:<select id="orden">
+          <option value="">Recomendados</option><option value="menor">Precio: menor a mayor</option>
+          <option value="mayor">Precio: mayor a menor</option><option value="nombre">Nombre A–Z</option></select></label>
+      </div>
+      <button class="btn-filtrar" id="btn-filtrar" aria-expanded="false" aria-controls="filtros">Filtrar por</button>
+      <aside class="filtros" id="filtros" aria-label="Filtros"><p class="filtros-titulo">Filtrar por</p><div id="grupos"></div></aside>
       <div class="rejilla" id="rejilla"></div>
     </section>
 
-    <!-- Arma tu pack -->
+    <!-- 5. Arma tu pack -->
     <section class="packs" id="packs">
       <p class="ceja">Más prendas, mejor precio</p>
       <h2>Arma tu pack</h2>
       <p class="packs-sub">Mientras más prendas lleves, menos pagas por cada una. Mezcla modelos, colores y tallas.</p>
       <div class="packs-lista" id="packs-lista"></div>
+    </section>
+
+    <!-- Lo que nos diferencia -->
+    <section class="valores" id="descubre">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 18 6M15 3l6 6M9 15l-3 3"/><circle cx="18.5" cy="5.5" r="1"/></svg><h3>Taller propio</h3><p>Cortamos y cosemos en Lima desde 1988. Del taller a tu puerta, sin intermediarios.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg><h3>Tallas 28 a 40</h3><p>Corte pensado para el hombre peruano. ¿Dudas con tu talla? Te ayudamos por WhatsApp.</p></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Tú eliges tu comprobante.</p></div>
     </section>
 
     <!-- Destacado -->
@@ -132,7 +124,7 @@
   <footer class="pie">
     <p class="pie-lema">Hecho en Lima<br>desde 1988</p>
     <div class="pie-marcas">
-      <div class="logo logo-claro"><span>Galmor Textiles</span><small>Taller limeño · 1988</small></div>
+      <div class="logo logo-claro"><span>Galmor</span><small>Textiles</small></div>
       <p class="pie-sub"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
     </div>
     <div class="redes" id="redes"></div>
