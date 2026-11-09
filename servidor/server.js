@@ -3,6 +3,8 @@
 //   POST /api/pedidos            la tienda registra un pedido (público, validado, sin duplicados)
 //   GET  /api/panel/pedidos      panel: lista de pedidos            (cabecera x-clave)
 //   POST /api/panel/estado       panel: {numero, estado}            (cabecera x-clave)
+//   POST /api/pedidos/imagen?n= la tienda sube la imagen PNG del pedido (una vez, hasta 15 min después)
+//   GET  /pedido/<n>-<clave>.png  imagen del pedido (link del WhatsApp); ?descargar=1 la baja como archivo
 //   GET  /api/seguimiento?n=&dni=  el cliente ve el estado de su pedido (número + DNI)
 //   POST /api/opiniones          el cliente deja una opinión; queda oculta hasta aprobarla
 //   GET  /api/opiniones          opiniones aprobadas (se muestran en la tienda)
@@ -19,6 +21,8 @@ const SITIO = process.env.SITIO || path.join(__dirname, "..");
 const DATOS = process.env.DATOS || "/data";
 const ARCHIVO = path.join(DATOS, "pedidos.json");
 const ARCHIVO_OPINIONES = path.join(DATOS, "opiniones.json");
+const IMAGENES = path.join(DATOS, "imagenes");
+const MAX_IMAGEN = 4 * 1024 * 1024;
 const MAX_PENDIENTES = 200; // Reason: tope de opiniones sin revisar para que nadie llene el disco
 const CLAVE = process.env.PANEL_CLAVE || "";
 const PUERTO = +(process.env.PUERTO || 80);
@@ -87,6 +91,15 @@ function leerCuerpo(req, limite = 12000) {
     req.on("error", mal);
   });
 }
+function leerBinario(req, limite) {
+  return new Promise((ok, mal) => {
+    const partes = [];
+    let largo = 0;
+    req.on("data", (d) => { largo += d.length; if (largo > limite) { mal(new Error("muy grande")); req.destroy(); } else partes.push(d); });
+    req.on("end", () => ok(Buffer.concat(partes)));
+    req.on("error", mal);
+  });
+}
 function claveOk(req) {
   const dada = Buffer.from(String(req.headers["x-clave"] || ""));
   const real = Buffer.from(CLAVE);
@@ -122,6 +135,29 @@ const servidor = http.createServer(async (req, res) => {
         guardar();
       }
       return responder(res, 200, { ok: true }, CORS);
+    }
+    if (ruta === "/api/pedidos/imagen" && req.method === "POST") {
+      const p = pedidos.find((x) => x.n === new URL(req.url, "http://x").searchParams.get("n"));
+      // Reason: solo el pedido recién hecho y sin imagen; así nadie reemplaza ni sube imágenes sueltas.
+      if (!p || p.img || Date.now() - new Date(p.d) > 15 * 60e3) return responder(res, 400, { ok: false });
+      let png;
+      try { png = await leerBinario(req, MAX_IMAGEN); } catch { return responder(res, 413, { ok: false }); }
+      if (png.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") return responder(res, 400, { ok: false });
+      p.img = `${p.n}-${crypto.randomBytes(9).toString("base64url")}`;
+      fs.mkdirSync(IMAGENES, { recursive: true });
+      fs.writeFileSync(path.join(IMAGENES, p.img + ".png"), png);
+      guardar();
+      return responder(res, 200, { ok: true, url: `/pedido/${p.img}.png` });
+    }
+    const img = ruta.match(/^\/pedido\/(GT-\d{6}-[A-Z0-9]{4}-[\w-]{12})\.png$/);
+    if (img && req.method === "GET") {
+      return fs.readFile(path.join(IMAGENES, img[1] + ".png"), (err, datos) => {
+        if (err) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("No encontrado"); }
+        const bajar = new URL(req.url, "http://x").searchParams.has("descargar");
+        res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "private, max-age=86400", "X-Robots-Tag": "noindex",
+          ...(bajar ? { "Content-Disposition": `attachment; filename="pedido-${img[1].slice(0, 14)}.png"` } : {}) });
+        res.end(datos);
+      });
     }
     if (ruta === "/api/seguimiento" && req.method === "GET") {
       const q = new URL(req.url, "http://x").searchParams;

@@ -471,7 +471,6 @@
   });
 
   // ---------- Paso 3: imagen del pedido ----------
-  let pedido = null;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(form));
@@ -489,11 +488,14 @@
       const items = carrito.map((i) => ({ ...i }));
       const salida = despacho(ahora);
       const blob = await imagenPedido(f, numero, ahora, items, salida);
-      const texto = mensajePedido(f, numero, ahora);
-      registrar(f, numero, ahora, items, salida);
-      pedido = { numero, texto, archivo: new File([blob], `pedido-${numero}.png`, { type: "image/png" }) };
-      $("#pedido-img").src = URL.createObjectURL(blob);
-      $("#abrir-chat").href = wsp(texto);
+      // El pedido se guarda en el servidor y la imagen queda en un link que el WhatsApp lleva para ver o descargar.
+      const link = await registrar(f, numero, ahora, items, salida, blob);
+      const texto = mensajePedido(f, numero, ahora) + (link ? `\n\nVer y descargar mi pedido: ${link}` : "");
+      const local = URL.createObjectURL(blob);
+      $("#pedido-img").src = local;
+      $("#enviar-pedido").href = wsp(texto);
+      Object.assign($("#descargar-pedido"), { href: link ? `${link}?descargar=1` : local, download: `pedido-${numero}.png` });
+      $("#sin-link").hidden = !!link;
       carrito = [];
       guardar();
       pintarCarrito();
@@ -505,16 +507,6 @@
       boton.textContent = "Generar mi pedido";
     }
   });
-
-  // Celular: se comparte la imagen directo a WhatsApp. Computadora: se descarga y se abre el chat con el resumen.
-  $("#enviar-imagen").onclick = async () => {
-    const archivo = pedido.archivo;
-    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      try { return await navigator.share({ files: [archivo], text: pedido.texto }); } catch (err) { if (err.name === "AbortError") return; }
-    }
-    Object.assign(document.createElement("a"), { href: URL.createObjectURL(archivo), download: archivo.name }).click();
-    window.open(wsp(pedido.texto), "_blank");
-  };
 
   // Mensaje de WhatsApp: solo el saludo con los datos del cliente; el detalle va en la imagen.
   function mensajePedido(f, numero, fecha) {
@@ -532,23 +524,30 @@
     return { iso: dia.toISOString().slice(0, 10), texto: dia.toLocaleDateString("es-PE", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }) };
   }
 
-  // Registro en la hoja de Google del panel de pedidos (si está configurada en productos.js).
-  function registrar(f, numero, fecha, items, salida) {
-    if (!C.registro) return;
+  // Guarda el pedido en el servidor (panel) y sube su imagen. Devuelve el link de la imagen, o "" si falló.
+  async function registrar(f, numero, fecha, items, salida, imagen) {
+    if (!C.registro) return "";
     const datos = { n: numero, d: fecha.toISOString(), s: salida.iso, x: descuento(items), t: total(items), c: f,
       i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
-    // Reason: "no-cors" + text/plain evita el bloqueo del navegador; la respuesta no se lee.
-    fetch(C.registro, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ accion: "nuevo", pedido: datos }) })
-      .catch(() => {});
+    try {
+      const r = await fetch(C.registro, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "nuevo", pedido: datos }) });
+      if (!r.ok) return "";
+      const img = await fetch(`${C.registro}/imagen?n=${encodeURIComponent(numero)}`, { method: "POST", headers: { "Content-Type": "image/png" }, body: imagen });
+      return img.ok ? new URL((await img.json()).url, location.href).href : "";
+    } catch { return ""; }
   }
 
   const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 
   async function imagenPedido(f, numero, fecha, items, salida) {
-    const FT = '"Barlow Condensed"', FX = '"Inter"';
-    await Promise.all([`800 40px ${FT}`, `800 40px ${FT}`, `500 20px ${FX}`, `600 20px ${FX}`, `400 20px ${FX}`].map((x) => document.fonts.load(x)));
-    const fotos = await Promise.all(items.map((i) => cargarImg(fotoColor(producto(i.id), i.color))));
+    const F = '"Jost"';
+    await Promise.all([`400 20px ${F}`, `500 20px ${F}`, `600 20px ${F}`, `700 20px ${F}`].map((x) => document.fonts.load(x)));
+    const [fotos, logos] = await Promise.all([
+      Promise.all(items.map((i) => cargarImg(fotoColor(producto(i.id), i.color)))),
+      Promise.all(["marca/logo-galmor.webp", "marca/logo-zoroz77.webp"].map(cargarImg)),
+    ]);
     const W = 1080, P = 56, FILA = 196;
+    const NEGRO = "#111111", CREMA = "#FAF6F1", ARENA = "#EFE6DC", GRIS = "#6B6B6B";
     const cv = document.createElement("canvas");
     const x = cv.getContext("2d");
 
@@ -559,7 +558,7 @@
       ["Comprobante", `${f.comprobante} · ${f.pago}`], ...envio, ["Despacho", salida.texto]];
 
     // Medidas: se ajusta el alto a la cantidad de datos y prendas.
-    x.font = `400 24px ${FX}`;
+    x.font = `400 24px ${F}`;
     const partir = (texto, ancho) => {
       const lineas = [""];
       for (const palabra of String(texto).split(" ")) {
@@ -572,7 +571,7 @@
     const datosLineas = datos.map(([k, v]) => [k, partir(v, W - P - 300)]);
     const altoDatos = datosLineas.reduce((s, [, l]) => s + l.length * 34 + 12, 0);
     const dto = descuento(items);
-    const H = 300 + altoDatos + 40 + items.length * FILA + 330 + 120 + (dto ? 80 : 0);
+    const H = 300 + altoDatos + 40 + items.length * FILA + 330 + 140 + (dto ? 80 : 0);
     cv.width = W;
     cv.height = H;
 
@@ -581,43 +580,61 @@
     };
     const caja = (px, py, w, h, color) => { x.fillStyle = color; x.fillRect(px, py, w, h); };
 
-    caja(0, 0, W, H, "#FFFFFF");
-    // Cabecera
-    caja(0, 0, W, 250, "#1E2A52");
-    texto("GALMOR TEXTILES", P, 104, `800 76px ${FT}`, "#FFFFFF", "left", "2px");
-    texto("DESDE 1988 · LIMA", P, 146, `500 20px ${FX}`, "#AEB6D0", "left", "6px");
-    texto(`PEDIDO N.° ${numero}`, P, 212, `800 40px ${FT}`, "#FFFFFF", "left", "1px");
+    caja(0, 0, W, H, CREMA);
+    // Marca de agua: logos de Galmor y Zoroz 77 en diagonal, muy suaves.
+    x.save();
+    x.globalAlpha = 0.05;
+    x.filter = "grayscale(1)";
+    x.translate(W / 2, H / 2);
+    x.rotate(-Math.PI / 7);
+    for (let fila = -6; fila <= 6; fila++) {
+      for (let col = -2; col <= 2; col++) {
+        const logo = logos[(fila + col + 100) % 2];
+        if (!logo) continue;
+        const ancho = 300, alto = ancho * logo.height / logo.width;
+        x.drawImage(logo, col * 520 + (fila % 2) * 260 - ancho / 2, fila * 260 - alto / 2, ancho, alto);
+      }
+    }
+    x.restore();
+
+    // Cabecera negra con el logo de la tienda
+    caja(0, 0, W, 250, NEGRO);
+    texto("GALMOR", P, 100, `500 64px ${F}`, "#FFFFFF", "left", "22px");
+    caja(P, 128, 46, 1.5, "#BDBDBD");
+    texto("TEXTILES", P + 62, 136, `400 20px ${F}`, "#FFFFFF", "left", "12px");
+    texto("ZOROZ 77 · GALMOR", W - P, 100, `500 20px ${F}`, "#BDBDBD", "right", "4px");
+    texto(`PEDIDO N.° ${numero}`, P, 214, `600 36px ${F}`, "#FFFFFF", "left", "1px");
     const fechaTxt = `${fecha.toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric" })} · ${fecha.toLocaleTimeString("es-PE", { timeZone: "America/Lima", hour: "numeric", minute: "2-digit", hour12: true })}`;
-    texto(fechaTxt, W - P, 212, `500 22px ${FX}`, "#FFFFFF", "right");
+    texto(fechaTxt, W - P, 214, `400 22px ${F}`, "#FFFFFF", "right");
 
     // Datos del cliente
     let y = 306;
     for (const [k, lineas] of datosLineas) {
-      texto(k.toUpperCase(), P, y, `600 18px ${FX}`, "#6B6B6B", "left", "2px");
-      lineas.forEach((l, j) => texto(l, 300, y + j * 34, `400 24px ${FX}`, "#1E2A52"));
+      texto(k.toUpperCase(), P, y, `500 17px ${F}`, GRIS, "left", "3px");
+      lineas.forEach((l, j) => texto(l, 300, y + j * 34, `400 24px ${F}`, NEGRO));
       y += lineas.length * 34 + 12;
     }
     y += 8;
-    caja(P, y, W - 2 * P, 3, "#1E2A52");
+    caja(P, y, W - 2 * P, 2, NEGRO);
     y += 28;
 
     // Prendas
     items.forEach((i, k) => {
       const p = producto(i.id), foto = fotos[k];
-      caja(P, y, 128, 160, "#F2F2F2");
+      caja(P, y, 128, 160, ARENA);
       if (foto) {
         const esc = Math.max(128 / foto.width, 160 / foto.height);
         const sw = 128 / esc, sh = 160 / esc;
         x.drawImage(foto, (foto.width - sw) / 2, 0, sw, sh, P, y, 128, 160);
       }
+      x.font = `600 28px ${F}`;
       const nombre = partir(p.nombre.toUpperCase(), 560);
-      x.font = `800 30px ${FT}`;
-      nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `800 30px ${FT}`, "#1E2A52"));
+      nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `600 28px ${F}`, NEGRO));
       const yDet = y + 34 + Math.min(nombre.length, 2) * 32 + 8;
-      texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${FX}`, "#333333");
-      texto(soles(p.precio * i.cant), W - P, y + 40, `800 34px ${FT}`, "#1E2A52", "right");
+      texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${F}`, "#333333");
+      texto(soles(p.precio * i.cant), W - P, y + 40, `600 32px ${F}`, NEGRO, "right");
       y += FILA;
-      caja(P, y - 18, W - 2 * P, 1, "#E5E5E5");
+      caja(P, y - 18, W - 2 * P, 1, "#E2D8CD");
     });
 
     // Totales
@@ -625,18 +642,19 @@
     y += 22;
     const lineasTotal = dto ? [["Subtotal", soles(subtotal(items))], [`Pack −${pack(items).descuento} %`, `−${soles(dto)}`]] : [];
     for (const [k, v] of [...lineasTotal, ["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
-      texto(k, W - 380, y, `400 24px ${FX}`, "#333333");
-      texto(v, W - P, y, `500 24px ${FX}`, "#333333", "right");
+      texto(k, W - 380, y, `400 24px ${F}`, "#333333");
+      texto(v, W - P, y, `500 24px ${F}`, "#333333", "right");
       y += 40;
     }
-    caja(P, y, W - 2 * P, 130, "#F4F0E9");
-    texto("TOTAL", P + 28, y + 86, `800 48px ${FT}`, "#1E2A52", "left", "1px");
-    texto(soles(t), W - P - 28, y + 92, `800 84px ${FT}`, "#3F4A2A", "right");
-    texto(`${piezas(items)} prenda(s) · precios con IGV`, P + 28, y + 116, `400 18px ${FX}`, "#6B6B6B");
+    caja(P, y, W - 2 * P, 130, ARENA);
+    texto("TOTAL", P + 28, y + 84, `600 44px ${F}`, NEGRO, "left", "4px");
+    texto(soles(t), W - P - 28, y + 90, `700 78px ${F}`, NEGRO, "right");
+    texto(`${piezas(items)} prenda(s) · precios con IGV`, P + 28, y + 116, `400 18px ${F}`, GRIS);
 
     // Pie
-    caja(0, H - 120, W, 120, "#3F4A2A");
-    texto("ENVÍA ESTA IMAGEN Y LA CAPTURA DE TU PAGO AL 983 573 288", W / 2, H - 50, `800 34px ${FT}`, "#FFFFFF", "center", "1px");
+    caja(0, H - 140, W, 140, NEGRO);
+    texto("ENVÍA TU CAPTURA DE PAGO AL 983 573 288", W / 2, H - 78, `600 32px ${F}`, "#FFFFFF", "center", "2px");
+    texto("Gracias por comprar en Galmor Textiles · Hecho en Lima desde 1988", W / 2, H - 40, `400 19px ${F}`, "#BDBDBD", "center");
     return new Promise((ok) => cv.toBlob(ok, "image/png"));
   }
 

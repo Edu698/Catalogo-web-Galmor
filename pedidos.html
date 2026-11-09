@@ -188,6 +188,7 @@
               ${p.estado === "pagado" ? `<button data-estado="despachado" data-n="${esc(p.n)}">Marcar despachado</button><button data-estado="nuevo" data-n="${esc(p.n)}">No pagó (volver)</button>` : ""}
               ${p.estado === "despachado" ? `<button data-estado="pagado" data-n="${esc(p.n)}">Volver a pagados</button>` : ""}
               ${p.estado !== "nuevo" ? `<a href="https://wa.me/51${esc(c.celular)}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+              ${p.img ? `<a href="/pedido/${esc(p.img)}.png" target="_blank" rel="noopener">Ver imagen</a>` : ""}
             </div>
           </div>
         </article>`;
