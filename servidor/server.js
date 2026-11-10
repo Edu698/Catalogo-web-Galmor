@@ -42,6 +42,9 @@ let opiniones = leer(ARCHIVO_OPINIONES);
 // Reason: la primera vez el catálogo sale de catalogo-inicial.json (precios del Excel); luego se edita desde el panel.
 const inicial = leer(path.join(__dirname, "catalogo-inicial.json"));
 let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : inicial;
+// 2026-11-10: productos que no estaban en el Excel de stock; sus fotos pasaron a otro producto (ver productos.js).
+const FUSIONADOS = { "jean-semi-pitillo": "jean-clasico-delgado", "doble-cargo": "pantalon-carbon", "bermuda-cargo": "bermuda-torero" };
+catalogo = catalogo.filter((p) => !(FUSIONADOS[p.codigo] && catalogo.some((x) => x.codigo === FUSIONADOS[p.codigo])));
 // Costo vacío: se completa con el del Excel de stock (P. costo). Un costo ya escrito en el panel no se toca.
 for (const p of catalogo) if (p.costo === null) p.costo = inicial.find((x) => x.codigo === p.codigo)?.costo ?? null;
 function escribir(archivo, datos) {

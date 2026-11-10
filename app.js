@@ -10,8 +10,8 @@
   // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
   const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
   const V = C.versionFotos ? `?v=${C.versionFotos}` : "";
-  const fotoColor = (p, color) => (p.sinFoto ? "marca/sin-foto.webp" : `fotos/${p.id}/${slug(color)}.webp${V}`);
-  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.webp${V}`);
+  const fotoColor = (p, color) => (p.sinFoto ? "marca/sin-foto.webp" : `fotos/${p.carpeta}/${slug(color)}.webp${V}`);
+  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.carpeta}/modelo-${i + 1}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
 
@@ -30,7 +30,7 @@
     const { productos } = await (await fetch("/api/catalogo")).json();
     C.productos = productos.map((x) => {
       const d = (C.detalles || []).find((y) => y.id === x.codigo);
-      return { ...x, id: x.codigo, precio: x.precios[0], modelos: d?.modelos || 0, descripcion: d?.descripcion || "",
+      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, precio: x.precios[0], modelos: d?.modelos || 0, descripcion: d?.descripcion || "",
         colores: d?.colores || { [SIN_COLOR]: "#cfc6bc" }, sinFoto: !d,
         ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
     });

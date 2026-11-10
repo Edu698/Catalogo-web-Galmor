@@ -31,6 +31,7 @@ window.CATALOGO = {
   marcas: { zoroz: "Zoroz 77", galmor: "Galmor" },
 
   // Fotos y textos de cada producto, por código (el mismo código del panel y del Excel).
+  // fotos: carpeta de fotos cuando no se llama igual que el código.
   // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
   detalles: [
     {
@@ -45,14 +46,12 @@ window.CATALOGO = {
       ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
-      id: "jean-semi-pitillo", modelos: 2,
-      descripcion: "Denim strech de la línea Black Collection: cómodo desde el primer uso, corte semi pitillo y 10 lavados distintos.",
+      id: "jean-clasico-delgado", fotos: "jean-semi-pitillo", modelos: 2, // fotos guardadas en fotos/jean-semi-pitillo/
       colores: {
         "Grafito azul": "#1b2440", "Madera": "#2c3a58", "Azul cristal": "#2e4a7c", "Azul acero": "#2b4f8f",
         "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
         "Plomo oscuro": "#2a2c31", "Negro": "#141416",
       },
-      ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
       id: "jogger-cargo", modelos: 0,
@@ -64,24 +63,20 @@ window.CATALOGO = {
       ficha: { "Tela": "Paper touch", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "doble-cargo", modelos: 0,
-      descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
+      id: "pantalon-carbon", fotos: "doble-cargo", modelos: 0, // fotos guardadas en fotos/doble-cargo/
       colores: {
         "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
         "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
       },
-      ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "bermuda-cargo", modelos: 0,
-      descripcion: "Fresca para el verano: tela paper touch, cintura elástica con cordón y bolsillos cargo. 13 colores.",
+      id: "bermuda-torero", fotos: "bermuda-cargo", modelos: 0, // fotos guardadas en fotos/bermuda-cargo/
       colores: {
         "Verde arena": "#5a5f50", "Verde militar": "#2f3229", "Beige": "#c8b296", "Caqui": "#bfa27c",
         "Hueso": "#e3d9cf", "Blanco": "#f3f3f3", "Cemento": "#8e9a92", "Plomo plata": "#8f93a3",
         "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
         "Negro": "#161616",
       },
-      ficha: { "Tela": "Paper touch", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],
 };
