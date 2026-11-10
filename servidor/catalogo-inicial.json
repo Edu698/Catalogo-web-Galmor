@@ -1,0 +1,489 @@
+[
+ {
+  "codigo": "drill-clasico",
+  "nombre": "Pantalón Drill Clásico",
+  "marca": "zoroz",
+  "tipo": "Drill",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Drill delgado",
+  "costo": null,
+  "precios": [
+   60,
+   55,
+   50,
+   45
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "jogger-cargo",
+  "nombre": "Pantalón Jogger Cargo",
+  "marca": "zoroz",
+  "tipo": "Jogger",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Tacto papel",
+  "costo": null,
+  "precios": [
+   65,
+   60,
+   55,
+   50
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-torero",
+  "nombre": "Bermuda Torero",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Tacto papel",
+  "costo": null,
+  "precios": [
+   50,
+   45,
+   40,
+   35
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "jean-clasico-grueso",
+  "nombre": "Pantalón Jean Clásico Grueso",
+  "marca": "zoroz",
+  "tipo": "Jean",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim grueso",
+  "costo": null,
+  "precios": [
+   60,
+   55,
+   50,
+   45
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "drill-tri-cargo",
+  "nombre": "Pantalón Drill Tri Cargo con Elástico y Cierre",
+  "marca": "zoroz",
+  "tipo": "Cargo",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Drill",
+  "costo": null,
+  "precios": [
+   85,
+   80,
+   75,
+   70
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-jean-sin-basta",
+  "nombre": "Bermuda Jean Sin Basta",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim",
+  "costo": null,
+  "precios": [
+   50,
+   45,
+   40,
+   35
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "pantalon-carbon",
+  "nombre": "Pantalón Carbón",
+  "marca": "zoroz",
+  "tipo": "Cargo",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Carbón",
+  "costo": null,
+  "precios": [
+   85,
+   80,
+   75,
+   70
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-jean-clasico",
+  "nombre": "Bermuda Jean Clásico",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim",
+  "costo": null,
+  "precios": [
+   50,
+   45,
+   40,
+   35
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-jean-rasgado",
+  "nombre": "Bermuda Jean Moda Rasgado",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim",
+  "costo": null,
+  "precios": [
+   50,
+   45,
+   40,
+   35
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "short-corto",
+  "nombre": "Short Corto",
+  "marca": "zoroz",
+  "tipo": "Short",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "",
+  "costo": null,
+  "precios": [
+   55,
+   50,
+   45,
+   40
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "jean-clasico-delgado",
+  "nombre": "Pantalón Jean Clásico Delgado",
+  "marca": "zoroz",
+  "tipo": "Jean",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim delgado",
+  "costo": null,
+  "precios": [
+   60,
+   55,
+   50,
+   45
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "tactico-cargo",
+  "nombre": "Pantalón Táctico Cargo",
+  "marca": "zoroz",
+  "tipo": "Cargo",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "",
+  "costo": null,
+  "precios": [
+   85,
+   80,
+   75,
+   70
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-torero-drill",
+  "nombre": "Bermuda Torero Drill",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Drill",
+  "costo": null,
+  "precios": [
+   50,
+   45,
+   40,
+   35
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "drill-semi-pitillo",
+  "nombre": "Pantalón Drill Strech Semi Pitillo",
+  "marca": "zoroz",
+  "tipo": "Drill",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Drill strech",
+  "costo": null,
+  "precios": [
+   65,
+   60,
+   55,
+   50
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "drill-nino",
+  "nombre": "Pantalón Drill Niño",
+  "marca": "zoroz",
+  "tipo": "Drill",
+  "publico": "Niño",
+  "tallas": [
+   "2",
+   "4",
+   "6",
+   "8",
+   "10",
+   "12",
+   "14",
+   "16"
+  ],
+  "tela": "Drill",
+  "costo": null,
+  "precios": [
+   60,
+   55,
+   50,
+   45
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 0,
+  "web": true
+ },
+ {
+  "codigo": "jean-semi-pitillo",
+  "nombre": "Pantalón Jean Strech Semi Pitillo",
+  "marca": "zoroz",
+  "tipo": "Jean",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Denim strech",
+  "costo": null,
+  "precios": [
+   79.9,
+   79.9,
+   79.9,
+   79.9
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "doble-cargo",
+  "nombre": "Pantalón Doble Cargo",
+  "marca": "zoroz",
+  "tipo": "Cargo",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Carbón",
+  "costo": null,
+  "precios": [
+   74.9,
+   74.9,
+   74.9,
+   74.9
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ },
+ {
+  "codigo": "bermuda-cargo",
+  "nombre": "Bermuda Cargo Cintura Elástica",
+  "marca": "zoroz",
+  "tipo": "Bermuda",
+  "publico": "Adulto",
+  "tallas": [
+   "28",
+   "30",
+   "32",
+   "34",
+   "36",
+   "38",
+   "40"
+  ],
+  "tela": "Tacto papel",
+  "costo": null,
+  "precios": [
+   54.9,
+   54.9,
+   54.9,
+   54.9
+  ],
+  "recargoMedia": 5,
+  "recargoExtra": 10,
+  "web": true
+ }
+]

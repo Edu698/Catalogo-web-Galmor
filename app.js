@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const C = window.CATALOGO;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -10,7 +10,7 @@
   // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
   const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
   const V = C.versionFotos ? `?v=${C.versionFotos}` : "";
-  const fotoColor = (p, color) => `fotos/${p.id}/${slug(color)}.webp${V}`;
+  const fotoColor = (p, color) => (p.sinFoto ? "marca/sin-foto.webp" : `fotos/${p.id}/${slug(color)}.webp${V}`);
   const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.id}/modelo-${i + 1}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
@@ -24,6 +24,29 @@
     setTimeout(() => splash.remove(), quieto ? 1000 : 3900);
   }
 
+  // ---------- Catálogo: nombres, tallas y precios vienen del servidor (panel); fotos y colores de productos.js ----------
+  const SIN_COLOR = "Color a coordinar";
+  try {
+    const { productos } = await (await fetch("/api/catalogo")).json();
+    C.productos = productos.map((x) => {
+      const d = (C.detalles || []).find((y) => y.id === x.codigo);
+      return { ...x, id: x.codigo, precio: x.precios[0], modelos: d?.modelos || 0, descripcion: d?.descripcion || "",
+        colores: d?.colores || { [SIN_COLOR]: "#cfc6bc" }, sinFoto: !d,
+        ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
+    });
+  } catch {
+    C.productos = [];
+    $("#rejilla").innerHTML = `<p class="vacio">No se pudo cargar el catálogo. Revisa tu internet y recarga la página.</p>`;
+  }
+
+  // Precio por talla y cantidad. Cant. 1, 3, 6 y 12 son de talla chica (28-34, niño 2-8);
+  // la talla media (36, niño 10-16) y la extra (38-40) suman su recargo. La cantidad cuenta todas las prendas del carrito.
+  const NIVELES = [1, 3, 6, 12];
+  const grupoTalla = (p, t) => (p.publico === "Niño" ? (+t >= 10 ? "media" : "chica") : +t >= 38 ? "extra" : +t === 36 ? "media" : "chica");
+  const recargo = (p, t) => ({ chica: 0, media: p.recargoMedia, extra: p.recargoExtra })[grupoTalla(p, t)] || 0;
+  const nivel = (n) => NIVELES.findLastIndex((k) => n >= k);
+  const precioUnit = (p, t, n = 1) => p.precios[nivel(n)] + (t ? recargo(p, t) : 0);
+
   // ---------- 2. Cabecera, filtros y catálogo ----------
   const PESTANAS = { todos: "Todos", galmor: "Galmor", zoroz: "Zoroz 77" };
   const rango = (n) => (n < 60 ? "Hasta S/ 60" : n <= 75 ? "S/ 60 a S/ 75" : "Más de S/ 75");
@@ -31,10 +54,10 @@
   const GRUPOS = [
     { k: "marca", n: "Marca", abierto: true, de: (p) => [marcaDe(p)], fijos: Object.keys(PESTANAS).slice(1).map((m) => C.marcas[m]) },
     { k: "tipo", n: "Tipo de pantalón", abierto: true, de: (p) => [p.tipo] },
-    { k: "color", n: "Color", de: (p) => nombresColor(p) },
+    { k: "color", n: "Color", de: (p) => (p.sinFoto ? [] : nombresColor(p)) },
     { k: "talla", n: "Talla", de: (p) => p.tallas },
-    { k: "corte", n: "Corte", de: (p) => [p.ficha.Calce] },
-    { k: "material", n: "Material", de: (p) => [p.ficha.Tela] },
+    { k: "corte", n: "Corte", de: (p) => (p.ficha.Calce ? [p.ficha.Calce] : []) },
+    { k: "material", n: "Material", de: (p) => (p.ficha.Tela ? [p.ficha.Tela] : []) },
     { k: "precio", n: "Precio", de: (p) => [rango(p.precio)], fijos: ["Hasta S/ 60", "S/ 60 a S/ 75", "Más de S/ 75"] },
   ];
   const elegidos = Object.fromEntries(GRUPOS.map((g) => [g.k, new Set()]));
@@ -68,7 +91,7 @@
     // Si se filtró por color, la tarjeta abre en ese color.
     const c0 = colores.find((c) => elegidos.color.has(c)) || colores[0];
     const fav = favoritos.includes(p.id);
-    const puntos = colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
+    const puntos = p.sinFoto ? "" : colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
     return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
       <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
       <button class="corazon ${fav ? "activo" : ""}" data-fav aria-pressed="${fav}" aria-label="Guardar en favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9-9.2C2 7.6 4 5 6.8 5c2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5 20 5 22 7.6 21 10.8 19.5 15.4 12 20 12 20z"/></svg></button>
@@ -157,6 +180,7 @@
       b.setAttribute("aria-pressed", b.classList.contains("activo"));
     } else if (b.dataset.talla) {
       $$(".tallas-mini button", t).forEach((x) => x.classList.toggle("activa", x === b));
+      $(".precio", t).textContent = soles(precioUnit(p, b.dataset.talla));
       $(".aviso-talla", t).textContent = "";
     } else if (b.dataset.agregar !== undefined) {
       const talla = $(".tallas-mini .activa", t)?.dataset.talla;
@@ -193,9 +217,9 @@
           <h2>${p.nombre}</h2>
           <p class="precio">${soles(p.precio)}</p>
           <p class="igv">Precio incluye IGV</p>
-          <p class="desc">${p.descripcion}</p>
+          ${p.descripcion ? `<p class="desc">${p.descripcion}</p>` : ""}
           <p class="rotulo"><span>Color: <b class="nombre-color"></b></span></p>
-          <div class="muestras">${colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" aria-label="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
+          <div class="muestras" ${p.sinFoto ? "hidden" : ""}>${colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" aria-label="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
           <div class="tallas-bloque">
             <p class="rotulo"><span>Talla</span></p>
             <div class="tallas">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
@@ -204,7 +228,7 @@
           <p class="rotulo"><span>Cantidad</span></p>
           <div class="cantidad"><button data-d="-1" aria-label="Menos">−</button><span class="cant">1</span><button data-d="1" aria-label="Más">+</button></div>
           <button class="btn btn-denim agregar">Agregar al carrito · ${soles(p.precio)}</button>
-          <div class="envio-nota"><b>Lima: pide hoy, llega mañana</b>Pedidos hasta las 6 p.m. Provincias: 2 a 4 días por Shalom u Olva.</div>
+          <div class="envio-nota"><b>Lima: pide hoy, llega mañana</b>Pedidos antes de las 5 p.m. Provincias: 2 a 4 días por Shalom u Olva.</div>
           <div class="ficha"><h3>Ficha técnica</h3><dl>${ficha}<div><dt>Tallas</dt><dd>${p.tallas.join(" · ")}</dd></div></dl></div>
         </div>
       </div>
@@ -247,6 +271,9 @@
       if (t.dataset.talla) {
         sel.talla = t.dataset.talla;
         $$(".tallas button", dlg).forEach((b) => b.classList.toggle("activa", b === t));
+        const pu = soles(precioUnit(p, sel.talla));
+        $(".info .precio", dlg).textContent = pu;
+        $$(".agregar", dlg).forEach((b) => (b.textContent = `Agregar al carrito · ${pu}`));
         $(".aviso-talla", dlg).textContent = "";
       }
       if (t.dataset.d) {
@@ -312,15 +339,16 @@
   // ---------- 5. Carrito ----------
   let carrito = leerLS("galmor_carrito", []).filter((i) => producto(i.id));
   const guardar = () => localStorage.setItem("galmor_carrito", JSON.stringify(carrito));
-  const subtotal = (items = carrito) => items.reduce((s, i) => s + producto(i.id).precio * i.cant, 0);
   const piezas = (items = carrito) => items.reduce((s, i) => s + i.cant, 0);
-  // Pack: el mayor descuento cuyo mínimo de prendas se alcanza (se mezclan modelos, colores y tallas).
-  const pack = (items = carrito) => [...(C.packs || [])].reverse().find((k) => piezas(items) >= k.prendas);
-  const descuento = (items = carrito) => Math.round(subtotal(items) * (pack(items)?.descuento || 0)) / 100;
-  const total = (items = carrito) => Math.round((subtotal(items) - descuento(items)) * 100) / 100;
+  // Precio de cada prenda según su talla y la cantidad total del carrito (se mezclan modelos, colores y tallas).
+  const unitario = (i, items = carrito) => precioUnit(producto(i.id), i.talla, piezas(items));
+  const subtotal = (items = carrito) => items.reduce((s, i) => s + precioUnit(producto(i.id), i.talla) * i.cant, 0);
+  const total = (items = carrito) => Math.round(items.reduce((s, i) => s + unitario(i, items) * i.cant, 0) * 100) / 100;
+  const descuento = (items = carrito) => Math.round((subtotal(items) - total(items)) * 100) / 100;
+  const pack = (items = carrito) => NIVELES[nivel(piezas(items))];
   function siguientePack(items = carrito) {
-    const k = (C.packs || []).find((x) => piezas(items) < x.prendas);
-    return k ? `Agrega ${k.prendas - piezas(items)} prenda(s) más y ahorra ${k.descuento} %.` : "";
+    const k = NIVELES.find((x) => piezas(items) < x);
+    return k ? `Lleva ${k - piezas(items)} prenda(s) más y paga menos por cada una.` : "";
   }
   const base = (t) => Math.round((t / 1.18) * 100) / 100; // Op. gravada; IGV = total − op. gravada
 
@@ -350,12 +378,12 @@
         <div><b>${p.nombre}</b><small>${marcaDe(p)} · ${i.color} · Talla ${i.talla}</small>
           <div class="cantidad"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button><span>${i.cant}</span><button data-k="${k}" data-d="1" aria-label="Más">+</button></div>
           <button class="quitar" data-quitar="${k}">Quitar</button></div>
-        <span class="precio">${soles(p.precio * i.cant)}</span></div>`;
+        <span class="precio">${soles(unitario(i) * i.cant)}</span></div>`;
     }).join("");
     const t = total(), b = base(t), dto = descuento();
     $("#carrito-resumen").innerHTML = `<div class="resumen">
         ${dto ? `<div><span>Subtotal</span><span>${soles(subtotal())}</span></div>
-        <div class="descuento"><span>Pack ${pack().prendas}+ prendas (−${pack().descuento} %)</span><span>−${soles(dto)}</span></div>` : ""}
+        <div class="descuento"><span>Precio por ${pack()}+ prendas</span><span>−${soles(dto)}</span></div>` : ""}
         <div><span>Op. gravada</span><span>${soles(b)}</span></div>
         <div><span>IGV (18 %)</span><span>${soles(t - b)}</span></div>
         <div class="total"><span>Total</span><span>${soles(t)}</span></div>
@@ -528,7 +556,7 @@
   async function registrar(f, numero, fecha, items, salida, imagen) {
     if (!C.registro) return "";
     const datos = { n: numero, d: fecha.toISOString(), s: salida.iso, x: descuento(items), t: total(items), c: f,
-      i: items.map((i) => [i.id, i.color, i.talla, i.cant, producto(i.id).precio]) };
+      i: items.map((i) => [i.id, i.color, i.talla, i.cant, unitario(i, items)]) };
     try {
       const r = await fetch(C.registro, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "nuevo", pedido: datos }) });
       if (!r.ok) return "";
@@ -632,7 +660,7 @@
       nombre.slice(0, 2).forEach((l, j) => texto(l, P + 156, y + 34 + j * 32, `600 28px ${F}`, NEGRO));
       const yDet = y + 34 + Math.min(nombre.length, 2) * 32 + 8;
       texto(`${marcaDe(p)} · ${i.color} · Talla ${i.talla} · x${i.cant}`, P + 156, yDet, `400 22px ${F}`, "#333333");
-      texto(soles(p.precio * i.cant), W - P, y + 40, `600 32px ${F}`, NEGRO, "right");
+      texto(soles(unitario(i, items) * i.cant), W - P, y + 40, `600 32px ${F}`, NEGRO, "right");
       y += FILA;
       caja(P, y - 18, W - 2 * P, 1, "#E2D8CD");
     });
@@ -640,7 +668,7 @@
     // Totales
     const t = total(items), b = base(t);
     y += 22;
-    const lineasTotal = dto ? [["Subtotal", soles(subtotal(items))], [`Pack −${pack(items).descuento} %`, `−${soles(dto)}`]] : [];
+    const lineasTotal = dto ? [["Subtotal", soles(subtotal(items))], [`Precio por ${pack(items)}+ prendas`, `−${soles(dto)}`]] : [];
     for (const [k, v] of [...lineasTotal, ["Op. gravada", soles(b)], ["IGV (18 %)", soles(t - b)]]) {
       texto(k, W - 380, y, `400 24px ${F}`, "#333333");
       texto(v, W - P, y, `500 24px ${F}`, "#333333", "right");
@@ -654,17 +682,23 @@
     // Pie
     caja(0, H - 140, W, 140, NEGRO);
     texto("ENVÍA TU CAPTURA DE PAGO AL 983 573 288", W / 2, H - 78, `600 32px ${F}`, "#FFFFFF", "center", "2px");
-    texto("Gracias por comprar en Galmor Textiles · Hecho en Lima desde 1988", W / 2, H - 40, `400 19px ${F}`, "#BDBDBD", "center");
+    texto("Gracias por tu compra · Galmor Textiles", W / 2, H - 40, `400 19px ${F}`, "#BDBDBD", "center");
     return new Promise((ok) => cv.toBlob(ok, "image/png"));
   }
 
   // ---------- Packs, "Ver todo", destacado y preguntas ----------
-  // Imagen de cada pack: marca/pack-2.webp, pack-3.webp, pack-4.webp (prendas dobladas).
-  $("#packs-lista").innerHTML = (C.packs || []).map((k, n) => `<div class="pack ${k.etiqueta === "Más popular" ? "estrella" : ""}">
-      ${k.etiqueta ? `<span class="pack-tag">${k.etiqueta}</span>` : ""}
-      <img class="pack-foto" src="marca/pack-${Math.min(Math.max(k.prendas, 2), 4)}.webp" alt="" loading="lazy">
-      <b>${k.prendas}${n === C.packs.length - 1 ? "+" : ""} prendas</b><span class="pct">−${k.descuento} %</span>
-      <small>Mezcla modelos, colores y tallas</small>
+  // "Arma tu pack": cuánto baja cada prenda al llevar 3, 6 o 12 (lo más común entre los productos).
+  const ETIQUETAS = ["", "Más popular", "Mejor precio"];
+  const rebaja = (k) => {
+    const cuenta = {};
+    for (const p of C.productos) { const d = Math.round((p.precios[0] - p.precios[k]) * 100) / 100; if (d > 0) cuenta[d] = (cuenta[d] || 0) + 1; }
+    return +Object.entries(cuenta).sort((a, b) => b[1] - a[1])[0]?.[0] || 0;
+  };
+  $("#packs-lista").innerHTML = NIVELES.slice(1).map((n, j) => `<div class="pack ${j === 1 ? "estrella" : ""}">
+      ${ETIQUETAS[j] ? `<span class="pack-tag">${ETIQUETAS[j]}</span>` : ""}
+      <img class="pack-foto" src="marca/pack-${j + 2}.webp" alt="" loading="lazy">
+      <b>${n}${j === 2 ? "+" : ""} prendas</b><span class="pct">−S/ ${rebaja(j + 1)}</span>
+      <small>menos por cada prenda</small>
       <a class="btn btn-cafe" href="#catalogo">Elegir prendas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");

@@ -1,9 +1,10 @@
-// Catálogo Galmor Textiles — ÚNICO archivo que hay que editar para cambiar productos, precios, colores o datos de pago.
-// Precios DE EJEMPLO; ya incluyen IGV.
+// Datos de la tienda Galmor Textiles: contacto, pagos, fotos y colores.
+// Nombres, tallas, precios y costos NO van aquí: se editan en el panel (pedidos.html → Precios) o subiendo el Excel.
 //
 // Fotos: van solas por nombre, sin escribirlas aquí.
-//   fotos/<id>/<color>.webp     una por color, el pantalón en el modelo (ej. fotos/jogger-cargo/verde-militar.webp)
-//   fotos/<id>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
+//   fotos/<código>/<color>.webp     una por color, el pantalón en el modelo (ej. fotos/jogger-cargo/verde-militar.webp)
+//   fotos/<código>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
+// Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
   versionFotos: "202611082348", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
@@ -25,23 +26,15 @@ window.CATALOGO = {
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
 
-  // Packs: descuento automático en el carrito según cuántas prendas se lleven (porcentajes DE EJEMPLO).
-  packs: [
-    { prendas: 2, descuento: 5 },
-    { prendas: 3, descuento: 10, etiqueta: "Más popular" },
-    { prendas: 4, descuento: 15, etiqueta: "Mejor precio" },
-  ],
-
   redes: { facebook: "#", instagram: "#", tiktok: "#" }, // pegar los enlaces cuando estén las páginas
 
   marcas: { zoroz: "Zoroz 77", galmor: "Galmor" },
 
-  // tipo: sale en el filtro "Tipo de pantalón". El corte y el material del filtro salen de la ficha (Calce y Tela).
+  // Fotos y textos de cada producto, por código (el mismo código del panel y del Excel).
   // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
-  productos: [
+  detalles: [
     {
-      id: "drill-semi-pitillo", tipo: "Drill", marca: "zoroz", precio: 69.9, modelos: 2,
-      nombre: "Pantalón Drill Strech Semi Pitillo",
+      id: "drill-semi-pitillo", modelos: 2,
       descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
       colores: {
         "Negro": "#1a1a1c", "Azul noche": "#171c2e", "Azul acero": "#2b3a5c", "Plomo oscuro": "#262b33",
@@ -49,46 +42,38 @@ window.CATALOGO = {
         "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
         "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
       },
-      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
     },
     {
-      id: "jean-semi-pitillo", tipo: "Jean", marca: "zoroz", precio: 79.9, modelos: 2,
-      nombre: "Pantalón Jean Strech Semi Pitillo",
+      id: "jean-semi-pitillo", modelos: 2,
       descripcion: "Denim strech de la línea Black Collection: cómodo desde el primer uso, corte semi pitillo y 10 lavados distintos.",
       colores: {
         "Grafito azul": "#1b2440", "Madera": "#2c3a58", "Azul cristal": "#2e4a7c", "Azul acero": "#2b4f8f",
         "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
         "Plomo oscuro": "#2a2c31", "Negro": "#141416",
       },
-      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Denim strech", "Calce": "Semi pitillo", "Bolsillos": "5 bolsillos", "Cierre": "Cierre y botón metálico", "Cuidado": "Lavar en frío, no usar lejía" },
     },
     {
-      id: "jogger-cargo", tipo: "Jogger", marca: "zoroz", precio: 64.9, modelos: 0,
-      nombre: "Pantalón Jogger Cargo Paper Touch",
+      id: "jogger-cargo", modelos: 0,
       descripcion: "Tela paper touch, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
       colores: {
         "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
         "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
       },
-      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Paper touch", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "doble-cargo", tipo: "Cargo", marca: "zoroz", precio: 74.9, modelos: 0,
-      nombre: "Pantalón Doble Cargo",
+      id: "doble-cargo", modelos: 0,
       descripcion: "Tela carbón resistente y caída recta. Doble bolsillo cargo por pierna: estilo urbano que aguanta todo.",
       colores: {
         "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
         "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
       },
-      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Carbón", "Calce": "Recto", "Bolsillos": "Doble cargo con tapa por pierna", "Cierre": "Cierre y botón", "Cuidado": "Lavar en frío, secar a la sombra" },
     },
     {
-      id: "bermuda-cargo", tipo: "Bermuda", marca: "zoroz", precio: 54.9, modelos: 0,
-      nombre: "Bermuda Cargo Cintura Elástica Paper Touch",
+      id: "bermuda-cargo", modelos: 0,
       descripcion: "Fresca para el verano: tela paper touch, cintura elástica con cordón y bolsillos cargo. 13 colores.",
       colores: {
         "Verde arena": "#5a5f50", "Verde militar": "#2f3229", "Beige": "#c8b296", "Caqui": "#bfa27c",
@@ -96,7 +81,6 @@ window.CATALOGO = {
         "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
         "Negro": "#161616",
       },
-      tallas: ["28", "30", "32", "34", "36", "40"],
       ficha: { "Tela": "Paper touch", "Calce": "Recto, sobre la rodilla", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío" },
     },
   ],

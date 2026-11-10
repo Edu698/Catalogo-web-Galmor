@@ -5,6 +5,9 @@
 //   POST /api/panel/estado       panel: {numero, estado}            (cabecera x-clave)
 //   POST /api/pedidos/imagen?n= la tienda sube la imagen PNG del pedido (una vez, hasta 15 min después)
 //   GET  /pedido/<n>-<clave>.png  imagen del pedido (link del WhatsApp); ?descargar=1 la baja como archivo
+//   GET  /api/catalogo           productos y precios de venta para la tienda (sin costo)
+//   GET  /api/panel/catalogo     panel: productos con costo              (cabecera x-clave)
+//   POST /api/panel/catalogo     panel: {productos} reemplaza la lista    (cabecera x-clave)
 //   GET  /api/seguimiento?n=&dni=  el cliente ve el estado de su pedido (número + DNI)
 //   POST /api/opiniones          el cliente deja una opinión; queda oculta hasta aprobarla
 //   GET  /api/opiniones          opiniones aprobadas (se muestran en la tienda)
@@ -22,6 +25,7 @@ const DATOS = process.env.DATOS || "/data";
 const ARCHIVO = path.join(DATOS, "pedidos.json");
 const ARCHIVO_OPINIONES = path.join(DATOS, "opiniones.json");
 const IMAGENES = path.join(DATOS, "imagenes");
+const ARCHIVO_CATALOGO = path.join(DATOS, "catalogo.json");
 const MAX_IMAGEN = 4 * 1024 * 1024;
 const MAX_PENDIENTES = 200; // Reason: tope de opiniones sin revisar para que nadie llene el disco
 const CLAVE = process.env.PANEL_CLAVE || "";
@@ -35,6 +39,8 @@ const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods
 const leer = (archivo) => { try { return JSON.parse(fs.readFileSync(archivo, "utf8")); } catch { return []; } };
 let pedidos = leer(ARCHIVO);
 let opiniones = leer(ARCHIVO_OPINIONES);
+// Reason: la primera vez el catálogo sale de catalogo-inicial.json (precios del Excel); luego se edita desde el panel.
+let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : leer(path.join(__dirname, "catalogo-inicial.json"));
 function escribir(archivo, datos) {
   fs.mkdirSync(DATOS, { recursive: true });
   const tmp = archivo + ".tmp";
@@ -43,6 +49,7 @@ function escribir(archivo, datos) {
 }
 const guardar = () => escribir(ARCHIVO, pedidos);
 const guardarOpiniones = () => escribir(ARCHIVO_OPINIONES, opiniones);
+const guardarCatalogo = () => escribir(ARCHIVO_CATALOGO, catalogo);
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
 function lima(fecha) { return new Date(fecha.getTime() - 5 * 3600e3); }
@@ -77,6 +84,35 @@ function validarOpinion(o) {
   if (comentario.length < 10) throw new Error("escribe un comentario un poco más largo");
   if (!(estrellas >= 1 && estrellas <= 5)) throw new Error("elige de 1 a 5 estrellas");
   return { nombre, texto: comentario, estrellas };
+}
+
+// Producto del catálogo. Precios de Cant. 1, 3, 6 y 12 son de talla chica; la talla media (36, niño 10-16) y la extra (38-40) suman su recargo.
+function validarProducto(x, i) {
+  const fila = `Producto ${i + 1}${x.nombre ? ` (${texto(x.nombre, 80)})` : ""}: `;
+  const num = (v) => (v === null || v === undefined || v === "" || isNaN(+v) ? null : Math.round(+v * 100) / 100);
+  const codigo = texto(x.codigo, 60).toLowerCase();
+  if (!/^[a-z0-9-]{2,60}$/.test(codigo)) throw new Error(fila + "código inválido (solo letras, números y guiones)");
+  const nombre = texto(x.nombre, 80);
+  if (nombre.length < 3) throw new Error(fila + "falta el nombre");
+  if (!["zoroz", "galmor"].includes(x.marca)) throw new Error(fila + "marca debe ser Zoroz 77 o Galmor");
+  if (!["Adulto", "Niño"].includes(x.publico)) throw new Error(fila + "público debe ser Adulto o Niño");
+  const tallas = (Array.isArray(x.tallas) ? x.tallas : []).map((t) => texto(t, 3)).filter((t) => /^\d{1,2}$/.test(t));
+  if (!tallas.length || tallas.length > 15) throw new Error(fila + "faltan las tallas");
+  const precios = [0, 1, 2, 3].map((k) => num((x.precios || [])[k]));
+  if (!(precios[0] > 0 && precios[0] < 10000)) throw new Error(fila + "falta el precio de Cant. 1");
+  for (let k = 1; k < 4; k++) if (!(precios[k] > 0)) precios[k] = precios[k - 1]; // vacío = igual al anterior
+  const costo = num(x.costo);
+  if (costo !== null && !(costo >= 0 && costo < 10000)) throw new Error(fila + "costo inválido");
+  const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
+  return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", publico: x.publico, tallas, tela: texto(x.tela, 40),
+    costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false };
+}
+function validarCatalogo(lista) {
+  if (!Array.isArray(lista) || !lista.length || lista.length > 500) throw new Error("lista de productos vacía");
+  const limpia = lista.map(validarProducto);
+  const repetido = limpia.find((x, i) => limpia.findIndex((y) => y.codigo === x.codigo) !== i);
+  if (repetido) throw new Error(`código repetido: ${repetido.codigo}`);
+  return limpia;
 }
 
 function responder(res, codigo, datos, extra = {}) {
@@ -159,6 +195,9 @@ const servidor = http.createServer(async (req, res) => {
         res.end(datos);
       });
     }
+    if (ruta === "/api/catalogo" && req.method === "GET") {
+      return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, ...venta }) => venta) });
+    }
     if (ruta === "/api/seguimiento" && req.method === "GET") {
       const q = new URL(req.url, "http://x").searchParams;
       const p = pedidos.find((x) => x.n === String(q.get("n") || "").trim().toUpperCase() && x.c.dni === String(q.get("dni") || "").trim());
@@ -191,6 +230,13 @@ const servidor = http.createServer(async (req, res) => {
         guardar();
         return responder(res, 200, { ok: true });
       }
+      if (ruta === "/api/panel/catalogo" && req.method === "GET") return responder(res, 200, { productos: catalogo });
+      if (ruta === "/api/panel/catalogo" && req.method === "POST") {
+        try { catalogo = validarCatalogo(JSON.parse(await leerCuerpo(req, 400000)).productos); }
+        catch (e) { return responder(res, 400, { ok: false, error: e.message }); }
+        guardarCatalogo();
+        return responder(res, 200, { ok: true, productos: catalogo });
+      }
       if (ruta === "/api/panel/opiniones" && req.method === "GET") return responder(res, 200, { opiniones: [...opiniones].reverse() });
       if (ruta === "/api/panel/opinion" && req.method === "POST") {
         const { id, accion } = JSON.parse(await leerCuerpo(req, 2000));
@@ -212,4 +258,4 @@ const servidor = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) servidor.listen(PUERTO, () => console.log(`Tienda en el puerto ${PUERTO}`));
-module.exports = { servidor, validar, validarOpinion, despacho };
+module.exports = { servidor, validar, validarOpinion, validarCatalogo, despacho };
