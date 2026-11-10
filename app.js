@@ -105,9 +105,9 @@
         <button class="btn-agregar" data-agregar>${ICONO_BOLSA}Agregar al carrito</button>
       </div></article>`;
   }
-  const tilePronto = () => `<div class="pronto"><small>Próximamente</small><b>Galmor</b>
-      <p>Classic Men · Mejor imposible. Sé el primero en saberlo.</p>
-      <a class="btn" href="${wsp("Hola Galmor, avísenme cuando llegue la colección Galmor.")}" target="_blank" rel="noopener">Avísame por WhatsApp</a></div>`;
+  const tilePronto = () => `<div class="pronto"><small>Nueva colección · Muy pronto</small><b>Galmor</b>
+      <p>El corte clásico que define tu estilo. Sé de los primeros en conocerla.</p>
+      <a class="btn" href="${wsp("Hola, quiero conocer la nueva colección Galmor cuando llegue.")}" target="_blank" rel="noopener">Quiero conocerla →</a></div>`;
   const ORDEN = { menor: (a, b) => a.precio - b.precio, mayor: (a, b) => b.precio - a.precio, nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es") };
   function pintarCatalogo() {
     const m = elegidos.marca;
