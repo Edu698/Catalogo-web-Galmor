@@ -40,7 +40,10 @@ const leer = (archivo) => { try { return JSON.parse(fs.readFileSync(archivo, "ut
 let pedidos = leer(ARCHIVO);
 let opiniones = leer(ARCHIVO_OPINIONES);
 // Reason: la primera vez el catálogo sale de catalogo-inicial.json (precios del Excel); luego se edita desde el panel.
-let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : leer(path.join(__dirname, "catalogo-inicial.json"));
+const inicial = leer(path.join(__dirname, "catalogo-inicial.json"));
+let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : inicial;
+// Costo vacío: se completa con el del Excel de stock (P. costo). Un costo ya escrito en el panel no se toca.
+for (const p of catalogo) if (p.costo === null) p.costo = inicial.find((x) => x.codigo === p.codigo)?.costo ?? null;
 function escribir(archivo, datos) {
   fs.mkdirSync(DATOS, { recursive: true });
   const tmp = archivo + ".tmp";
