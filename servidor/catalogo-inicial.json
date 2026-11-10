@@ -24,7 +24,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Clásico"
  },
  {
   "codigo": "jogger-cargo",
@@ -51,7 +52,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Jogger"
  },
  {
   "codigo": "bermuda-torero",
@@ -78,7 +80,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Bermudas y shorts"
  },
  {
   "codigo": "jean-clasico-grueso",
@@ -105,7 +108,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Clásico"
  },
  {
   "codigo": "drill-tri-cargo",
@@ -132,7 +136,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Cargo"
  },
  {
   "codigo": "bermuda-jean-sin-basta",
@@ -159,7 +164,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Bermudas y shorts"
  },
  {
   "codigo": "pantalon-carbon",
@@ -186,7 +192,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Cargo"
  },
  {
   "codigo": "bermuda-jean-clasico",
@@ -213,7 +220,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Bermudas y shorts"
  },
  {
   "codigo": "bermuda-jean-rasgado",
@@ -240,7 +248,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Moda rasgado"
  },
  {
   "codigo": "short-corto",
@@ -267,7 +276,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Bermudas y shorts"
  },
  {
   "codigo": "jean-clasico-delgado",
@@ -294,7 +304,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Clásico"
  },
  {
   "codigo": "tactico-cargo",
@@ -321,7 +332,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Cargo"
  },
  {
   "codigo": "bermuda-torero-drill",
@@ -348,7 +360,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Bermudas y shorts"
  },
  {
   "codigo": "drill-semi-pitillo",
@@ -375,7 +388,8 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 10,
-  "web": true
+  "web": true,
+  "estilo": "Semi pitillo"
  },
  {
   "codigo": "drill-nino",
@@ -403,6 +417,7 @@
   ],
   "recargoMedia": 5,
   "recargoExtra": 0,
-  "web": true
+  "web": true,
+  "estilo": "Niños"
  }
 ]

@@ -148,6 +148,7 @@
       <label>Código<input name="codigo" maxlength="60" placeholder="Se crea solo si lo dejas vacío"></label>
       <label>Marca<select name="marca"><option value="zoroz">Zoroz 77</option><option value="galmor">Galmor</option></select></label>
       <label>Tipo<input name="tipo" list="tipos" maxlength="30"></label>
+      <label>Estilo (botones de la web)<input name="estilo" list="estilos" maxlength="30"></label>
       <label>Público<select name="publico"><option>Adulto</option><option>Niño</option></select></label>
       <label class="ancho">Tallas<input name="tallas" placeholder="28, 30, 32, 34, 36, 38, 40"></label>
       <label>Tela (ficha técnica)<input name="tela" maxlength="40"></label>
@@ -162,6 +163,7 @@
       <p class="aviso-talla ancho" id="error-producto" style="grid-column:1/-1"></p>
       <div class="botones"><button class="si" type="submit">Guardar</button><button type="button" id="cancelar-producto">Cancelar</button></div>
     </form>
+    <datalist id="estilos"><option>Clásico</option><option>Semi pitillo</option><option>Cargo</option><option>Jogger</option><option>Bermudas y shorts</option><option>Moda rasgado</option><option>Niños</option></datalist>
     <datalist id="tipos"><option>Jean</option><option>Drill</option><option>Cargo</option><option>Jogger</option><option>Bermuda</option><option>Short</option></datalist>
   </dialog>
 
@@ -328,7 +330,7 @@
     $("#entrar").onsubmit = (e) => { e.preventDefault(); clave = $("#clave").value.trim(); cargar(); };
 
     // ---------- Precios: catálogo con costo, ganancia y Excel ----------
-    const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Público", "publico"], ["Tallas", "tallas"],
+    const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Estilo", "estilo"], ["Público", "publico"], ["Tallas", "tallas"],
       ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2], ["Cant. 12", 3],
       ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"]];
     const MARCAS = { zoroz: "Zoroz 77", galmor: "Galmor" };
@@ -348,7 +350,7 @@
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
         return `<details class="producto-panel ${p.web ? "" : "oculto"}"><summary><b>${esc(p.nombre)}</b>
-            <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
+            <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.estilo)} · ${esc(p.tipo)} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
             <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
           <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
@@ -373,7 +375,7 @@
       editando = k;
       const p = catalogo[k] || { marca: "zoroz", publico: "Adulto", tallas: ["28", "30", "32", "34", "36", "38", "40"], precios: [], recargoMedia: 5, recargoExtra: 10, web: true, costo: null };
       $("#titulo-producto").textContent = k < 0 ? "Nuevo producto" : "Editar producto";
-      for (const campo of ["nombre", "codigo", "marca", "tipo", "publico", "tela", "recargoMedia", "recargoExtra"]) fp.elements[campo].value = p[campo] ?? "";
+      for (const campo of ["nombre", "codigo", "marca", "tipo", "estilo", "publico", "tela", "recargoMedia", "recargoExtra"]) fp.elements[campo].value = p[campo] ?? "";
       fp.elements.codigo.readOnly = k >= 0;
       fp.elements.tallas.value = p.tallas.join(", ");
       fp.elements.costo.value = p.costo ?? "";
@@ -385,7 +387,7 @@
     fp.onsubmit = async (e) => {
       e.preventDefault();
       const f = fp.elements;
-      const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(),
+      const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), estilo: f.estilo.value.trim(),
         publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
         precios: [0, 1, 2, 3].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked };
       if (editando < 0 && catalogo.some((p) => p.codigo === nuevo.codigo)) return ($("#error-producto").textContent = "Ese código ya existe. Escribe otro.");
@@ -431,7 +433,7 @@
         const tallas = String(valor(f, "tallas")).trim();
         const rango = tallas.match(/^(\d+)\s*(?:-|a|al)\s*(\d+)$/i);
         const previo = catalogo.find((p) => p.codigo === codigo);
-        return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "",
+        return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "", estilo: String(valor(f, "estilo")).trim() || previo?.estilo || "",
           publico: /ni/.test(normal(valor(f, "publico"))) ? "Niño" : "Adulto",
           tallas: rango ? Array.from({ length: (rango[2] - rango[1]) / 2 + 1 }, (_, j) => String(+rango[1] + 2 * j)) : tallas ? tallas.split(/[^\d]+/).filter(Boolean) : previo?.tallas || [],
           tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2, 3].map((j) => numero(valor(f, j))),
@@ -446,7 +448,7 @@
       try { nuevos = leerExcel(await archivo.arrayBuffer()); } catch (err) { return alert(err.message); }
       const antes = Object.fromEntries(catalogo.map((p) => [p.codigo, p]));
       const agregados = nuevos.filter((p) => !antes[p.codigo]);
-      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web" };
+      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", estilo: "estilo", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web" };
       const cambian = nuevos.filter((p) => antes[p.codigo]).map((p) => [p, Object.keys(CAMPOS).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(antes[p.codigo][k]))]).filter(([, c]) => c.length);
       const quitados = catalogo.filter((p) => !nuevos.some((n) => n.codigo === p.codigo));
       const lista = (t, l) => l.length ? `<p><b>${t} (${l.length})</b></p><ul>${l.join("")}</ul>` : "";

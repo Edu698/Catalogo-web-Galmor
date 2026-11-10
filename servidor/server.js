@@ -46,7 +46,12 @@ let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : inicia
 const FUSIONADOS = { "jean-semi-pitillo": "jean-clasico-delgado", "doble-cargo": "pantalon-carbon", "bermuda-cargo": "bermuda-torero" };
 catalogo = catalogo.filter((p) => !(FUSIONADOS[p.codigo] && catalogo.some((x) => x.codigo === FUSIONADOS[p.codigo])));
 // Costo vacío: se completa con el del Excel de stock (P. costo). Un costo ya escrito en el panel no se toca.
-for (const p of catalogo) if (p.costo === null) p.costo = inicial.find((x) => x.codigo === p.codigo)?.costo ?? null;
+// Igual con el estilo (Clásico, Cargo…), que se agregó el 10/11/2026.
+for (const p of catalogo) {
+  const base = inicial.find((x) => x.codigo === p.codigo);
+  if (p.costo === null) p.costo = base?.costo ?? null;
+  if (!p.estilo) p.estilo = base?.estilo || p.tipo || "Otros";
+}
 function escribir(archivo, datos) {
   fs.mkdirSync(DATOS, { recursive: true });
   const tmp = archivo + ".tmp";
@@ -110,7 +115,8 @@ function validarProducto(x, i) {
   const costo = num(x.costo);
   if (costo !== null && !(costo >= 0 && costo < 10000)) throw new Error(fila + "costo inválido");
   const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
-  return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", publico: x.publico, tallas, tela: texto(x.tela, 40),
+  return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", estilo: texto(x.estilo, 30) || texto(x.tipo, 30) || "Otros",
+    publico: x.publico, tallas, tela: texto(x.tela, 40),
     costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false };
 }
 function validarCatalogo(lista) {

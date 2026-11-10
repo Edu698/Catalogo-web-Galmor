@@ -10,7 +10,13 @@
   // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
   const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
   const V = C.versionFotos ? `?v=${C.versionFotos}` : "";
-  const fotoColor = (p, color) => (p.sinFoto ? "marca/sin-foto.webp" : `fotos/${p.carpeta}/${slug(color)}.webp${V}`);
+  const SIN_FOTO = "marca/sin-foto.webp";
+  const fotoColor = (p, color) => (p.sinFoto ? SIN_FOTO : `fotos/${p.carpeta}/${p.alias?.[color] || slug(color)}.webp${V}`);
+  // Color sin foto todavía: se ve "Foto pronto" en vez de una imagen rota.
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (img.tagName === "IMG" && !img.src.endsWith(SIN_FOTO)) img.src = SIN_FOTO;
+  }, true);
   const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.carpeta}/modelo-${i + 1}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
@@ -30,8 +36,8 @@
     const { productos } = await (await fetch("/api/catalogo")).json();
     C.productos = productos.map((x) => {
       const d = (C.detalles || []).find((y) => y.id === x.codigo);
-      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, precio: x.precios[0], modelos: d?.modelos || 0, descripcion: d?.descripcion || "",
-        colores: d?.colores || { [SIN_COLOR]: "#cfc6bc" }, sinFoto: !d,
+      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0,
+        descripcion: d?.descripcion || "", colores: d?.colores || { [SIN_COLOR]: "#cfc6bc" }, sinColor: !d?.colores, sinFoto: !d?.fotos,
         ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
     });
   } catch {
@@ -49,12 +55,15 @@
 
   // ---------- 2. Cabecera, filtros y catálogo ----------
   const PESTANAS = { todos: "Todos", galmor: "Galmor", zoroz: "Zoroz 77" };
+  // Estilos en el orden de los botones; un estilo nuevo escrito en el panel sale al final.
+  const ESTILOS = ["Clásico", "Semi pitillo", "Cargo", "Jogger", "Bermudas y shorts", "Moda rasgado", "Niños"];
+  const enOrden = (lista, orden = []) => [...lista].sort((a, b) => ((orden.indexOf(a) + 1 || 99) - (orden.indexOf(b) + 1 || 99)));
   const rango = (n) => (n < 60 ? "Hasta S/ 60" : n <= 75 ? "S/ 60 a S/ 75" : "Más de S/ 75");
   // Cada grupo del panel "Filtrar por": qué valores tiene cada producto.
   const GRUPOS = [
     { k: "marca", n: "Marca", abierto: true, de: (p) => [marcaDe(p)], fijos: Object.keys(PESTANAS).slice(1).map((m) => C.marcas[m]) },
-    { k: "tipo", n: "Tipo de pantalón", abierto: true, de: (p) => [p.tipo] },
-    { k: "color", n: "Color", de: (p) => (p.sinFoto ? [] : nombresColor(p)) },
+    { k: "estilo", n: "Estilo", abierto: true, de: (p) => [p.estilo], orden: ESTILOS },
+    { k: "color", n: "Color", de: (p) => (p.sinColor ? [] : nombresColor(p)) },
     { k: "talla", n: "Talla", de: (p) => p.tallas },
     { k: "corte", n: "Corte", de: (p) => (p.ficha.Calce ? [p.ficha.Calce] : []) },
     { k: "material", n: "Material", de: (p) => (p.ficha.Tela ? [p.ficha.Tela] : []) },
@@ -66,7 +75,7 @@
 
   function pintarFiltros() {
     $("#grupos").innerHTML = GRUPOS.map((g) => {
-      const valores = [...new Set([...(g.fijos || []), ...C.productos.flatMap(g.de)])];
+      const valores = enOrden(new Set([...(g.fijos || []), ...C.productos.flatMap(g.de)]), g.orden);
       const opciones = valores.map((v) => {
         const n = C.productos.filter((p) => g.de(p).includes(v)).length;
         const punto = g.k === "color" ? `<i style="background:${tono(v)}"></i>` : "";
@@ -74,6 +83,13 @@
       }).join("");
       return `<details ${g.abierto ? "open" : ""}><summary>${g.n}</summary><div class="opciones opciones-${g.k}">${opciones}</div></details>`;
     }).join("") + `<button class="btn-texto" id="limpiar-filtros">Limpiar filtros</button>`;
+  }
+  function pintarEstilos() {
+    const e = elegidos.estilo;
+    const activo = e.size === 1 ? [...e][0] : e.size ? "" : "Todo";
+    const hay = enOrden(new Set(C.productos.map((p) => p.estilo)), ESTILOS);
+    $("#estilos").innerHTML = ["Todo", ...hay].map((n) => `<button data-estilo="${esc(n)}" class="${n === activo ? "activo" : ""}" aria-pressed="${n === activo}">${esc(n)}
+      <small>${n === "Todo" ? C.productos.length : C.productos.filter((p) => p.estilo === n).length}</small></button>`).join("");
   }
   function pintarPestanas() {
     const m = elegidos.marca;
@@ -91,7 +107,7 @@
     // Si se filtró por color, la tarjeta abre en ese color.
     const c0 = colores.find((c) => elegidos.color.has(c)) || colores[0];
     const fav = favoritos.includes(p.id);
-    const puntos = p.sinFoto ? "" : colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
+    const puntos = p.sinColor ? "" : colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
     return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
       <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
       <button class="corazon ${fav ? "activo" : ""}" data-fav aria-pressed="${fav}" aria-label="Guardar en favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9-9.2C2 7.6 4 5 6.8 5c2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5 20 5 22 7.6 21 10.8 19.5 15.4 12 20 12 20z"/></svg></button>
@@ -111,12 +127,13 @@
   const ORDEN = { menor: (a, b) => a.precio - b.precio, mayor: (a, b) => b.precio - a.precio, nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es") };
   function pintarCatalogo() {
     const m = elegidos.marca;
-    $("#titulo-catalogo").textContent = m.size === 1 ? [...m][0] : "Nuestra colección";
+    $("#titulo-catalogo").textContent = elegidos.estilo.size === 1 ? [...elegidos.estilo][0] : m.size === 1 ? [...m][0] : "Nuestra colección";
+    pintarEstilos();
     const norma = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const texto = $("#buscar").value.trim(), busca = norma(texto);
     const lista = C.productos
       .filter((p) => GRUPOS.every((g) => !elegidos[g.k].size || g.de(p).some((v) => elegidos[g.k].has(v))))
-      .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${nombresColor(p).join(" ")}`).includes(t)));
+      .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.estilo} ${nombresColor(p).join(" ")}`).includes(t)));
     if (ORDEN[$("#orden").value]) lista.sort(ORDEN[$("#orden").value]);
     // Galmor aún no tiene productos: se muestra el aviso "Próximamente" si no hay otros filtros que lo descarten.
     const otros = GRUPOS.some((g) => g.k !== "marca" && elegidos[g.k].size) || texto;
@@ -141,6 +158,14 @@
     pintarPestanas();
     pintarCatalogo();
     $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" });
+  });
+  $("#estilos").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    elegidos.estilo.clear();
+    if (b.dataset.estilo !== "Todo") elegidos.estilo.add(b.dataset.estilo);
+    pintarFiltros();
+    pintarCatalogo();
   });
   $("#grupos").addEventListener("change", (e) => {
     const c = e.target;
@@ -219,7 +244,7 @@
           <p class="igv">Precio incluye IGV</p>
           ${p.descripcion ? `<p class="desc">${p.descripcion}</p>` : ""}
           <p class="rotulo"><span>Color: <b class="nombre-color"></b></span></p>
-          <div class="muestras" ${p.sinFoto ? "hidden" : ""}>${colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" aria-label="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
+          <div class="muestras" ${p.sinColor ? "hidden" : ""}>${colores.map((c) => `<button class="muestra" data-color="${c}" title="${c}" aria-label="${c}" style="background:${p.colores[c]}"></button>`).join("")}</div>
           <div class="tallas-bloque">
             <p class="rotulo"><span>Talla</span></p>
             <div class="tallas">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>

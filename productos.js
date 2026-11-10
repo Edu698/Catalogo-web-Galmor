@@ -30,53 +30,26 @@ window.CATALOGO = {
 
   marcas: { zoroz: "Zoroz 77", galmor: "Galmor" },
 
-  // Fotos y textos de cada producto, por código (el mismo código del panel y del Excel).
-  // fotos: carpeta de fotos cuando no se llama igual que el código.
-  // colores: nombre → tono de la muestra. El primero es el que se ve al abrir el producto.
+  // Colores de venta y fotos de cada producto, por código (el mismo del panel y del Excel).
+  // colores: nombre → tono de la muestra, en orden de más vendido. Sin colores sale "Color a coordinar".
+  // fotos: carpeta en fotos/ con una foto por color (fotos/<carpeta>/<color>.webp). Sin carpeta, o si falta
+  //   la foto de un color, se muestra "Foto pronto". modelos: cuántas fotos de cuerpo entero (modelo-N.webp).
+  // alias: color → nombre del archivo de foto, cuando no se llaman igual.
   detalles: [
-    {
-      id: "drill-semi-pitillo", modelos: 2,
-      descripcion: "El pantalón de todos los días: drill con elasticidad, corte semi pitillo que estiliza sin apretar. Viene en 16 colores.",
-      colores: {
-        "Negro": "#1a1a1c", "Azul noche": "#171c2e", "Azul acero": "#2b3a5c", "Plomo oscuro": "#262b33",
-        "Plomo intermedio": "#4a5258", "Plomo plata": "#8d97a5", "Beige": "#d6c4a6", "Caqui": "#c9ad84",
-        "Hueso": "#ddd6cb", "Blanco": "#f4f4f2", "Camello": "#b0742f", "Canela": "#7a3f1f",
-        "Cocoa": "#5a4337", "Marrón": "#2e211d", "Verde arena": "#4f5546", "Verde militar": "#2f3329",
-      },
-      ficha: { "Tela": "Drill strech", "Calce": "Semi pitillo", "Bolsillos": "2 delanteros sesgados · 2 traseros (uno con botón)", "Cierre": "Bragueta con cierre y botón", "Cuidado": "Lavar en frío, del revés" },
-    },
-    {
-      id: "jean-clasico-delgado", fotos: "jean-semi-pitillo", modelos: 2, // fotos guardadas en fotos/jean-semi-pitillo/
-      colores: {
-        "Grafito azul": "#1b2440", "Madera": "#2c3a58", "Azul cristal": "#2e4a7c", "Azul acero": "#2b4f8f",
-        "Celeste oscuro": "#2f5fa8", "Celeste claro": "#7ca2cf", "Verde": "#2b4568", "Plomo claro": "#4b4f57",
-        "Plomo oscuro": "#2a2c31", "Negro": "#141416",
-      },
-    },
-    {
-      id: "jogger-cargo", modelos: 0,
-      descripcion: "Tela paper touch, ligera y fresca. Cintura elástica con cordón, bolsillos cargo y puño en la basta.",
-      colores: {
-        "Beige": "#cbbba5", "Caqui": "#c9a878", "Hueso": "#dcd9d2", "Plomo plata": "#7f8fa3",
-        "Cocoa": "#6a5548", "Verde arena": "#4c5248", "Verde militar": "#2f342c", "Negro": "#19191a",
-      },
-      ficha: { "Tela": "Paper touch", "Calce": "Jogger con puño elástico", "Cintura": "Elástica con cordón", "Bolsillos": "Cargo laterales con tapa", "Cuidado": "Lavar en frío, secar a la sombra" },
-    },
-    {
-      id: "pantalon-carbon", fotos: "doble-cargo", modelos: 0, // fotos guardadas en fotos/doble-cargo/
-      colores: {
-        "Beige": "#b9a58c", "Hueso": "#cfd0cc", "Camello": "#9c6431", "Cocoa": "#7b6a5e",
-        "Verde arena": "#4a4f40", "Plomo oscuro": "#2c3238", "Negro": "#161616",
-      },
-    },
-    {
-      id: "bermuda-torero", fotos: "bermuda-cargo", modelos: 0, // fotos guardadas en fotos/bermuda-cargo/
-      colores: {
-        "Verde arena": "#5a5f50", "Verde militar": "#2f3229", "Beige": "#c8b296", "Caqui": "#bfa27c",
-        "Hueso": "#e3d9cf", "Blanco": "#f3f3f3", "Cemento": "#8e9a92", "Plomo plata": "#8f93a3",
-        "Plomo oscuro": "#25272b", "Acero oscuro": "#1f2a4d", "Canela": "#6e3b1e", "Cocoa": "#4a3426",
-        "Negro": "#161616",
-      },
-    },
+    { id: "drill-clasico", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Cocoa": "#5a4337", "Azul noche": "#171c2e", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Hueso": "#ddd6cb" } },
+    { id: "jogger-cargo", fotos: "jogger-cargo", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Cocoa": "#5a4337", "Plomo oscuro": "#2c3238", "Hueso": "#ddd6cb" } },
+    { id: "bermuda-torero", fotos: "bermuda-cargo", colores: { "Blanco": "#f4f4f2", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Cocoa": "#5a4337", "Hueso": "#ddd6cb", "Plomo oscuro": "#2c3238" } },
+    { id: "jean-clasico-grueso", colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Plomo lápiz": "#4a4d52", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf" } },
+    { id: "drill-tri-cargo", colores: { "Negro": "#1a1a1c", "Verde arena": "#4f5546", "Cocoa": "#5a4337", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238" } },
+    { id: "pantalon-carbon", fotos: "doble-cargo", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Verde arena": "#4f5546", "Hueso": "#ddd6cb" } },
+    { id: "bermuda-jean-clasico", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
+    { id: "short-corto", colores: { "Hueso": "#ddd6cb", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Plomo oscuro": "#2c3238", "Blanco": "#f4f4f2" } },
+    { id: "bermuda-torero-drill", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Hueso": "#ddd6cb" } },
+    { id: "drill-semi-pitillo", fotos: "drill-semi-pitillo", modelos: 2, colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Cocoa": "#5a4337", "Plomo oscuro": "#2c3238", "Verde arena": "#4f5546", "Hueso": "#ddd6cb" } },
+    { id: "drill-nino", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Hueso": "#ddd6cb", "Canela": "#7a3f1f", "Cocoa": "#5a4337", "Camello": "#b0742f" } },
+    { id: "bermuda-jean-sin-basta", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
+    { id: "tactico-cargo" },
+    { id: "jean-clasico-delgado", fotos: "jean-semi-pitillo", modelos: 2, alias: {"Cristal":  "azul-cristal", "Celeste":  "celeste-claro"}, colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Plomo lápiz": "#4a4d52", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf" } },
+    { id: "bermuda-jean-rasgado", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
   ],
 };
