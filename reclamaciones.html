@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Libro de Reclamaciones — Galmor Textiles</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="marca/icono-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="diseno.css">
+  <style>
+    .libro { max-width: 860px; margin: 0 auto; padding: 30px var(--margen) 70px; }
+    .libro h1 { font: 700 clamp(30px, 4vw, 44px) var(--titulo); text-transform: uppercase; margin: 0 0 6px; }
+    .libro .proveedor { color: var(--tinta-2); margin-bottom: 22px; }
+    .libro fieldset { background: #fff; border: 0; border-radius: 14px; padding: 22px; margin: 0 0 18px; display: grid; gap: 12px; }
+    .libro legend { font: 700 18px var(--texto); text-transform: uppercase; padding: 0; float: left; width: 100%; margin-bottom: 4px; }
+    .libro label { display: grid; gap: 5px; font: 600 14px var(--texto); color: var(--tinta-2); }
+    .libro input, .libro select, .libro textarea { min-height: 46px; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 8px; font: 400 16px var(--texto); color: var(--tinta); background: #fff; }
+    .libro textarea { min-height: 110px; resize: vertical; }
+    .libro .doble { display: grid; gap: 12px; }
+    @media (min-width: 640px) { .libro .doble { grid-template-columns: 1fr 1fr; } }
+    .libro .opciones-tipo { display: grid; gap: 8px; }
+    .libro .opciones-tipo label { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; color: var(--tinta); }
+    .libro .opciones-tipo input, .libro .acepto input { min-height: 0; width: 20px; height: 20px; accent-color: var(--denim); }
+    .libro .nota { font-size: 14px; color: var(--tinta-3); }
+    .libro .btn { width: 100%; min-height: 58px; border-radius: 10px; }
+    .hoja { background: #fff; border-radius: 14px; padding: 26px; }
+    .hoja h2 { font: 700 26px var(--titulo); margin: 0 0 4px; }
+    .hoja dl { display: grid; grid-template-columns: 170px 1fr; gap: 6px 14px; margin: 16px 0; }
+    .hoja dt { color: var(--tinta-3); } .hoja dd { margin: 0; white-space: pre-wrap; }
+    .cab-legal { display: flex; justify-content: center; padding: 22px; background: #fdfbf9; border-bottom: 1px solid var(--linea); }
+    @media print { .cab-legal, .no-imprimir { display: none !important; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <header class="cab-legal"><a class="logo" href="./"><span>Galmor</span><small>Textiles</small></a></header>
+  <main class="libro">
+    <h1>Libro de Reclamaciones</h1>
+    <p class="proveedor" id="proveedor">Galmor Textiles</p>
+
+    <form id="form-reclamo" novalidate>
+      <fieldset>
+        <legend>1. Tus datos</legend>
+        <label>Nombre completo<input name="nombre" maxlength="120" autocomplete="name" required></label>
+        <div class="doble">
+          <label>DNI o carné de extranjería<input name="documento" maxlength="12" required></label>
+          <label>Celular<input name="telefono" inputmode="tel" maxlength="15" autocomplete="tel"></label>
+        </div>
+        <label>Domicilio<input name="domicilio" maxlength="200" autocomplete="street-address" required></label>
+        <label>Correo electrónico<input name="correo" type="email" maxlength="120" autocomplete="email" required></label>
+        <label>Si eres menor de edad: nombre de tu padre, madre o apoderado<input name="apoderado" maxlength="120"></label>
+      </fieldset>
+      <fieldset>
+        <legend>2. Lo que compraste</legend>
+        <div class="doble">
+          <label>Tipo<select name="bien"><option>Producto</option><option>Servicio</option></select></label>
+          <label>Monto reclamado (S/)<input name="monto" inputmode="decimal" maxlength="20"></label>
+        </div>
+        <div class="doble">
+          <label>Número de pedido (si lo tienes)<input name="pedido" maxlength="30" placeholder="GT-261109-AB12"></label>
+          <label>Descripción<input name="descripcion" maxlength="500" placeholder="Ej. Pantalón Drill Clásico, talla 32"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>3. Detalle</legend>
+        <div class="opciones-tipo">
+          <label><input type="radio" name="tipo" value="Reclamo" checked><span><b>Reclamo:</b> no estás conforme con el producto o servicio.</span></label>
+          <label><input type="radio" name="tipo" value="Queja"><span><b>Queja:</b> no estás conforme con la atención recibida, sin relación con el producto o servicio.</span></label>
+        </div>
+        <label>Detalle<textarea name="detalle" maxlength="2000" required></textarea></label>
+        <label>¿Qué solicitas?<textarea name="solicitud" maxlength="1000"></textarea></label>
+      </fieldset>
+      <label class="acepto"><input type="checkbox" name="acepto"> Declaro que los datos son verdaderos y acepto la <a href="legal.html#privacidad" target="_blank">Política de privacidad</a>.</label>
+      <p class="nota">La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI. El proveedor responderá en un plazo no mayor a 15 días hábiles.</p>
+      <p class="aviso-talla" id="error-reclamo" role="alert"></p>
+      <button class="btn btn-cafe" type="submit">Enviar hoja de reclamación</button>
+    </form>
+    <div id="hoja" hidden></div>
+  </main>
+  <script src="productos.js"></script>
+  <script>
+    (() => {
+      const E = window.CATALOGO.empresa || {};
+      const proveedor = [E.razonSocial || "Galmor Textiles", E.ruc && `RUC ${E.ruc}`, E.direccion].filter(Boolean).join(" · ");
+      document.getElementById("proveedor").textContent = proveedor;
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      const form = document.getElementById("form-reclamo");
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(form));
+        const boton = form.querySelector("[type=submit]");
+        boton.disabled = true;
+        try {
+          const r = await fetch("/api/reclamos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, acepto: !!f.acepto }) });
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || "No se pudo enviar.");
+          const fecha = new Date(d.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", dateStyle: "long", timeStyle: "short" });
+          const filas = [["Hoja N.°", d.numero], ["Fecha", fecha], ["Proveedor", proveedor], ["Nombre", f.nombre], ["Documento", f.documento],
+            ["Domicilio", f.domicilio], ["Celular", f.telefono], ["Correo", f.correo], ["Apoderado", f.apoderado], ["Bien", f.bien], ["Monto", f.monto && `S/ ${f.monto}`],
+            ["Pedido", f.pedido], ["Descripción", f.descripcion], ["Tipo", f.tipo], ["Detalle", f.detalle], ["Solicitud", f.solicitud]].filter(([, v]) => v);
+          form.hidden = true;
+          const hoja = document.getElementById("hoja");
+          hoja.hidden = false;
+          hoja.innerHTML = `<div class="hoja"><h2>Hoja de reclamación N.° ${esc(d.numero)}</h2>
+            <p>Registramos tu ${esc(f.tipo.toLowerCase())}. Te responderemos en un plazo máximo de 15 días hábiles. Guarda o imprime esta hoja.</p>
+            <dl>${filas.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+            <button class="btn btn-cafe no-imprimir" onclick="print()">Imprimir o guardar en PDF</button></div>`;
+          scrollTo(0, 0);
+        } catch (err) {
+          document.getElementById("error-reclamo").textContent = err.message.startsWith("Failed") ? "Sin conexión. Intenta otra vez." : err.message[0].toUpperCase() + err.message.slice(1) + ".";
+        } finally { boton.disabled = false; }
+      };
+    })();
+  </script>
+</body>
+</html>

@@ -26,7 +26,11 @@ window.CATALOGO = {
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
 
-  redes: { facebook: "#", instagram: "#", tiktok: "#" }, // pegar los enlaces cuando estén las páginas
+  redes: { facebook: "#", instagram: "#", tiktok: "#", youtube: "#" }, // pegar los enlaces; con "#" el ícono no se muestra
+
+  // Datos legales de la empresa: salen en el pie, en las políticas y en el Libro de Reclamaciones.
+  // Vacío = no se muestra. Completar con los datos reales (no usar datos de ejemplo).
+  empresa: { razonSocial: "", ruc: "", direccion: "", correo: "" },
 
   marcas: { zoroz: "Zoroz 77", galmor: "Galmor" },
 

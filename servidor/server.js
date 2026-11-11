@@ -5,6 +5,9 @@
 //   POST /api/panel/estado       panel: {numero, estado}            (cabecera x-clave)
 //   POST /api/pedidos/imagen?n= la tienda sube la imagen PNG del pedido (una vez, hasta 15 min después)
 //   GET  /pedido/<n>-<clave>.png  imagen del pedido (link del WhatsApp); ?descargar=1 la baja como archivo
+//   POST /api/reclamos           Libro de Reclamaciones: guarda una hoja y devuelve su número
+//   GET  /api/panel/reclamos     panel: hojas de reclamación             (cabecera x-clave)
+//   POST /api/panel/reclamo      panel: {id, respuesta} marca respondida  (cabecera x-clave)
 //   GET  /api/catalogo           productos y precios de venta para la tienda (sin costo)
 //   GET  /api/panel/catalogo     panel: productos con costo              (cabecera x-clave)
 //   POST /api/panel/catalogo     panel: {productos} reemplaza la lista    (cabecera x-clave)
@@ -24,6 +27,7 @@ const SITIO = process.env.SITIO || path.join(__dirname, "..");
 const DATOS = process.env.DATOS || "/data";
 const ARCHIVO = path.join(DATOS, "pedidos.json");
 const ARCHIVO_OPINIONES = path.join(DATOS, "opiniones.json");
+const ARCHIVO_RECLAMOS = path.join(DATOS, "reclamos.json");
 const IMAGENES = path.join(DATOS, "imagenes");
 const ARCHIVO_CATALOGO = path.join(DATOS, "catalogo.json");
 const MAX_IMAGEN = 4 * 1024 * 1024;
@@ -46,11 +50,12 @@ let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : inicia
 const FUSIONADOS = { "jean-semi-pitillo": "jean-clasico-delgado", "doble-cargo": "pantalon-carbon", "bermuda-cargo": "bermuda-torero" };
 catalogo = catalogo.filter((p) => !(FUSIONADOS[p.codigo] && catalogo.some((x) => x.codigo === FUSIONADOS[p.codigo])));
 // Costo vacío: se completa con el del Excel de stock (P. costo). Un costo ya escrito en el panel no se toca.
-// Igual con el estilo (Clásico, Cargo…), que se agregó el 10/11/2026.
+// 11/11/2026: filtros nuevos (tipo, corte y material). Un producto guardado antes de existir "corte" los toma del catálogo inicial.
 for (const p of catalogo) {
   const base = inicial.find((x) => x.codigo === p.codigo);
   if (p.costo === null) p.costo = base?.costo ?? null;
-  if (!p.estilo) p.estilo = base?.estilo || p.tipo || "Otros";
+  if (p.corte === undefined) Object.assign(p, base ? { tipo: base.tipo, corte: base.corte, tela: base.tela } : { corte: "" });
+  delete p.estilo;
 }
 function escribir(archivo, datos) {
   fs.mkdirSync(DATOS, { recursive: true });
@@ -60,6 +65,8 @@ function escribir(archivo, datos) {
 }
 const guardar = () => escribir(ARCHIVO, pedidos);
 const guardarOpiniones = () => escribir(ARCHIVO_OPINIONES, opiniones);
+let reclamos = leer(ARCHIVO_RECLAMOS);
+const guardarReclamos = () => escribir(ARCHIVO_RECLAMOS, reclamos);
 const guardarCatalogo = () => escribir(ARCHIVO_CATALOGO, catalogo);
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
@@ -85,8 +92,9 @@ function validar(p) {
   const bruto = limpias.reduce((s, [, , , q, pr]) => s + q * pr, 0);
   const total = +p.t;
   if (!(total > 0 && total <= bruto + 0.01)) throw new Error("total inválido");
+  if (c.acepto !== true) throw new Error("falta aceptar los Términos y la Política de privacidad");
   const campos = ["nombre", "dni", "celular", "correo", "envio", "direccion", "distrito", "agencia", "departamento", "ciudad", "sede", "comprobante", "pago"];
-  return { n: p.n, c: Object.fromEntries(campos.map((k) => [k, texto(c[k], 160)])), i: limpias, t: Math.round(total * 100) / 100, x: Math.round((+p.x || 0) * 100) / 100 };
+  return { n: p.n, c: { ...Object.fromEntries(campos.map((k) => [k, texto(c[k], 160)])), acepto: new Date().toISOString() }, i: limpias, t: Math.round(total * 100) / 100, x: Math.round((+p.x || 0) * 100) / 100 };
 }
 
 function validarOpinion(o) {
@@ -115,7 +123,7 @@ function validarProducto(x, i) {
   const costo = num(x.costo);
   if (costo !== null && !(costo >= 0 && costo < 10000)) throw new Error(fila + "costo inválido");
   const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
-  return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", estilo: texto(x.estilo, 30) || texto(x.tipo, 30) || "Otros",
+  return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", corte: texto(x.corte, 30),
     publico: x.publico, tallas, tela: texto(x.tela, 40),
     costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false };
 }
@@ -125,6 +133,22 @@ function validarCatalogo(lista) {
   const repetido = limpia.find((x, i) => limpia.findIndex((y) => y.codigo === x.codigo) !== i);
   if (repetido) throw new Error(`código repetido: ${repetido.codigo}`);
   return limpia;
+}
+
+// Hoja del Libro de Reclamaciones (Código de Protección al Consumidor, D.S. 011-2011-PCM).
+function validarReclamo(r) {
+  const t = (k, n) => texto(r[k], n);
+  const h = { nombre: t("nombre", 120), documento: t("documento", 15), domicilio: t("domicilio", 200), telefono: t("telefono", 15),
+    correo: t("correo", 120), apoderado: t("apoderado", 120), bien: r.bien === "Servicio" ? "Servicio" : "Producto", monto: t("monto", 20),
+    descripcion: t("descripcion", 500), pedido: t("pedido", 30), tipo: r.tipo === "Queja" ? "Queja" : "Reclamo", detalle: t("detalle", 2000),
+    solicitud: t("solicitud", 1000) };
+  if (h.nombre.split(/\s+/).length < 2) throw new Error("escribe tu nombre completo");
+  if (!/^[A-Za-z0-9]{8,12}$/.test(h.documento)) throw new Error("documento inválido (DNI de 8 dígitos o carné de extranjería)");
+  if (h.domicilio.length < 5) throw new Error("falta tu domicilio");
+  if (!/^\S+@\S+\.\S+$/.test(h.correo)) throw new Error("correo inválido");
+  if (h.detalle.length < 10) throw new Error("cuéntanos el detalle del reclamo o queja");
+  if (r.acepto !== true) throw new Error("falta aceptar la declaración");
+  return h;
 }
 
 function responder(res, codigo, datos, extra = {}) {
@@ -207,6 +231,18 @@ const servidor = http.createServer(async (req, res) => {
         res.end(datos);
       });
     }
+    if (ruta === "/api/reclamos" && req.method === "POST") {
+      let h;
+      try { h = validarReclamo(JSON.parse(await leerCuerpo(req, 8000))); }
+      catch (e) { return responder(res, 400, { ok: false, error: e.message }); }
+      if (reclamos.length >= 5000) return responder(res, 429, { ok: false, error: "intenta más tarde" });
+      const anio = new Date().getUTCFullYear();
+      const n = reclamos.filter((x) => x.numero.startsWith(`${anio}-`)).length + 1;
+      const hoja = { ...h, numero: `${anio}-${String(n).padStart(5, "0")}`, id: crypto.randomUUID(), d: new Date().toISOString(), respondido: null, respuesta: "" };
+      reclamos.push(hoja);
+      guardarReclamos();
+      return responder(res, 200, { ok: true, numero: hoja.numero, fecha: hoja.d });
+    }
     if (ruta === "/api/catalogo" && req.method === "GET") {
       return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, ...venta }) => venta) });
     }
@@ -249,6 +285,16 @@ const servidor = http.createServer(async (req, res) => {
         guardarCatalogo();
         return responder(res, 200, { ok: true, productos: catalogo });
       }
+      if (ruta === "/api/panel/reclamos" && req.method === "GET") return responder(res, 200, { reclamos: [...reclamos].reverse() });
+      if (ruta === "/api/panel/reclamo" && req.method === "POST") {
+        const { id, respuesta } = JSON.parse(await leerCuerpo(req, 6000));
+        const r = reclamos.find((x) => x.id === id);
+        if (!r) return responder(res, 400, { ok: false });
+        r.respuesta = texto(respuesta, 3000);
+        r.respondido = r.respuesta ? new Date().toISOString() : null;
+        guardarReclamos();
+        return responder(res, 200, { ok: true });
+      }
       if (ruta === "/api/panel/opiniones" && req.method === "GET") return responder(res, 200, { opiniones: [...opiniones].reverse() });
       if (ruta === "/api/panel/opinion" && req.method === "POST") {
         const { id, accion } = JSON.parse(await leerCuerpo(req, 2000));
@@ -270,4 +316,4 @@ const servidor = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) servidor.listen(PUERTO, () => console.log(`Tienda en el puerto ${PUERTO}`));
-module.exports = { servidor, validar, validarOpinion, validarCatalogo, despacho };
+module.exports = { servidor, validar, validarOpinion, validarCatalogo, validarReclamo, despacho };

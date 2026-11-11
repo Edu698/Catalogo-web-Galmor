@@ -109,7 +109,7 @@
   <main class="panel" id="contenido" hidden>
     <div id="aviso"></div>
     <div class="tablero" id="tablero"></div>
-    <nav class="secciones" id="secciones"><button data-s="pedidos" class="activa">Pedidos</button><button data-s="opiniones">Opiniones <b id="n-pendientes" hidden></b></button><button data-s="precios">Precios</button></nav>
+    <nav class="secciones" id="secciones"><button data-s="pedidos" class="activa">Pedidos</button><button data-s="opiniones">Opiniones <b id="n-pendientes" hidden></b></button><button data-s="precios">Precios</button><button data-s="reclamos">Reclamos <b id="n-reclamos" hidden></b></button></nav>
     <div id="vista-pedidos">
     <div class="filtros-panel" id="filtros">
       <button data-f="cobrar">Por cobrar</button>
@@ -128,6 +128,10 @@
     <div id="vista-opiniones" hidden>
       <p class="ventana-sub">Los clientes dejan su opinión en la tienda. Solo se publica cuando tocas <b>Publicar</b>.</p>
       <div id="lista-opiniones"></div>
+    </div>
+    <div id="vista-reclamos" hidden>
+      <p class="ventana-sub">Hojas del Libro de Reclamaciones. Por ley debes responder en un plazo máximo de <b>15 días hábiles</b>. Escribe tu respuesta, envíala al cliente por correo o WhatsApp y guárdala aquí.</p>
+      <div id="lista-reclamos"></div>
     </div>
     <div id="vista-precios" hidden>
       <div class="precios-cab">
@@ -148,7 +152,7 @@
       <label>Código<input name="codigo" maxlength="60" placeholder="Se crea solo si lo dejas vacío"></label>
       <label>Marca<select name="marca"><option value="zoroz">Zoroz 77</option><option value="galmor">Galmor</option></select></label>
       <label>Tipo<input name="tipo" list="tipos" maxlength="30"></label>
-      <label>Estilo (botones de la web)<input name="estilo" list="estilos" maxlength="30"></label>
+      <label>Corte<input name="corte" list="cortes" maxlength="30"></label>
       <label>Público<select name="publico"><option>Adulto</option><option>Niño</option></select></label>
       <label class="ancho">Tallas<input name="tallas" placeholder="28, 30, 32, 34, 36, 38, 40"></label>
       <label>Tela (ficha técnica)<input name="tela" maxlength="40"></label>
@@ -163,8 +167,8 @@
       <p class="aviso-talla ancho" id="error-producto" style="grid-column:1/-1"></p>
       <div class="botones"><button class="si" type="submit">Guardar</button><button type="button" id="cancelar-producto">Cancelar</button></div>
     </form>
-    <datalist id="estilos"><option>Clásico</option><option>Semi pitillo</option><option>Cargo</option><option>Jogger</option><option>Bermudas y shorts</option><option>Moda rasgado</option><option>Niños</option></datalist>
-    <datalist id="tipos"><option>Jean</option><option>Drill</option><option>Cargo</option><option>Jogger</option><option>Bermuda</option><option>Short</option></datalist>
+    <datalist id="cortes"><option>Clásico</option><option>Slim</option><option>Semi pitillo</option><option>Recto</option></datalist>
+    <datalist id="tipos"><option>Jeans</option><option>Drill</option><option>Cargo</option><option>Doble cargo</option><option>Jogger</option><option>Bermuda / Short</option><option>Torero</option><option>Niños</option></datalist>
   </dialog>
 
   <section id="rotulos"></section>
@@ -200,9 +204,10 @@
     async function cargar() {
       if (!clave) return mostrarEntrada();
       try {
-        let lista;
-        [pedidos, opiniones, lista] = await Promise.all([api("/api/panel/pedidos").then((d) => d.pedidos), api("/api/panel/opiniones").then((d) => d.opiniones),
-          api("/api/panel/catalogo").then((d) => d.productos)]);
+        let lista, hojas;
+        [pedidos, opiniones, lista, hojas] = await Promise.all([api("/api/panel/pedidos").then((d) => d.pedidos), api("/api/panel/opiniones").then((d) => d.opiniones),
+          api("/api/panel/catalogo").then((d) => d.productos), api("/api/panel/reclamos").then((d) => d.reclamos)]);
+        if (JSON.stringify(hojas) !== JSON.stringify(reclamos)) { reclamos = hojas; pintarReclamos(); }
         // Reason: solo se repinta si cambió, para no cerrar lo que el dueño tiene abierto en la pestaña Precios.
         if (JSON.stringify(lista) !== JSON.stringify(catalogo)) { catalogo = lista; pintarPrecios(); }
         sessionStorage.setItem("galmor_panel", clave);
@@ -284,6 +289,7 @@
       $("#vista-pedidos").hidden = b.dataset.s !== "pedidos";
       $("#vista-opiniones").hidden = b.dataset.s !== "opiniones";
       $("#vista-precios").hidden = b.dataset.s !== "precios";
+      $("#vista-reclamos").hidden = b.dataset.s !== "reclamos";
     });
     function visibles() {
       const m = manana();
@@ -330,7 +336,7 @@
     $("#entrar").onsubmit = (e) => { e.preventDefault(); clave = $("#clave").value.trim(); cargar(); };
 
     // ---------- Precios: catálogo con costo, ganancia y Excel ----------
-    const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Estilo", "estilo"], ["Público", "publico"], ["Tallas", "tallas"],
+    const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Corte", "corte"], ["Público", "publico"], ["Tallas", "tallas"],
       ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2], ["Cant. 12", 3],
       ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"]];
     const MARCAS = { zoroz: "Zoroz 77", galmor: "Galmor" };
@@ -341,7 +347,34 @@
     const grupos = (p) => p.publico === "Niño"
       ? [["Chica (2-8)", 0], ["Media (10-16)", p.recargoMedia]]
       : [["Chica (28-34)", 0], ["Talla 36", p.recargoMedia], ["Extra (38-40)", p.recargoExtra]];
-    let catalogo = [];
+    let catalogo = [], reclamos = [];
+    // Días hábiles (lunes a viernes) que pasaron desde la hoja; la ley da 15 para responder.
+    const habiles = (iso) => { let n = 0; for (let d = new Date(iso); d < new Date(); d.setDate(d.getDate() + 1)) if (d.getDay() % 6) n++; return Math.max(0, n - 1); };
+    function pintarReclamos() {
+      const pendientes = reclamos.filter((r) => !r.respondido).length;
+      $("#n-reclamos").hidden = !pendientes;
+      $("#n-reclamos").textContent = pendientes;
+      $("#lista-reclamos").innerHTML = reclamos.length ? reclamos.map((r) => {
+        const quedan = 15 - habiles(r.d);
+        return `<article class="opinion-panel ${r.respondido ? "publicada" : ""}">
+          <span class="estado">${r.respondido ? "Respondido" : quedan < 0 ? "Fuera de plazo" : `Quedan ${quedan} días hábiles`}</span> <b>Hoja ${esc(r.numero)} · ${esc(r.tipo)}</b>
+          <p><small>${esc(fechaHora(r.d))}</small></p>
+          <dl><dt>Cliente</dt><dd>${esc(r.nombre)} · ${esc(r.documento)}</dd><dt>Contacto</dt><dd>${esc(r.telefono)} · ${esc(r.correo)}</dd>
+            <dt>Domicilio</dt><dd>${esc(r.domicilio)}</dd>${r.pedido ? `<dt>Pedido</dt><dd>${esc(r.pedido)}</dd>` : ""}
+            <dt>Bien</dt><dd>${esc(r.bien)}${r.monto ? ` · S/ ${esc(r.monto)}` : ""}${r.descripcion ? ` · ${esc(r.descripcion)}` : ""}</dd>
+            <dt>Detalle</dt><dd>${esc(r.detalle)}</dd>${r.solicitud ? `<dt>Solicita</dt><dd>${esc(r.solicitud)}</dd>` : ""}</dl>
+          <label style="display:grid;gap:4px;font-weight:600">Respuesta<textarea data-respuesta="${esc(r.id)}" rows="3" style="padding:10px;border:1px solid var(--linea);border-radius:6px;font:400 15px var(--texto)">${esc(r.respuesta)}</textarea></label>
+          <div class="botones"><button class="si" data-guardar-reclamo="${esc(r.id)}">Guardar respuesta</button>
+            ${r.telefono ? `<a class="wsp" href="https://wa.me/51${esc(r.telefono.replace(/\D/g, "").slice(-9))}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+            <a href="mailto:${esc(r.correo)}?subject=${encodeURIComponent("Respuesta a su hoja de reclamación " + r.numero)}">Correo</a></div></article>`;
+      }).join("") : `<p class="vacio-panel">No hay hojas de reclamación.</p>`;
+    }
+    $("#lista-reclamos").addEventListener("click", async (e) => {
+      const id = e.target.dataset.guardarReclamo;
+      if (!id) return;
+      try { await api("/api/panel/reclamo", { id, respuesta: document.querySelector(`[data-respuesta="${id}"]`).value }); await cargar(); }
+      catch { $("#aviso").innerHTML = `<p class="aviso-panel">No se guardó la respuesta. Revisa tu internet y vuelve a intentar.</p>`; }
+    });
 
     function pintarPrecios() {
       $("#lista-precios").innerHTML = catalogo.map((p, k) => {
@@ -350,7 +383,7 @@
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
         return `<details class="producto-panel ${p.web ? "" : "oculto"}"><summary><b>${esc(p.nombre)}</b>
-            <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.estilo)} · ${esc(p.tipo)} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
+            <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)}${p.corte ? ` · ${esc(p.corte)}` : ""} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
             <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
           <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
@@ -375,7 +408,7 @@
       editando = k;
       const p = catalogo[k] || { marca: "zoroz", publico: "Adulto", tallas: ["28", "30", "32", "34", "36", "38", "40"], precios: [], recargoMedia: 5, recargoExtra: 10, web: true, costo: null };
       $("#titulo-producto").textContent = k < 0 ? "Nuevo producto" : "Editar producto";
-      for (const campo of ["nombre", "codigo", "marca", "tipo", "estilo", "publico", "tela", "recargoMedia", "recargoExtra"]) fp.elements[campo].value = p[campo] ?? "";
+      for (const campo of ["nombre", "codigo", "marca", "tipo", "corte", "publico", "tela", "recargoMedia", "recargoExtra"]) fp.elements[campo].value = p[campo] ?? "";
       fp.elements.codigo.readOnly = k >= 0;
       fp.elements.tallas.value = p.tallas.join(", ");
       fp.elements.costo.value = p.costo ?? "";
@@ -387,7 +420,7 @@
     fp.onsubmit = async (e) => {
       e.preventDefault();
       const f = fp.elements;
-      const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), estilo: f.estilo.value.trim(),
+      const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), corte: f.corte.value.trim(),
         publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
         precios: [0, 1, 2, 3].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked };
       if (editando < 0 && catalogo.some((p) => p.codigo === nuevo.codigo)) return ($("#error-producto").textContent = "Ese código ya existe. Escribe otro.");
@@ -433,7 +466,7 @@
         const tallas = String(valor(f, "tallas")).trim();
         const rango = tallas.match(/^(\d+)\s*(?:-|a|al)\s*(\d+)$/i);
         const previo = catalogo.find((p) => p.codigo === codigo);
-        return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "", estilo: String(valor(f, "estilo")).trim() || previo?.estilo || "",
+        return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "", corte: col.corte >= 0 ? String(valor(f, "corte")).trim() : previo?.corte || "",
           publico: /ni/.test(normal(valor(f, "publico"))) ? "Niño" : "Adulto",
           tallas: rango ? Array.from({ length: (rango[2] - rango[1]) / 2 + 1 }, (_, j) => String(+rango[1] + 2 * j)) : tallas ? tallas.split(/[^\d]+/).filter(Boolean) : previo?.tallas || [],
           tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2, 3].map((j) => numero(valor(f, j))),
@@ -448,7 +481,7 @@
       try { nuevos = leerExcel(await archivo.arrayBuffer()); } catch (err) { return alert(err.message); }
       const antes = Object.fromEntries(catalogo.map((p) => [p.codigo, p]));
       const agregados = nuevos.filter((p) => !antes[p.codigo]);
-      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", estilo: "estilo", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web" };
+      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", corte: "corte", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web" };
       const cambian = nuevos.filter((p) => antes[p.codigo]).map((p) => [p, Object.keys(CAMPOS).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(antes[p.codigo][k]))]).filter(([, c]) => c.length);
       const quitados = catalogo.filter((p) => !nuevos.some((n) => n.codigo === p.codigo));
       const lista = (t, l) => l.length ? `<p><b>${t} (${l.length})</b></p><ul>${l.join("")}</ul>` : "";

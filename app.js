@@ -55,48 +55,79 @@
 
   // ---------- 2. Cabecera, filtros y catálogo ----------
   const PESTANAS = { todos: "Todos", galmor: "Galmor", zoroz: "Zoroz 77" };
-  // Estilos en el orden de los botones; un estilo nuevo escrito en el panel sale al final.
-  const ESTILOS = ["Clásico", "Semi pitillo", "Cargo", "Jogger", "Bermudas y shorts", "Moda rasgado", "Niños"];
   const enOrden = (lista, orden = []) => [...lista].sort((a, b) => ((orden.indexOf(a) + 1 || 99) - (orden.indexOf(b) + 1 || 99)));
-  const rango = (n) => (n < 60 ? "Hasta S/ 60" : n <= 75 ? "S/ 60 a S/ 75" : "Más de S/ 75");
-  // Cada grupo del panel "Filtrar por": qué valores tiene cada producto.
-  const GRUPOS = [
-    { k: "marca", n: "Marca", abierto: true, de: (p) => [marcaDe(p)], fijos: Object.keys(PESTANAS).slice(1).map((m) => C.marcas[m]) },
-    { k: "estilo", n: "Estilo", abierto: true, de: (p) => [p.estilo], orden: ESTILOS },
-    { k: "color", n: "Color", de: (p) => (p.sinColor ? [] : nombresColor(p)) },
-    { k: "talla", n: "Talla", de: (p) => p.tallas },
-    { k: "corte", n: "Corte", de: (p) => (p.ficha.Calce ? [p.ficha.Calce] : []) },
-    { k: "material", n: "Material", de: (p) => (p.ficha.Tela ? [p.ficha.Tela] : []) },
-    { k: "precio", n: "Precio", de: (p) => [rango(p.precio)], fijos: ["Hasta S/ 60", "S/ 60 a S/ 75", "Más de S/ 75"] },
-  ];
-  const elegidos = Object.fromEntries(GRUPOS.map((g) => [g.k, new Set()]));
-  const tono = (c) => C.productos.find((p) => p.colores[c])?.colores[c];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  // Botones rápidos de arriba del catálogo: cada uno agrupa productos por tipo, corte, tela o público.
+  const ATAJOS = [
+    ["Todos", () => true],
+    ["Jeans", (p) => p.tipo === "Jeans"],
+    ["Drill", (p) => /drill/i.test(`${p.tipo} ${p.tela}`)],
+    ["Clásicos", (p) => p.corte === "Clásico"],
+    ["Semi pitillo", (p) => p.corte === "Semi pitillo"],
+    ["Cargo", (p) => /cargo/i.test(p.tipo)],
+    ["Joggers", (p) => p.tipo === "Jogger"],
+    ["Bermudas", (p) => /bermuda|torero/i.test(p.tipo)],
+    ["Niños", (p) => p.publico === "Niño"],
+  ];
+  // Grupos del panel "Filtrar por" con casillas, en el orden del diseño; un valor nuevo del panel sale al final.
+  const CASILLAS = [
+    { k: "marca", n: "Marca", abierto: true, de: (p) => [marcaDe(p)], fijos: ["Galmor", "Zoroz 77"] },
+    { k: "tipo", n: "Tipo de pantalón", abierto: true, de: (p) => [p.tipo], orden: ["Jeans", "Drill", "Cargo", "Doble cargo", "Jogger", "Bermuda / Short", "Torero", "Niños"] },
+    { k: "corte", n: "Corte", abierto: true, de: (p) => (p.corte ? [p.corte] : []), orden: ["Clásico", "Slim", "Semi pitillo", "Recto"] },
+  ];
+  const MATERIAL = { k: "material", de: (p) => (p.tela ? [p.tela] : []), orden: ["Drill", "Drill stretch", "Tacto papel", "Denim", "Denim grueso"] };
+  const elegidos = { marca: new Set(), tipo: new Set(), corte: new Set(), color: new Set(), talla: new Set(), material: new Set() };
+  const SETS = { ...Object.fromEntries(CASILLAS.map((g) => [g.k, g.de])), color: (p) => (p.sinColor ? [] : nombresColor(p)), talla: (p) => p.tallas, material: MATERIAL.de };
+  let atajo = "Todos", publicoTalla = "Adulto", verTodosColores = false;
+  const precios = () => C.productos.map((p) => p.precio);
+  const limites = () => [Math.floor(Math.min(...precios()) / 5) * 5, Math.ceil(Math.max(...precios()) / 5) * 5];
+  let precioMin = 0, precioMax = Infinity;
+  const tono = (c) => C.productos.find((p) => p.colores[c])?.colores[c];
+  const valoresDe = (de, orden) => enOrden(new Set(C.productos.flatMap(de)), orden);
+  const flecha = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
 
   function pintarFiltros() {
-    $("#grupos").innerHTML = GRUPOS.map((g) => {
-      const valores = enOrden(new Set([...(g.fijos || []), ...C.productos.flatMap(g.de)]), g.orden);
-      const opciones = valores.map((v) => {
-        const n = C.productos.filter((p) => g.de(p).includes(v)).length;
-        const punto = g.k === "color" ? `<i style="background:${tono(v)}"></i>` : "";
-        return `<label><input type="checkbox" data-grupo="${g.k}" value="${esc(v)}" ${elegidos[g.k].has(v) ? "checked" : ""}>${punto}${esc(v)} <small>(${n})</small></label>`;
-      }).join("");
-      return `<details ${g.abierto ? "open" : ""}><summary>${g.n}</summary><div class="opciones opciones-${g.k}">${opciones}</div></details>`;
-    }).join("") + `<button class="btn-texto" id="limpiar-filtros">Limpiar filtros</button>`;
+    // Reason: se recuerda qué grupos dejó abiertos el cliente para no cerrárselos al repintar.
+    const abiertos = new Set($$("#grupos details").filter((d) => d.open).map((d) => d.dataset.g));
+    const primera = !$("#grupos details");
+    const grupo = (k, n, abierto, cuerpo) => `<details data-g="${k}" ${(primera ? abierto : abiertos.has(k)) ? "open" : ""}><summary>${n}${flecha}</summary>${cuerpo}</details>`;
+    const casillas = (k, valores) => `<div class="opciones">${valores.map((v) =>
+      `<label><input type="checkbox" data-grupo="${k}" value="${esc(v)}" ${elegidos[k].has(v) ? "checked" : ""}>${esc(v)}</label>`).join("")}</div>`;
+    const colores = valoresDe(SETS.color);
+    const tallas = enOrden(new Set(C.productos.filter((p) => (p.publico === "Niño") === (publicoTalla === "Niños")).flatMap((p) => p.tallas)))
+      .sort((a, b) => a - b);
+    const [lo, hi] = limites();
+    $("#grupos").innerHTML = CASILLAS.map((g) => grupo(g.k, g.n, g.abierto, casillas(g.k, enOrden(new Set([...(g.fijos || []), ...C.productos.flatMap(g.de)]), g.orden)))).join("")
+      + grupo("color", "Color", false, `<div class="circulos ${verTodosColores ? "todos" : ""}">${colores.map((c, i) =>
+        `<button type="button" data-color-f="${esc(c)}" class="${elegidos.color.has(c) ? "activo" : ""} ${i >= 11 ? "extra" : ""}" style="background:${tono(c)}" title="${esc(c)}" aria-label="${esc(c)}" aria-pressed="${elegidos.color.has(c)}"></button>`).join("")}
+        ${colores.length > 11 ? `<button type="button" class="mas-colores" data-mas-colores aria-label="${verTodosColores ? "Ver menos colores" : "Ver más colores"}">${verTodosColores ? "−" : "+"}</button>` : ""}</div>`)
+      + grupo("talla", "Talla", false, `<div class="segmento-talla">${["Adulto", "Niños"].map((t) => `<button type="button" data-publico="${t}" class="${t === publicoTalla ? "activo" : ""}">${t}</button>`).join("")}</div>
+        <div class="tallas-filtro">${tallas.map((t) => `<button type="button" data-talla-f="${t}" class="${elegidos.talla.has(t) ? "activo" : ""}" aria-pressed="${elegidos.talla.has(t)}">${t}</button>`).join("")}</div>`)
+      + grupo("material", "Material", false, casillas("material", valoresDe(MATERIAL.de, MATERIAL.orden)))
+      + grupo("precio", "Precio", false, `<div class="rango-precio"><input type="range" data-precio="min" min="${lo}" max="${hi}" step="5" value="${Math.max(lo, precioMin)}" aria-label="Precio mínimo">
+        <input type="range" data-precio="max" min="${lo}" max="${hi}" step="5" value="${Math.min(hi, precioMax)}" aria-label="Precio máximo"></div>
+        <p class="rango-textos"><span id="precio-min">S/ ${Math.max(lo, precioMin)}</span><span id="precio-max">S/ ${Math.min(hi, precioMax)}</span></p>`);
+    pintarRango();
   }
-  function pintarEstilos() {
-    const e = elegidos.estilo;
-    const activo = e.size === 1 ? [...e][0] : e.size ? "" : "Todo";
-    const hay = enOrden(new Set(C.productos.map((p) => p.estilo)), ESTILOS);
-    $("#estilos").innerHTML = ["Todo", ...hay].map((n) => `<button data-estilo="${esc(n)}" class="${n === activo ? "activo" : ""}" aria-pressed="${n === activo}">${esc(n)}
-      <small>${n === "Todo" ? C.productos.length : C.productos.filter((p) => p.estilo === n).length}</small></button>`).join("");
+  // Barra café entre los dos círculos del precio.
+  function pintarRango() {
+    const caja = $(".rango-precio");
+    if (!caja) return;
+    const [lo, hi] = limites();
+    const a = (Math.max(lo, precioMin) - lo) / (hi - lo || 1) * 100, b = (Math.min(hi, precioMax) - lo) / (hi - lo || 1) * 100;
+    caja.style.setProperty("--a", a + "%");
+    caja.style.setProperty("--b", b + "%");
+  }
+  function pintarAtajos() {
+    $("#estilos").innerHTML = ATAJOS.filter(([, f]) => C.productos.some(f)).map(([n]) =>
+      `<button data-estilo="${esc(n)}" class="${n === atajo ? "activo" : ""}" aria-pressed="${n === atajo}">${esc(n)}</button>`).join("");
   }
   function pintarPestanas() {
     const m = elegidos.marca;
-    const activa = m.size === 1 ? Object.keys(C.marcas).find((k) => m.has(C.marcas[k])) : m.size ? "" : "todos";
+    const activa = atajo === "Niños" ? "" : m.size === 1 ? Object.keys(C.marcas).find((k) => m.has(C.marcas[k])) : m.size ? "" : "todos";
     $("#pestanas").innerHTML = Object.entries(PESTANAS)
       .map(([id, n]) => `<button data-marca="${id}" class="${id === activa ? "activa" : ""}" aria-pressed="${id === activa}">${n}</button>`)
-      .join("") + `<a href="#descubre">Descubre</a>`;
+      .join("") + `<button data-ninos class="${atajo === "Niños" ? "activa" : ""}" aria-pressed="${atajo === "Niños"}">Niños <span class="nuevo">Nuevo</span></button><a href="#descubre">Descubre</a>`;
   }
 
   const leerLS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -107,7 +138,7 @@
     // Si se filtró por color, la tarjeta abre en ese color.
     const c0 = colores.find((c) => elegidos.color.has(c)) || colores[0];
     const fav = favoritos.includes(p.id);
-    const puntos = p.sinColor ? "" : colores.slice(0, 5).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
+    const puntos = p.sinColor ? "" : colores.slice(0, 4).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
     return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
       <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
       <button class="corazon ${fav ? "activo" : ""}" data-fav aria-pressed="${fav}" aria-label="Guardar en favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9-9.2C2 7.6 4 5 6.8 5c2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5 20 5 22 7.6 21 10.8 19.5 15.4 12 20 12 20z"/></svg></button>
@@ -115,7 +146,8 @@
         <button class="tarjeta-nombre" data-ver>${p.nombre}</button>
         <span class="tarjeta-marca">${marcaDe(p)}</span>
         <span class="precio">${soles(p.precio)}</span>
-        <div class="puntos">${puntos}${colores.length > 5 ? `<button class="mas" data-ver aria-label="Ver los ${colores.length} colores">+${colores.length - 5}</button>` : ""}</div>
+        <div class="puntos">${puntos}${!p.sinColor && colores.length > 4 ? `<button class="mas" data-ver aria-label="Ver los ${colores.length} colores">+${colores.length - 4}</button>` : ""}</div>
+        <span class="tallas-rotulo">Tallas</span>
         <div class="tallas-mini">${p.tallas.map((t) => `<button data-talla="${t}">${t}</button>`).join("")}</div>
         <p class="aviso-talla" role="alert"></p>
         <button class="btn-agregar" data-agregar>${ICONO_BOLSA}Agregar al carrito</button>
@@ -125,55 +157,94 @@
       <p>El corte clásico que define tu estilo. Sé de los primeros en conocerla.</p>
       <a class="btn" href="${wsp("Hola, quiero conocer la nueva colección Galmor cuando llegue.")}" target="_blank" rel="noopener">Quiero conocerla →</a></div>`;
   const ORDEN = { menor: (a, b) => a.precio - b.precio, mayor: (a, b) => b.precio - a.precio, nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es") };
+  const hayFiltros = () => Object.values(elegidos).some((s) => s.size) || atajo !== "Todos" || precioMin > limites()[0] || precioMax < limites()[1];
   function pintarCatalogo() {
     const m = elegidos.marca;
-    $("#titulo-catalogo").textContent = elegidos.estilo.size === 1 ? [...elegidos.estilo][0] : m.size === 1 ? [...m][0] : "Nuestra colección";
-    pintarEstilos();
+    $("#titulo-catalogo").textContent = atajo !== "Todos" ? atajo : m.size === 1 ? [...m][0] : "Nuestra colección";
+    pintarAtajos();
+    pintarPestanas();
     const norma = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const texto = $("#buscar").value.trim(), busca = norma(texto);
+    const filtroAtajo = ATAJOS.find(([n]) => n === atajo)[1];
     const lista = C.productos
-      .filter((p) => GRUPOS.every((g) => !elegidos[g.k].size || g.de(p).some((v) => elegidos[g.k].has(v))))
-      .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.estilo} ${nombresColor(p).join(" ")}`).includes(t)));
+      .filter(filtroAtajo)
+      .filter((p) => Object.entries(SETS).every(([k, de]) => !elegidos[k].size || de(p).some((v) => elegidos[k].has(v))))
+      .filter((p) => p.precio >= precioMin && p.precio <= precioMax)
+      .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.corte} ${p.tela} ${nombresColor(p).join(" ")}`).includes(t)));
     if (ORDEN[$("#orden").value]) lista.sort(ORDEN[$("#orden").value]);
-    // Galmor aún no tiene productos: se muestra el aviso "Próximamente" si no hay otros filtros que lo descarten.
-    const otros = GRUPOS.some((g) => g.k !== "marca" && elegidos[g.k].size) || texto;
-    const pronto = !otros && (!m.size || m.has(C.marcas.galmor));
+    // Galmor aún no tiene productos: se muestra el aviso "Muy pronto" si no hay otros filtros que lo descarten.
+    const soloMarca = !Object.entries(elegidos).some(([k, s]) => k !== "marca" && s.size) && atajo === "Todos" && !texto;
+    const pronto = soloMarca && (!m.size || m.has(C.marcas.galmor));
     $("#rejilla").innerHTML = lista.map(tarjeta).join("") + (pronto ? tilePronto() : "")
       || `<p class="vacio">No encontramos productos${texto ? ` para «${esc(texto)}»` : " con esos filtros"}. <button class="btn-texto" data-limpiar>Ver todos</button></p>`;
+    $("#limpiar-filtros").hidden = !hayFiltros() && !texto;
   }
   function limpiarFiltros() {
     Object.values(elegidos).forEach((s) => s.clear());
+    atajo = "Todos";
+    [precioMin, precioMax] = [0, Infinity];
     $("#buscar").value = "";
     pintarFiltros();
-    pintarPestanas();
     pintarCatalogo();
   }
+  const irAlCatalogo = () => $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" });
 
   $("#pestanas").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
-    elegidos.marca.clear();
-    if (b.dataset.marca !== "todos") elegidos.marca.add(C.marcas[b.dataset.marca]);
+    if (b.dataset.ninos !== undefined) atajo = "Niños";
+    else {
+      atajo = "Todos";
+      elegidos.marca.clear();
+      if (b.dataset.marca !== "todos") elegidos.marca.add(C.marcas[b.dataset.marca]);
+    }
     pintarFiltros();
-    pintarPestanas();
     pintarCatalogo();
-    $("#catalogo").scrollIntoView({ behavior: quieto ? "auto" : "smooth" });
+    irAlCatalogo();
   });
   $("#estilos").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
-    elegidos.estilo.clear();
-    if (b.dataset.estilo !== "Todo") elegidos.estilo.add(b.dataset.estilo);
-    pintarFiltros();
+    atajo = b.dataset.estilo;
     pintarCatalogo();
   });
   $("#grupos").addEventListener("change", (e) => {
     const c = e.target;
+    if (!c.dataset.grupo) return;
     elegidos[c.dataset.grupo][c.checked ? "add" : "delete"](c.value);
-    if (c.dataset.grupo === "marca") pintarPestanas();
     pintarCatalogo();
   });
-  $("#grupos").addEventListener("click", (e) => { if (e.target.id === "limpiar-filtros") limpiarFiltros(); });
+  $("#grupos").addEventListener("input", (e) => {
+    const r = e.target;
+    if (!r.dataset.precio) return;
+    const [mn, mx] = $$("[data-precio]").map((x) => +x.value);
+    // Reason: si un círculo pasa al otro, se intercambian para que el mínimo nunca supere al máximo.
+    [precioMin, precioMax] = [Math.min(mn, mx), Math.max(mn, mx)];
+    $("#precio-min").textContent = `S/ ${precioMin}`;
+    $("#precio-max").textContent = `S/ ${precioMax}`;
+    pintarRango();
+    pintarCatalogo();
+  });
+  $("#grupos").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const d = b.dataset;
+    if (d.colorF || d.tallaF) {
+      const set = d.colorF ? elegidos.color : elegidos.talla, v = d.colorF || d.tallaF;
+      set.has(v) ? set.delete(v) : set.add(v);
+      b.classList.toggle("activo", set.has(v));
+      b.setAttribute("aria-pressed", set.has(v));
+      return pintarCatalogo();
+    }
+    if (d.publico) { publicoTalla = d.publico; return pintarFiltros(); }
+    if (d.masColores !== undefined) { verTodosColores = !verTodosColores; pintarFiltros(); }
+  });
+  $("#limpiar-filtros").onclick = limpiarFiltros;
+  $("#aplicar-filtros").onclick = () => {
+    $("#filtros").classList.remove("abierto");
+    $("#btn-filtrar").setAttribute("aria-expanded", false);
+    $("#rejilla").scrollIntoView({ behavior: quieto ? "auto" : "smooth", block: "start" });
+  };
   $("#orden").addEventListener("change", pintarCatalogo);
   $("#btn-filtrar").onclick = () => {
     const abierto = $("#filtros").classList.toggle("abierto");
@@ -527,7 +598,9 @@
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(form));
-    if (!validar(f)) return;
+    const ok = validar(f);
+    $("#error-acepto").textContent = f.acepto ? "" : "Marca la casilla para aceptar los Términos y la Política de privacidad.";
+    if (!ok || !f.acepto) return;
     const boton = $("[type=submit]", form);
     boton.disabled = true;
     boton.textContent = "Generando…";
@@ -580,7 +653,7 @@
   // Guarda el pedido en el servidor (panel) y sube su imagen. Devuelve el link de la imagen, o "" si falló.
   async function registrar(f, numero, fecha, items, salida, imagen) {
     if (!C.registro) return "";
-    const datos = { n: numero, d: fecha.toISOString(), s: salida.iso, x: descuento(items), t: total(items), c: f,
+    const datos = { n: numero, d: fecha.toISOString(), s: salida.iso, x: descuento(items), t: total(items), c: { ...f, acepto: true },
       i: items.map((i) => [i.id, i.color, i.talla, i.cant, unitario(i, items)]) };
     try {
       const r = await fetch(C.registro, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "nuevo", pedido: datos }) });
@@ -713,7 +786,7 @@
 
   // ---------- Packs, "Ver todo", destacado y preguntas ----------
   // "Arma tu pack": cuánto baja cada prenda al llevar 3, 6 o 12 (lo más común entre los productos).
-  const ETIQUETAS = ["", "Más popular", "Mejor precio"];
+  const ETIQUETAS = ["", "★ Más popular", "♛ Mejor precio"];
   const rebaja = (k) => {
     const cuenta = {};
     for (const p of C.productos) { const d = Math.round((p.precios[0] - p.precios[k]) * 100) / 100; if (d > 0) cuenta[d] = (cuenta[d] || 0) + 1; }
@@ -721,11 +794,10 @@
   };
   $("#packs-lista").innerHTML = NIVELES.slice(1).map((n, j) => `<div class="pack ${j === 1 ? "estrella" : ""}">
       ${ETIQUETAS[j] ? `<span class="pack-tag">${ETIQUETAS[j]}</span>` : ""}
-      <img class="pack-foto" src="marca/pack-${j + 2}.webp" alt="" loading="lazy">
-      <b>${n}${j === 2 ? "+" : ""} prendas</b><span class="pct">−S/ ${rebaja(j + 1)}</span>
-      <small>menos por cada prenda</small>
-      <a class="btn btn-cafe" href="#catalogo">Elegir prendas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
-  $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir)));
+      <b><strong>${n}${j === 2 ? "+" : ""}</strong> prendas</b><span class="pct">S/ ${rebaja(j + 1)}</span>
+      <small>de descuento por unidad</small>
+      <a class="btn" href="#catalogo">Elegir pack <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
+  $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir, b.dataset.color)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
   // ---------- Opiniones: las aprobadas en el panel (servidor) + las escritas en productos.js ----------
   function pintarOpiniones(lista) {
@@ -794,17 +866,38 @@
     Facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z"/>',
     Instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/>',
     TikTok: '<path d="M14 3v11.5A3.5 3.5 0 1 1 10.5 11"/><path d="M14 3c.6 2.6 2.4 4.4 5 5"/>',
-    WhatsApp: '<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 1.8.8"/>',
+    YouTube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>',
   };
-  const enlaces = { Facebook: C.redes.facebook, Instagram: C.redes.instagram, TikTok: C.redes.tiktok, WhatsApp: wsp() };
+  const enlaces = { Facebook: C.redes.facebook, Instagram: C.redes.instagram, TikTok: C.redes.tiktok, YouTube: C.redes.youtube };
   $("#redes").innerHTML = Object.entries(ICONOS).map(([n, svg]) =>
-    `<a href="${enlaces[n]}" target="_blank" rel="noopener" aria-label="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></a>`).join("");
-  $("#pie-texto").innerHTML = `<a href="${wsp()}" target="_blank" rel="noopener">WhatsApp 983 573 288</a> · `
-    + `<a href="${wsp("Hola, quiero información sobre cambios y devoluciones.")}" target="_blank" rel="noopener">Cambios y devoluciones</a> · `
-    + `<a href="${wsp("Hola, necesito ayuda con mi talla.")}" target="_blank" rel="noopener">Guía de tallas</a> · © ${new Date().getFullYear()} Galmor Textiles`;
+    `<a href="${enlaces[n] || "#"}" ${enlaces[n] && enlaces[n] !== "#" ? 'target="_blank" rel="noopener"' : ""} aria-label="${n}"><svg viewBox="0 0 24 24">${svg}</svg></a>`).join("");
+  const E = C.empresa || {};
+  $("#pie-wsp").href = wsp("Hola Galmor, quiero información.");
+  $$("[data-wsp]").forEach((a) => (a.href = wsp(a.dataset.wsp)));
+  $("#pie-contacto").href = E.correo ? `mailto:${E.correo}` : wsp("Hola Galmor, quiero comunicarme con ustedes.");
+  if (E.correo) { $("#pie-correo").hidden = false; $("#pie-correo").href = `mailto:${E.correo}`; $("#pie-correo span").textContent = E.correo; }
+  if (E.direccion) { $("#pie-direccion").hidden = false; $("#pie-direccion span").textContent = E.direccion; }
+  $("#pie-legal").innerHTML = [E.razonSocial && `<b>Razón social:</b> ${esc(E.razonSocial)}`, E.ruc && `<b>RUC:</b> ${esc(E.ruc)}`,
+    E.direccion && `<b>Dirección:</b> ${esc(E.direccion)}`, E.correo && `<b>Correo:</b> ${esc(E.correo)}`,
+    `© ${new Date().getFullYear()} Galmor Textiles. Todos los derechos reservados.`].filter(Boolean).map((t) => `<span>${t}</span>`).join("");
+  // Enlaces a una pregunta: la abre y baja hasta ella.
+  $$("[data-faq]").forEach((a) => a.addEventListener("click", () => { const d = $(a.getAttribute("href")); if (d) d.open = true; }));
+  $$("[data-marca-pie]").forEach((b) => (b.onclick = () => {
+    atajo = "Todos";
+    elegidos.marca.clear();
+    elegidos.marca.add(C.marcas[b.dataset.marcaPie]);
+    pintarFiltros();
+    pintarCatalogo();
+    irAlCatalogo();
+  }));
+  // Aviso de cookies y términos: se acepta una vez.
+  if (!localStorage.getItem("galmor_acepta")) $("#aviso-cookies").hidden = false;
+  $("#aceptar-cookies").onclick = () => {
+    localStorage.setItem("galmor_acepta", new Date().toISOString());
+    $("#aviso-cookies").hidden = true;
+  };
 
   pintarFiltros();
-  pintarPestanas();
   pintarCatalogo();
   pintarCarrito();
   // Enlace directo a un producto y color: ?producto=jogger-cargo&color=negro

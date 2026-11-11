@@ -61,22 +61,32 @@
     <!-- 4. Catálogo con filtros -->
     <section class="catalogo" id="catalogo">
       <div class="cat-cab">
-        <div><h2 id="titulo-catalogo">Nuestra colección</h2><p>Descubre pantalones para cada estilo.</p></div>
+        <div><h2 id="titulo-catalogo">Nuestra colección</h2><p>Pantalones para cada estilo. Encuentra tu próximo favorito.</p></div>
         <label class="orden">Ordenar por:<select id="orden">
           <option value="">Recomendados</option><option value="menor">Precio: menor a mayor</option>
           <option value="mayor">Precio: mayor a menor</option><option value="nombre">Nombre A–Z</option></select></label>
       </div>
       <nav class="estilos" id="estilos" aria-label="Elige un estilo"></nav>
       <button class="btn-filtrar" id="btn-filtrar" aria-expanded="false" aria-controls="filtros">Filtrar por</button>
-      <aside class="filtros" id="filtros" aria-label="Filtros"><p class="filtros-titulo">Filtrar por</p><div id="grupos"></div></aside>
+      <aside class="filtros" id="filtros" aria-label="Filtros">
+        <div class="filtros-cab"><p class="filtros-titulo">Filtrar por</p><button class="btn-limpiar" id="limpiar-filtros" type="button">Limpiar filtros</button></div>
+        <div id="grupos"></div>
+        <button class="btn btn-cafe aplicar" id="aplicar-filtros" type="button">Aplicar filtros</button>
+      </aside>
       <div class="rejilla" id="rejilla"></div>
     </section>
 
     <!-- 5. Arma tu pack -->
     <section class="packs" id="packs">
-      <p class="ceja">Más prendas, mejor precio</p>
-      <h2>Arma tu pack</h2>
-      <p class="packs-sub">Mientras más prendas lleves, menos pagas por cada una. Mezcla modelos, colores y tallas.</p>
+      <div class="packs-cab">
+        <div class="packs-texto">
+          <p class="ceja">Galmor Textiles</p>
+          <h2>Arma tu pack</h2>
+          <p class="packs-lema">Lleva más, paga menos.</p>
+          <p class="packs-sub">Combina modelos, colores y tallas. Tu descuento por unidad <mark>aumenta</mark> según la cantidad que elijas.</p>
+        </div>
+        <img class="packs-pila" src="marca/pack-pila.webp" width="830" height="432" alt="Pantalones doblados: jean, beige, verde y negro" loading="lazy">
+      </div>
       <div class="packs-lista" id="packs-lista"></div>
     </section>
 
@@ -87,14 +97,25 @@
       <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><h3>Boleta o ticket</h3><p>Todos los precios incluyen IGV. Tú eliges tu comprobante.</p></div>
     </section>
 
-    <!-- Destacado -->
-    <section class="destacado">
-      <div class="destacado-foto"><img src="fotos/doble-cargo/hueso.webp" alt="Pantalón Doble Cargo Tela Carbón color hueso" loading="lazy"></div>
+    <!-- Destacado: doble cargo -->
+    <section class="destacado" id="destacado">
+      <div class="destacado-foto"><span class="destacado-marca" aria-hidden="true">GALMOR</span>
+        <img src="fotos/doble-cargo/hueso.webp" width="1000" height="1500" alt="Pantalón doble cargo color hueso" loading="lazy"></div>
+      <div class="destacado-telas">
+        <img src="marca/tela-1.webp" width="264" height="316" alt="Detalle de la pretina y sus costuras" loading="lazy">
+        <img src="marca/tela-2.webp" width="264" height="288" alt="Detalle de la tela" loading="lazy">
+      </div>
       <div class="destacado-texto">
-        <p class="ceja">Lo mejor del taller</p>
-        <h2>Calidad que se siente</h2>
-        <p>Telas resistentes, costuras firmes y acabados revisados prenda por prenda. Hechos para el día a día de Lima.</p>
-        <button class="btn btn-denim" data-abrir="doble-cargo">Ver Doble Cargo</button>
+        <div class="logo"><span>Galmor</span><small>Textiles</small></div>
+        <i class="raya"></i>
+        <h2>Un modelo que marca <em>estilo.</em></h2>
+        <p class="destacado-sub">Descubre nuestro doble cargo.</p>
+        <dl class="destacado-datos">
+          <div><dt>Tela</dt><dd>Resistente y cómoda</dd></div>
+          <div><dt>Corte</dt><dd>Silueta moderna</dd></div>
+          <div><dt>Diseño</dt><dd>Funcional y versátil</dd></div>
+        </dl>
+        <button class="btn btn-cafe" data-abrir="pantalon-carbon" data-color="hueso">Descubrir doble cargo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
       </div>
     </section>
 
@@ -107,33 +128,77 @@
     </section>
 
     <!-- Preguntas frecuentes -->
-    <section class="faq">
-      <div class="faq-cab">
-        <h2>Resolvemos tus dudas</h2>
-        <p>Aquí están las preguntas más comunes. Si no encuentras lo que buscas, escríbenos.</p>
-        <a class="btn btn-denim" id="faq-wsp" target="_blank" rel="noopener">Escríbenos →</a>
-      </div>
+    <section class="faq" id="preguntas">
+      <div class="logo"><span>Galmor</span><small>Textiles</small></div>
+      <i class="raya"></i>
+      <h2>Resolvemos <span>tus dudas</span></h2>
+      <p class="faq-sub">Estamos aquí para ayudarte con tu compra.</p>
       <div class="faq-lista">
-        <details><summary>¿Cuánto tarda el envío?</summary><p>En Lima despachamos en motorizado: si pides hoy antes de las 5 p.m., te llega mañana. A provincias enviamos por Shalom u Olva y llega en 2 a 4 días. El costo del envío lo coordinamos por WhatsApp.</p></details>
-        <details><summary>¿Cómo pago mi pedido?</summary><p>Por Yape, Plin o transferencia bancaria. Al terminar tu pedido ves los datos y el monto exacto. Envías la imagen del pedido y la captura de tu pago por WhatsApp, y te confirmamos.</p></details>
-        <details><summary>¿Cómo elijo mi talla?</summary><p>Adulto: tallas 28 a 40. Niño: tallas 2 a 16. La talla 36 y las tallas 38 y 40 tienen un pequeño recargo, que ves al elegirlas. Si dudas entre dos tallas, escríbenos por WhatsApp con tu medida de cintura y te recomendamos la mejor.</p></details>
-        <details><summary>¿Puedo cambiar mi prenda?</summary><p>Sí. Escríbenos por WhatsApp con tu número de pedido y coordinamos el cambio de talla o modelo. La prenda debe estar sin uso y con sus etiquetas.</p></details>
-        <details><summary>¿Me dan boleta?</summary><p>Sí. Al hacer tu pedido eliges boleta o ticket. Todos los precios ya incluyen IGV.</p></details>
-        <details><summary>¿Cómo funciona el pack?</summary><p>Desde 3 prendas, cada una te sale más barata; y baja más con 6 y con 12. Se aplica solo en el carrito y puedes mezclar modelos, colores y tallas.</p></details>
+        <details id="faq-pedido"><summary>¿Cómo puedo realizar mi pedido?</summary><p>Elige tu pantalón, el color y la talla, y toca «Agregar al carrito». En el carrito toca «Ir a pagar», completa tus datos y elige cómo pagar. Al final se genera la imagen de tu pedido y se abre WhatsApp para que nos la envíes junto con la captura de tu pago.</p></details>
+        <details id="faq-envio"><summary>¿Cuánto cuesta y cuánto tarda el envío?</summary><p>En Lima despachamos en motorizado: si pides antes de las 5 p.m., te llega mañana. A provincias enviamos por Shalom u Olva y llega en 2 a 4 días hábiles. El costo depende de tu distrito o ciudad; te lo confirmamos por WhatsApp antes de despachar.</p></details>
+        <details id="faq-pago"><summary>¿Qué medios de pago aceptan?</summary><p>Yape, Plin y transferencia bancaria (BCP). Al terminar tu pedido ves los datos de pago y el monto exacto. Tú eliges boleta o ticket; todos los precios incluyen IGV.</p></details>
+        <details id="faq-talla"><summary>¿Cómo puedo elegir mi talla?</summary><p>Adulto: tallas 28 a 40. Niño: tallas 2 a 16. La talla 36 y las tallas 38 y 40 tienen un pequeño recargo, que ves al elegirlas. Si dudas entre dos tallas, escríbenos por WhatsApp con tu medida de cintura y te recomendamos la mejor.</p></details>
+        <details id="faq-cambios"><summary>¿Puedo cambiar o devolver mi pantalón?</summary><p>Sí. Escríbenos por WhatsApp con tu número de pedido y coordinamos el cambio de talla o de modelo. La prenda debe estar sin uso y con sus etiquetas. Revisa las condiciones en nuestra <a href="legal.html#cambios">Política de cambios y devoluciones</a>.</p></details>
+        <details id="faq-pack"><summary>¿Cómo funciona ARMA TU PACK?</summary><p>Desde 3 prendas, cada una te sale más barata; y baja más con 6 y con 12. El descuento se aplica solo en el carrito y puedes mezclar modelos, colores y tallas.</p></details>
+        <details id="faq-seguimiento"><summary>¿Cómo puedo consultar el estado de mi pedido?</summary><p>Toca el ícono de la persona, arriba a la derecha («Mi pedido»), y escribe tu número de pedido y tu DNI. Verás si está recibido, pagado o despachado, y la fecha de despacho.</p></details>
       </div>
+      <p class="faq-ayuda">¿Necesitas ayuda adicional?</p>
+      <a class="btn btn-cafe faq-boton" id="faq-wsp" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 1.8.8"/></svg>Contactar por WhatsApp <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a>
     </section>
   </main>
 
   <!-- 7. Pie -->
-  <footer class="pie">
-    <p class="pie-lema">Encuentra el pantalón<br>que va contigo.</p>
-    <div class="pie-marcas">
+  <footer class="pie" id="contacto">
+    <div class="pie-top">
+      <div><p class="pie-lema">Encuentra el pantalón que va contigo.</p><i class="raya"></i></div>
       <div class="logo logo-claro"><span>Galmor</span><small>Textiles</small></div>
-      <p class="pie-sub"><b>ZOROZ 77</b><i></i><em>Galmor</em></p>
     </div>
-    <div class="redes" id="redes"></div>
-    <p class="pie-texto" id="pie-texto"></p>
+    <div class="pie-cols">
+      <div><h3>Atención al cliente</h3><ul>
+        <li><a data-wsp="Hola Galmor, necesito ayuda." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg>Contáctanos</a></li>
+        <li><a href="#faq-envio" data-faq><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>Envíos y entregas</a></li>
+        <li><a href="#faq-cambios" data-faq><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 6.5v11L12 22l9-4.5v-11z"/><path d="m3 6.5 9 4.5 9-4.5M12 11v11"/></svg>Cambios y devoluciones</a></li>
+        <li><a href="#faq-talla" data-faq><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9a6 4 0 0 1 12 0v6a6 4 0 0 1-12 0z"/><path d="M15 12h6v4h-6M18 12v2"/><ellipse cx="9" cy="9" rx="2" ry="1.3"/></svg>Guía de tallas</a></li>
+        <li><a href="#preguntas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17h.01"/></svg>Preguntas frecuentes</a></li>
+      </ul></div>
+      <div><h3>Información legal</h3><ul>
+        <li><a href="legal.html#terminos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h7M9 16h7"/></svg>Términos y condiciones</a></li>
+        <li><a href="legal.html#privacidad"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Política de privacidad</a></li>
+        <li><a href="legal.html#cookies"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><path d="M8.5 9.5h.01M15 14.5h.01M10 15h.01M12 12h.01"/></svg>Política de cookies</a></li>
+        <li><a href="legal.html#cambios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M4 3v5h5M20 21v-5h-5"/></svg>Política de cambios y devoluciones</a></li>
+      </ul></div>
+      <div class="pie-marcas"><h3>Nuestras marcas</h3>
+        <button type="button" class="pie-galmor" data-marca-pie="galmor">Galmor</button><i></i>
+        <button type="button" class="pie-zoroz" data-marca-pie="zoroz">Zoroz 77</button>
+      </div>
+      <div><h3>Descubre</h3><ul>
+        <li><a href="#catalogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg>Catálogo</a></li>
+        <li><a href="#packs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg>Arma tu pack</a></li>
+        <li><a id="pie-contacto" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3 7 9 6 9-6"/></svg>Contacto</a></li>
+      </ul></div>
+    </div>
+    <div class="pie-contacto">
+      <b>Contáctanos</b>
+      <a id="pie-wsp" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 1.8.8"/></svg>WhatsApp: 983 573 288</a>
+      <a id="pie-correo" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3 7 9 6 9-6"/></svg><span></span></a>
+      <span id="pie-direccion" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-11.5a7 7 0 0 0-14 0C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span></span></span>
+      <div class="redes" id="redes"></div>
+    </div>
+    <div class="pie-libro">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5c3-1 7-1 10 1 3-2 7-2 10-1v14c-3-1-7-1-10 1-3-2-7-2-10-1z"/><path d="M12 6v14"/></svg>
+      <b>Libro de reclamaciones</b>
+      <p>Registra aquí tu queja o reclamo.<br>Te responderemos en un plazo máximo de 15 días hábiles.</p>
+      <a class="btn" href="reclamaciones.html">Ingresar al libro <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a>
+    </div>
+    <p class="pie-legal" id="pie-legal"></p>
   </footer>
+
+  <!-- Aviso de cookies y términos: sale la primera vez -->
+  <div class="aviso-cookies" id="aviso-cookies" role="dialog" aria-label="Aviso de cookies" hidden>
+    <p>Usamos cookies y almacenamiento propio solo para que la tienda funcione (tu carrito y tus favoritos). Al continuar aceptas nuestros
+      <a href="legal.html#terminos">Términos y condiciones</a>, la <a href="legal.html#privacidad">Política de privacidad</a> y la <a href="legal.html#cookies">Política de cookies</a>.</p>
+    <button class="btn btn-cafe" id="aceptar-cookies" type="button">Aceptar</button>
+  </div>
 
   <a class="wsp-flotante" id="wsp-flotante" target="_blank" rel="noopener">WhatsApp</a>
 
@@ -237,6 +302,8 @@
       </div>
       <div class="datos-pago" id="datos-pago"></div>
 
+      <label class="acepto"><input type="checkbox" name="acepto" value="si"> Acepto los <a href="legal.html#terminos" target="_blank">Términos y condiciones</a> y la <a href="legal.html#privacidad" target="_blank">Política de privacidad</a>.</label>
+      <p class="aviso-talla" id="error-acepto" role="alert"></p>
       <button class="btn btn-denim btn-alto" type="submit">Generar mi pedido</button>
       <p class="nota">Tu pedido se confirma cuando recibimos la captura de pago.</p>
       <button class="btn-texto" type="button" id="volver-1">← Volver al carrito</button>

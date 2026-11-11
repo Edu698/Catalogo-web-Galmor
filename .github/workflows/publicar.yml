@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Revisar que la tienda esté completa
         run: |
-          for f in index.html app.js productos.js estilos.css secciones.css diseno.css pedidos.html servidor/server.js servidor/catalogo-inicial.json panel/xlsx.full.min.js; do test -s "$f" || { echo "Falta $f"; exit 1; }; done
+          for f in index.html app.js productos.js estilos.css secciones.css diseno.css pedidos.html legal.html reclamaciones.html servidor/server.js servidor/catalogo-inicial.json panel/xlsx.full.min.js; do test -s "$f" || { echo "Falta $f"; exit 1; }; done
           test -d fotos && test -d marca
           node -e "require('./servidor/server.js')"
       - name: Llave para entrar al servidor
@@ -44,7 +44,7 @@ jobs:
       - name: Copiar archivos
         # Se sube a una carpeta nueva y luego se cambia de golpe: la tienda nunca queda a medias.
         run: |
-          tar -czf - index.html app.js productos.js estilos.css secciones.css diseno.css pedidos.html servidor panel fotos marca \
+          tar -czf - index.html app.js productos.js estilos.css secciones.css diseno.css pedidos.html legal.html reclamaciones.html servidor panel fotos marca \
             | ssh -i ~/.ssh/servidor -o BatchMode=yes root@2.31.21.41 '
                 set -e
                 mkdir -p /opt/tienda/datos && rm -rf /opt/tienda/nuevo && mkdir /opt/tienda/nuevo
