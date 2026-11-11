@@ -119,14 +119,6 @@
       </div>
     </section>
 
-    <!-- Opiniones de clientes (se llenan en productos.js) -->
-    <section class="opiniones">
-      <p class="ceja">Opiniones reales</p>
-      <h2>Lo que dicen nuestros clientes</h2>
-      <div class="opiniones-lista" id="opiniones"></div>
-      <button class="btn btn-denim" id="opinar">Deja tu opinión</button>
-    </section>
-
     <!-- Preguntas frecuentes -->
     <section class="faq" id="preguntas">
       <div class="logo"><span>Galmor</span><small>Textiles</small></div>
@@ -204,23 +196,6 @@
 
   <!-- Aviso "Agregado" -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <!-- Dejar una opinión: se publica cuando el dueño la aprueba en el panel -->
-  <dialog class="ventana" id="ventana-opinion" aria-labelledby="titulo-opinion">
-    <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
-    <form id="form-opinion" novalidate>
-      <h2 id="titulo-opinion">Tu opinión</h2>
-      <p class="ventana-sub">Cuéntanos qué te pareció tu compra. La publicamos después de revisarla.</p>
-      <div class="estrellas-elegir" role="radiogroup" aria-label="Estrellas">
-        <label><input type="radio" name="estrellas" value="5" checked aria-label="5 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="4" aria-label="4 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="3" aria-label="3 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="2" aria-label="2 estrellas"><span>★</span></label><label><input type="radio" name="estrellas" value="1" aria-label="1 estrella"><span>★</span></label>
-      </div>
-      <label class="campo">Tu nombre<input name="nombre" maxlength="40" placeholder="Ej. Carlos M."></label>
-      <label class="campo">Tu comentario<textarea name="texto" maxlength="500" rows="4" placeholder="¿Cómo te quedó el pantalón? ¿Qué tal la tela?"></textarea></label>
-      <p class="aviso-talla" id="error-opinion" role="alert"></p>
-      <button class="btn btn-cafe btn-alto" type="submit">Enviar opinión</button>
-    </form>
-    <p class="ventana-gracias" id="gracias-opinion" hidden>¡Gracias! Tu opinión se publica en cuanto la revisemos.</p>
-  </dialog>
 
   <!-- Mi pedido: el cliente ve en qué va su compra con su número de pedido y DNI -->
   <dialog class="ventana" id="ventana-seguimiento" aria-labelledby="titulo-seguimiento">

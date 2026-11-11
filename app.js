@@ -153,9 +153,6 @@
         <button class="btn-agregar" data-agregar>${ICONO_BOLSA}Agregar al carrito</button>
       </div></article>`;
   }
-  const tilePronto = () => `<div class="pronto"><small>Nueva colección · Muy pronto</small><b>Galmor</b>
-      <p>El corte clásico que define tu estilo. Sé de los primeros en conocerla.</p>
-      <a class="btn" href="${wsp("Hola, quiero conocer la nueva colección Galmor cuando llegue.")}" target="_blank" rel="noopener">Quiero conocerla →</a></div>`;
   const ORDEN = { menor: (a, b) => a.precio - b.precio, mayor: (a, b) => b.precio - a.precio, nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es") };
   const hayFiltros = () => Object.values(elegidos).some((s) => s.size) || atajo !== "Todos" || precioMin > limites()[0] || precioMax < limites()[1];
   function pintarCatalogo() {
@@ -172,10 +169,7 @@
       .filter((p) => p.precio >= precioMin && p.precio <= precioMax)
       .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.corte} ${p.tela} ${nombresColor(p).join(" ")}`).includes(t)));
     if (ORDEN[$("#orden").value]) lista.sort(ORDEN[$("#orden").value]);
-    // Galmor aún no tiene productos: se muestra el aviso "Muy pronto" si no hay otros filtros que lo descarten.
-    const soloMarca = !Object.entries(elegidos).some(([k, s]) => k !== "marca" && s.size) && atajo === "Todos" && !texto;
-    const pronto = soloMarca && (!m.size || m.has(C.marcas.galmor));
-    $("#rejilla").innerHTML = lista.map(tarjeta).join("") + (pronto ? tilePronto() : "")
+    $("#rejilla").innerHTML = lista.map(tarjeta).join("")
       || `<p class="vacio">No encontramos productos${texto ? ` para «${esc(texto)}»` : " con esos filtros"}. <button class="btn-texto" data-limpiar>Ver todos</button></p>`;
     $("#limpiar-filtros").hidden = !hayFiltros() && !texto;
   }
@@ -799,43 +793,8 @@
       <a class="btn" href="#catalogo">Elegir pack <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir, b.dataset.color)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
-  // ---------- Opiniones: las aprobadas en el panel (servidor) + las escritas en productos.js ----------
-  function pintarOpiniones(lista) {
-    $("#opiniones").innerHTML = lista.length
-      ? lista.slice(0, 9).map((o) => `<div class="opinion"><span class="estrellas">${"★".repeat(o.estrellas || 5)}</span><p>${esc(o.texto)}</p><b>— ${esc(o.nombre)}</b></div>`).join("")
-      : `<p class="opiniones-vacio" style="grid-column:1/-1;text-align:center">¿Ya compraste? Cuéntanos qué te pareció tu pantalón y publicamos tu opinión aquí.</p>`;
-  }
-  pintarOpiniones(C.opiniones || []);
-  fetch("/api/opiniones").then((r) => r.json()).then((d) => pintarOpiniones([...d.opiniones, ...(C.opiniones || [])])).catch(() => {});
-
-  // Ventanas de "Deja tu opinión" y "Mi pedido".
+  // Ventana "Mi pedido".
   $$(".ventana").forEach((v) => v.addEventListener("click", (e) => { if (e.target === v || e.target.dataset.cerrar !== undefined) v.close(); }));
-  async function enviarJSON(url, datos) {
-    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
-    return { ok: r.ok, ...(await r.json().catch(() => ({}))) };
-  }
-  $("#opinar").onclick = () => {
-    $("#form-opinion").reset();
-    $("#form-opinion").hidden = false;
-    $("#gracias-opinion").hidden = true;
-    $("#error-opinion").textContent = "";
-    $("#ventana-opinion").showModal();
-  };
-  $("#form-opinion").onsubmit = async (e) => {
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.target));
-    const boton = $("button[type=submit]", e.target);
-    boton.disabled = true;
-    try {
-      const r = await enviarJSON("/api/opiniones", f);
-      if (!r.ok) throw new Error(r.error || "No se pudo enviar. Intenta otra vez.");
-      e.target.hidden = true;
-      $("#gracias-opinion").hidden = false;
-    } catch (err) {
-      $("#error-opinion").textContent = err.message.startsWith("Failed") ? "Sin conexión. Intenta otra vez." : err.message[0].toUpperCase() + err.message.slice(1) + ".";
-    } finally { boton.disabled = false; }
-  };
-
   const PASOS_PEDIDO = [["nuevo", "Recibido", "Esperamos la captura de tu pago."], ["pagado", "Pagado", "Estamos preparando tu pedido."], ["despachado", "Despachado", "Tu pedido ya salió."]];
   $("#abrir-seguimiento").onclick = () => {
     $("#resultado-seguimiento").innerHTML = "";
