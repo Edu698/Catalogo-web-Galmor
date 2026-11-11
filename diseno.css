@@ -352,3 +352,37 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 .destacado-marca { z-index: 2; left: 14px; top: 50%; translate: none; transform: translateY(-50%) rotate(180deg); transform-origin: center; writing-mode: vertical-rl; }
 .destacado-texto h2 em { text-transform: uppercase; }
 @media (max-width: 899px) { .destacado { background: linear-gradient(180deg, #d7d5d3 0 46%, #f8eee6 46%); } .destacado-foto img { max-height: 440px; } .destacado-marca { font-size: 40px; } }
+
+/* Pack en el celular: misma estructura que la imagen de referencia (texto e imagen lado a lado; 3 tarjetas en una fila). */
+/* Reason: la foto trae su propio fondo; se difuminan los bordes y se mantiene su proporción para que no se estire. */
+.packs-pila { height: auto; aspect-ratio: 830 / 432; object-fit: cover; align-self: center; border-radius: 0;
+  -webkit-mask-image: radial-gradient(ellipse 70% 75% at 55% 50%, #000 55%, transparent 98%); mask-image: radial-gradient(ellipse 70% 75% at 55% 50%, #000 55%, transparent 98%); }
+@media (max-width: 899px) {
+  .packs { padding: 28px 14px 34px; }
+  .packs-cab { grid-template-columns: 1.15fr 1fr; gap: 6px; margin-bottom: 30px; }
+  .packs .ceja { font-size: 10px; letter-spacing: .2em; gap: 8px; }
+  .packs .ceja::after { width: 34px; }
+  .packs h2 { font-size: clamp(26px, 8vw, 40px); margin: 8px 0 2px; }
+  .packs-lema { font-size: clamp(16px, 4.8vw, 24px); }
+  .packs-lema::after { width: 80px; height: 3px; margin: 8px 0 10px; }
+  .packs-sub { font-size: 12px; line-height: 1.4; }
+  .packs-sub mark { padding: 0 3px; }
+  .packs-pila { max-width: none; width: 100%; margin: 0; }
+  .packs-lista { grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 10px; align-items: center; }
+  .pack { padding: 18px 8px 12px; border-radius: 12px; }
+  .pack.estrella { padding: 22px 8px 16px; }
+  .pack b { font-size: 11px; padding-bottom: 6px; }
+  .pack b strong { font-size: 28px; vertical-align: -3px; margin-right: 3px; }
+  .pack .pct { font-size: clamp(22px, 7.5vw, 34px); margin: 8px 0 6px; }
+  .pack small { font-size: 8px; padding: 5px 4px; border-radius: 12px; margin-bottom: 10px; letter-spacing: 0; }
+  .pack .btn { min-height: 32px; font-size: 10px; padding: 0 6px; border-radius: 6px; }
+  .pack .btn svg { width: 14px; height: 14px; margin-left: 6px; }
+  .pack-tag { top: -11px; padding: 3px 8px; font-size: 8px; }
+}
+@media (max-width: 899px) {
+  .pack b, .pack .btn { white-space: nowrap; }
+  .pack b { font-size: 10px; }
+  .pack b strong { font-size: 24px; }
+  .pack .btn { font-size: 9px; letter-spacing: 0; }
+  .pack .btn svg { width: 12px; margin-left: 4px; }
+}

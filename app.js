@@ -127,7 +127,7 @@
     const activa = atajo === "Niños" ? "" : m.size === 1 ? Object.keys(C.marcas).find((k) => m.has(C.marcas[k])) : m.size ? "" : "todos";
     $("#pestanas").innerHTML = Object.entries(PESTANAS)
       .map(([id, n]) => `<button data-marca="${id}" class="${id === activa ? "activa" : ""}" aria-pressed="${id === activa}">${n}</button>`)
-      .join("") + `<button data-ninos class="${atajo === "Niños" ? "activa" : ""}" aria-pressed="${atajo === "Niños"}">Niños <span class="nuevo">Nuevo</span></button><a href="#descubre">Descubre</a>`;
+      .join("") + `<button data-ninos class="${atajo === "Niños" ? "activa" : ""}" aria-pressed="${atajo === "Niños"}">Niños <span class="nuevo">Nuevo</span></button><a href="#destacado">Descubre</a>`;
   }
 
   const leerLS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
