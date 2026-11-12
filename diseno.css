@@ -386,3 +386,22 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
   .pack .btn { font-size: 9px; letter-spacing: 0; }
   .pack .btn svg { width: 12px; margin-left: 4px; }
 }
+
+/* Pack 12/11/2026: pantalones sobre su pedestal, del mismo tono que el fondo (como la imagen de referencia).
+   La imagen trae los bordes ya fundidos; va arriba a la derecha y las tarjetas quedan encima del pedestal. */
+.packs { position: relative; background: radial-gradient(ellipse 60% 70% at 72% 18%, #f3dccb, transparent 70%), #f8e8db; }
+.packs-cab { position: relative; z-index: 1; display: block; min-height: calc(min(56vw, 900px) * 426 / 860 * .96); }
+.packs-texto { max-width: 46%; }
+.packs-pila, .packs-pila:is(img) { position: absolute; z-index: 0; top: 0; right: 0; width: min(56vw, 900px); max-width: none; height: auto; aspect-ratio: 860 / 426;
+  margin: 0; border-radius: 0; -webkit-mask-image: none; mask-image: none; object-fit: contain; pointer-events: none; }
+.packs-lista { position: relative; z-index: 1; }
+@media (max-width: 899px) {
+  .packs { padding-top: 22px; }
+  .packs-texto { max-width: 52%; }
+  .packs-pila { width: 60vw; top: 6px; margin: 0; }
+  .packs-cab { min-height: calc(60vw * 426 / 860 * .96); margin-bottom: 18px; }
+}
+@media (min-width: 900px) {
+  .packs-texto { max-width: 52%; }
+  .packs h2 { font-size: clamp(40px, 4.8vw, 76px); white-space: nowrap; }
+}
