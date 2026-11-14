@@ -26,7 +26,13 @@ window.CATALOGO = {
   // Opiniones de clientes reales. Agregar así: { nombre: "Carlos M.", texto: "Muy buena tela…", estrellas: 5 },
   opiniones: [],
 
-  redes: { facebook: "#", instagram: "#", tiktok: "#", youtube: "#" }, // pegar los enlaces; con "#" el ícono no se muestra
+  // Pegar los enlaces; con "#" el ícono no se muestra. Los usan el pie del catálogo y enlaces.html.
+  redes: {
+    facebook: "https://www.facebook.com/profile.php?id=61596384419335",
+    instagram: "https://www.instagram.com/galmortextiles.oficial/",
+    tiktok: "https://www.tiktok.com/@galmor.textilesoficial",
+    youtube: "#",
+  },
 
   // Datos legales de la empresa: salen en el pie, en las políticas y en el Libro de Reclamaciones.
   // Vacío = no se muestra. Completar con los datos reales (no usar datos de ejemplo).
