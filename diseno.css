@@ -405,3 +405,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
   .packs-texto { max-width: 52%; }
   .packs h2 { font-size: clamp(40px, 4.8vw, 76px); white-space: nowrap; }
 }
+
+/* Etiqueta "Más vendido" (se marca en el panel) */
+.etiqueta-top { position: absolute; top: 12px; left: 12px; z-index: 2; background: var(--denim); color: #fff; padding: 5px 12px; border-radius: 16px;
+  font: 600 12px var(--texto); letter-spacing: .03em; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); }

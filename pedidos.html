@@ -94,6 +94,26 @@
     .ventana-panel input, .ventana-panel select { height: 44px; padding: 0 10px; border: 1px solid var(--linea); border-radius: 6px; font: 400 16px var(--texto); }
     .ventana-panel .fila-precios { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .ventana-panel .botones { grid-column: 1 / -1; }
+    .rapidos { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rapidos button { min-height: 34px; padding: 0 12px; border-radius: 17px; border: 1.5px solid var(--linea); background: #fff; font: 600 13px var(--texto); cursor: pointer; color: var(--tinta-3); }
+    .rapidos .chip-web.si { background: #e7f4e8; border-color: #9fd0a3; color: #1f6b2a; }
+    .rapidos .chip-web:not(.si) { background: #fbe9e7; border-color: #e6a59c; color: #b23a2e; }
+    .rapidos .chip-top.si { background: var(--denim); border-color: var(--denim); color: #fff; }
+    .rotulo-stock { font-size: 14px; margin: 10px 0 6px; color: var(--tinta-2); }
+    .colores-stock { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .color-stock { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border-radius: 18px; border: 1.5px solid var(--linea); background: #fff; font: 500 14px var(--texto); cursor: pointer; }
+    .color-stock i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+    .color-stock.sin { opacity: .5; text-decoration: line-through; background: #f3eeea; }
+    .sel-rep { height: 44px; padding: 0 10px; border: 1px solid var(--linea); border-radius: 6px; font: 400 15px var(--texto); background: #fff; margin-left: 6px; }
+    .reportes { display: grid; gap: 14px; }
+    @media (min-width: 800px) { .reportes { grid-template-columns: 1fr 1fr; } }
+    .reporte { background: #fff; border-radius: 12px; padding: 16px; }
+    .reporte h3 { font: 700 18px var(--texto); text-transform: uppercase; margin: 0 0 10px; }
+    .reporte table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .reporte td { padding: 6px 4px; border-bottom: 1px solid #f0e8e0; vertical-align: top; }
+    .reporte td:first-child { position: relative; width: 60%; }
+    .reporte td:first-child i { display: block; height: 4px; border-radius: 2px; background: var(--dorado, #c69a6b); margin-top: 4px; }
+    .reporte td:not(:first-child) { text-align: right; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -109,7 +129,7 @@
   <main class="panel" id="contenido" hidden>
     <div id="aviso"></div>
     <div class="tablero" id="tablero"></div>
-    <nav class="secciones" id="secciones"><button data-s="pedidos" class="activa">Pedidos</button><button data-s="opiniones">Opiniones <b id="n-pendientes" hidden></b></button><button data-s="precios">Precios</button><button data-s="reclamos">Reclamos <b id="n-reclamos" hidden></b></button></nav>
+    <nav class="secciones" id="secciones"><button data-s="pedidos" class="activa">Pedidos</button><button data-s="opiniones">Opiniones <b id="n-pendientes" hidden></b></button><button data-s="precios">Precios</button><button data-s="reclamos">Reclamos <b id="n-reclamos" hidden></b></button><button data-s="reportes">Reportes</button></nav>
     <div id="vista-pedidos">
     <div class="filtros-panel" id="filtros">
       <button data-f="cobrar">Por cobrar</button>
@@ -128,6 +148,16 @@
     <div id="vista-opiniones" hidden>
       <p class="ventana-sub">Los clientes dejan su opinión en la tienda. Solo se publica cuando tocas <b>Publicar</b>.</p>
       <div id="lista-opiniones"></div>
+    </div>
+    <div id="vista-reportes" hidden>
+      <div class="precios-cab">
+        <label>Periodo <select id="rep-periodo" class="sel-rep"><option value="7">Últimos 7 días</option><option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 3 meses</option><option value="365">Último año</option><option value="0">Todo</option></select></label>
+        <label>Pedidos <select id="rep-estado" class="sel-rep"><option value="pagados">Solo pagados y despachados</option><option value="todos">Todos (también por cobrar)</option></select></label>
+        <button class="btn btn-borde" id="rep-excel">Descargar Excel</button>
+      </div>
+      <div class="tablero" id="rep-resumen"></div>
+      <div class="reportes" id="rep-tablas"></div>
     </div>
     <div id="vista-reclamos" hidden>
       <p class="ventana-sub">Hojas del Libro de Reclamaciones. Por ley debes responder en un plazo máximo de <b>15 días hábiles</b>. Escribe tu respuesta, envíala al cliente por correo o WhatsApp y guárdala aquí.</p>
@@ -173,6 +203,7 @@
 
   <section id="rotulos"></section>
 
+  <script src="productos.js"></script>
   <script src="panel/xlsx.full.min.js"></script>
   <script>
   (() => {
@@ -264,6 +295,7 @@
       }).join("") : `<p class="vacio-panel">No hay pedidos en esta lista.</p>`;
       $("#n-sel").textContent = elegidos().length;
       pintarOpiniones();
+      if (!$("#vista-reportes").hidden) pintarReportes();
     }
     function pintarOpiniones() {
       const pendientes = opiniones.filter((o) => !o.ok).length;
@@ -290,6 +322,8 @@
       $("#vista-opiniones").hidden = b.dataset.s !== "opiniones";
       $("#vista-precios").hidden = b.dataset.s !== "precios";
       $("#vista-reclamos").hidden = b.dataset.s !== "reclamos";
+      $("#vista-reportes").hidden = b.dataset.s !== "reportes";
+      if (b.dataset.s === "reportes") pintarReportes();
     });
     function visibles() {
       const m = manana();
@@ -315,7 +349,7 @@
           : `<p class="lugar">${esc(c.ciudad)} — ${esc(c.departamento)}</p><p class="otro">Agencia ${esc(c.agencia)}: ${esc(c.sede)}</p>`;
         return `<div class="etiq"><p class="para">PARA:</p><p class="nombre">${esc(c.nombre)}</p>
           <p class="doc">DNI: ${esc(c.dni)} · CEL.: ${esc(c.celular)}</p>${lugar}
-          <p class="pie">Pedido ${esc(p.n)} · ${piezas(p)} prenda(s) · Remite: GALMOR TEXTILES · 983 573 288</p></div>`;
+          <p class="pie">Pedido ${esc(p.n)} · ${piezas(p)} prenda(s) · Remite: GALMOR TEXTILES · ${TELEFONO}</p></div>`;
       }).join("");
     }
 
@@ -338,8 +372,9 @@
     // ---------- Precios: catálogo con costo, ganancia y Excel ----------
     const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Corte", "corte"], ["Público", "publico"], ["Tallas", "tallas"],
       ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2], ["Cant. 12", 3],
-      ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"]];
+      ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"], ["Más vendido", "destacado"]];
     const MARCAS = { zoroz: "Zoroz 77", galmor: "Galmor" };
+    const TELEFONO = window.CATALOGO.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
     const CANT = [1, 3, 6, 12];
     const normal = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9+]/g, "");
     const slug = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -376,17 +411,25 @@
       catch { $("#aviso").innerHTML = `<p class="aviso-panel">No se guardó la respuesta. Revisa tu internet y vuelve a intentar.</p>`; }
     });
 
+    const coloresDe = (codigo) => Object.entries((window.CATALOGO.detalles || []).find((d) => d.id === codigo)?.colores || {});
     function pintarPrecios() {
+      const abiertos = new Set([...document.querySelectorAll("#lista-precios details[open]")].map((d) => d.dataset.codigo));
       $("#lista-precios").innerHTML = catalogo.map((p, k) => {
+        const ocultos = p.ocultos || [];
+        const colores = coloresDe(p.codigo).map(([n, tono]) => `<button type="button" class="color-stock ${ocultos.includes(n) ? "sin" : ""}" data-color-stock="${k}" data-c="${esc(n)}"
+          title="${ocultos.includes(n) ? "Sin stock: no se muestra" : "Con stock: se muestra"}"><i style="background:${tono}"></i>${esc(n)}</button>`).join("");
         const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${p.precios.map((v, j) => {
           const venta = v + r, gana = p.costo === null ? null : (venta - p.costo) * CANT[j];
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
-        return `<details class="producto-panel ${p.web ? "" : "oculto"}"><summary><b>${esc(p.nombre)}</b>
+        return `<details class="producto-panel ${p.web ? "" : "oculto"}" data-codigo="${esc(p.codigo)}" ${abiertos.has(p.codigo) ? "open" : ""}><summary><b>${esc(p.nombre)}</b>
+            <span class="rapidos"><button type="button" class="chip-web ${p.web ? "si" : ""}" data-web="${k}">${p.web ? "✓ Se muestra" : "✗ Oculto"}</button>
+              <button type="button" class="chip-top ${p.destacado ? "si" : ""}" data-top="${k}">★ Más vendido</button></span>
             <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)}${p.corte ? ` · ${esc(p.corte)}` : ""} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
             <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
           <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
+            ${colores ? `<p class="rotulo-stock">Colores · toca un color sin stock para ocultarlo de la tienda:</p><div class="colores-stock">${colores}</div>` : ""}
             <div class="botones"><button data-editar="${k}">Editar</button><button data-quitar-producto="${k}">Quitar</button></div></div></details>`;
       }).join("") || `<p class="vacio-panel">No hay productos. Agrega uno o sube tu Excel.</p>`;
     }
@@ -422,7 +465,8 @@
       const f = fp.elements;
       const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), corte: f.corte.value.trim(),
         publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
-        precios: [0, 1, 2, 3].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked };
+        precios: [0, 1, 2, 3].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked,
+        destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [] };
       if (editando < 0 && catalogo.some((p) => p.codigo === nuevo.codigo)) return ($("#error-producto").textContent = "Ese código ya existe. Escribe otro.");
       const lista = editando < 0 ? [...catalogo, nuevo] : catalogo.map((p, k) => (k === editando ? nuevo : p));
       const error = await guardarCatalogo(lista);
@@ -432,7 +476,19 @@
     $("#cancelar-producto").onclick = () => $("#ventana-producto").close();
     $("#agregar-producto").onclick = () => abrirEditor(-1);
     $("#lista-precios").addEventListener("click", async (e) => {
-      const d = e.target.dataset;
+      const b = e.target.closest("button");
+      const d = b ? b.dataset : e.target.dataset;
+      if (d.web || d.top || d.colorStock) {
+        e.preventDefault(); // Reason: los botones están dentro del resumen; sin esto el producto se abre o se cierra.
+        const k = +(d.web || d.top || d.colorStock);
+        const p = { ...catalogo[k], ocultos: [...(catalogo[k].ocultos || [])] };
+        if (d.web) p.web = !p.web;
+        if (d.top) p.destacado = !p.destacado;
+        if (d.colorStock) p.ocultos = p.ocultos.includes(d.c) ? p.ocultos.filter((x) => x !== d.c) : [...p.ocultos, d.c];
+        const error = await guardarCatalogo(catalogo.map((x, j) => (j === k ? p : x)));
+        if (error) alert(error);
+        return;
+      }
       if (d.editar) abrirEditor(+d.editar);
       if (d.quitarProducto && confirm(`¿Quitar "${catalogo[+d.quitarProducto].nombre}" de la lista?`)) {
         const error = await guardarCatalogo(catalogo.filter((_, k) => k !== +d.quitarProducto));
@@ -443,7 +499,7 @@
     // Excel: misma plantilla para bajar y subir.
     $("#descargar-excel").onclick = () => {
       const filas = catalogo.map((p) => COLUMNAS.map(([, k]) => typeof k === "number" ? p.precios[k]
-        : k === "marca" ? MARCAS[p.marca] : k === "tallas" ? p.tallas.join(", ") : k === "web" ? (p.web ? "Sí" : "No") : p[k] ?? ""));
+        : k === "marca" ? MARCAS[p.marca] : k === "tallas" ? p.tallas.join(", ") : k === "web" || k === "destacado" ? (p[k] ? "Sí" : "No") : p[k] ?? ""));
       const hoja = XLSX.utils.aoa_to_sheet([COLUMNAS.map(([t]) => t), ...filas]);
       hoja["!cols"] = COLUMNAS.map(([t]) => ({ wch: t === "Producto" ? 46 : t === "Tallas" ? 24 : t === "Código" ? 22 : Math.max(9, t.length + 2) }));
       const libro = XLSX.utils.book_new();
@@ -470,7 +526,8 @@
           publico: /ni/.test(normal(valor(f, "publico"))) ? "Niño" : "Adulto",
           tallas: rango ? Array.from({ length: (rango[2] - rango[1]) / 2 + 1 }, (_, j) => String(+rango[1] + 2 * j)) : tallas ? tallas.split(/[^\d]+/).filter(Boolean) : previo?.tallas || [],
           tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2, 3].map((j) => numero(valor(f, j))),
-          recargoMedia: numero(valor(f, "recargoMedia")) ?? 0, recargoExtra: numero(valor(f, "recargoExtra")) ?? 0, web: !/^no$/.test(normal(valor(f, "web"))) };
+          recargoMedia: numero(valor(f, "recargoMedia")) ?? 0, recargoExtra: numero(valor(f, "recargoExtra")) ?? 0, web: !/^no$/.test(normal(valor(f, "web"))),
+          destacado: col.destacado >= 0 ? /^si$/.test(normal(valor(f, "destacado"))) : previo?.destacado === true, ocultos: previo?.ocultos || [] };
       });
     }
     $("#subir-excel").onchange = async (e) => {
@@ -481,7 +538,7 @@
       try { nuevos = leerExcel(await archivo.arrayBuffer()); } catch (err) { return alert(err.message); }
       const antes = Object.fromEntries(catalogo.map((p) => [p.codigo, p]));
       const agregados = nuevos.filter((p) => !antes[p.codigo]);
-      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", corte: "corte", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web" };
+      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", corte: "corte", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web", destacado: "más vendido" };
       const cambian = nuevos.filter((p) => antes[p.codigo]).map((p) => [p, Object.keys(CAMPOS).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(antes[p.codigo][k]))]).filter(([, c]) => c.length);
       const quitados = catalogo.filter((p) => !nuevos.some((n) => n.codigo === p.codigo));
       const lista = (t, l) => l.length ? `<p><b>${t} (${l.length})</b></p><ul>${l.join("")}</ul>` : "";
@@ -499,6 +556,71 @@
         if (error) $("#error-excel").textContent = error;
         else $("#cambios-excel").innerHTML = `<p class="aviso-panel">✓ Precios guardados. La tienda ya muestra los cambios.</p>`;
       };
+    };
+
+    // ---------- Reportes: qué y dónde se vende más (sale de los pedidos guardados) ----------
+    const REGION = { "Lima": "Lima y Callao", "Callao": "Lima y Callao",
+      "Tumbes": "Norte", "Piura": "Norte", "Lambayeque": "Norte", "La Libertad": "Norte", "Cajamarca": "Norte", "Amazonas": "Norte", "Áncash": "Norte",
+      "Huánuco": "Centro", "Pasco": "Centro", "Junín": "Centro", "Huancavelica": "Centro", "Ica": "Centro",
+      "Arequipa": "Sur", "Moquegua": "Sur", "Tacna": "Sur", "Cusco": "Sur", "Puno": "Sur", "Apurímac": "Sur", "Ayacucho": "Sur",
+      "Loreto": "Oriente", "Ucayali": "Oriente", "Madre de Dios": "Oriente", "San Martín": "Oriente" };
+    const departamentoDe = (c) => (c.envio === "lima" ? "Lima" : String(c.departamento || "—").replace(" (provincias)", ""));
+    // Cada reporte: título, de qué se cuenta (prendas o pedidos) y la clave de cada fila.
+    const REPORTES = [
+      ["Productos más vendidos", "prendas", (p, it) => nombre(it[0])],
+      ["Colores más vendidos", "prendas", (p, it) => it[1]],
+      ["Producto y color", "prendas", (p, it) => `${nombre(it[0])} · ${it[1]}`],
+      ["Tallas más vendidas", "prendas", (p, it) => `Talla ${it[2]}`],
+      ["Departamentos", "pedidos", (p) => departamentoDe(p.c)],
+      ["Provincias / ciudades", "pedidos", (p) => (p.c.envio === "lima" ? "Lima" : p.c.ciudad || "—")],
+      ["Distritos de Lima", "pedidos", (p) => (p.c.envio === "lima" ? p.c.distrito || "—" : null)],
+      ["Regiones", "pedidos", (p) => REGION[departamentoDe(p.c)] || "—"],
+      ["Países", "pedidos", () => "Perú"],
+      ["Medios de pago", "pedidos", (p) => p.c.pago || "—"],
+    ];
+    function datosReportes() {
+      const dias = +$("#rep-periodo").value, soloPagados = $("#rep-estado").value === "pagados";
+      const desde = dias ? Date.now() - dias * 864e5 : 0;
+      const lista = pedidos.filter((p) => new Date(p.d) >= desde && (!soloPagados || p.estado !== "nuevo"));
+      const tablas = REPORTES.map(([titulo, por, clave]) => {
+        const m = new Map();
+        for (const p of lista) {
+          const filas = por === "prendas" ? p.i.map((it) => [clave(p, it), it[3], it[3] * it[4]]) : [[clave(p), 1, p.t]];
+          for (const [k, n, sol] of filas) {
+            if (k === null) continue;
+            const a = m.get(k) || [0, 0];
+            m.set(k, [a[0] + n, a[1] + sol]);
+          }
+        }
+        return [titulo, por, [...m].sort((a, b) => b[1][0] - a[1][0] || b[1][1] - a[1][1])];
+      });
+      return { lista, tablas };
+    }
+    function pintarReportes() {
+      const { lista, tablas } = datosReportes();
+      const prendas = lista.reduce((s, p) => s + piezas(p), 0), ventas = lista.reduce((s, p) => s + p.t, 0);
+      $("#rep-resumen").innerHTML = `
+        <div class="dato"><small>Pedidos</small><b>${lista.length}</b></div>
+        <div class="dato"><small>Prendas</small><b>${prendas}</b></div>
+        <div class="dato"><small>Ventas</small><b>${soles(ventas)}</b></div>
+        <div class="dato"><small>Ticket promedio</small><b>${soles(lista.length ? ventas / lista.length : 0)}</b></div>`;
+      $("#rep-tablas").innerHTML = tablas.map(([titulo, por, filas]) => {
+        const max = filas[0]?.[1][0] || 1;
+        return `<article class="reporte"><h3>${titulo}</h3>${filas.length ? `<table>${filas.slice(0, 10).map(([k, [n, sol]], i) =>
+          `<tr><td>${i + 1}. ${esc(k)}<i style="width:${(n / max) * 100}%"></i></td><td>${n} ${por}</td><td>${soles(sol)}</td></tr>`).join("")}</table>`
+          : `<p class="vacio-panel">Sin datos en este periodo.</p>`}</article>`;
+      }).join("");
+    }
+    $("#rep-periodo").onchange = $("#rep-estado").onchange = pintarReportes;
+    $("#rep-excel").onclick = () => {
+      const { tablas } = datosReportes();
+      const libro = XLSX.utils.book_new();
+      for (const [titulo, por, filas] of tablas) {
+        const hoja = XLSX.utils.aoa_to_sheet([[titulo, por === "prendas" ? "Prendas" : "Pedidos", "Ventas (S/)"], ...filas.map(([k, [n, sol]]) => [k, n, Math.round(sol * 100) / 100])]);
+        hoja["!cols"] = [{ wch: 44 }, { wch: 10 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(libro, hoja, titulo.replace(/[\\/?*[\]:]/g, "-").slice(0, 31));
+      }
+      XLSX.writeFile(libro, `reportes-galmor-${hoy()}.xlsx`);
     };
     setInterval(() => { if (clave && !document.hidden) cargar(); }, 60000); // se actualiza solo cada minuto
     cargar();

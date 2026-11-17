@@ -125,7 +125,9 @@ function validarProducto(x, i) {
   const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
   return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", corte: texto(x.corte, 30),
     publico: x.publico, tallas, tela: texto(x.tela, 40),
-    costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false };
+    costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false,
+    // Más vendido: sale primero en la tienda con su etiqueta. Ocultos: colores sin stock que no se muestran.
+    destacado: x.destacado === true, ocultos: (Array.isArray(x.ocultos) ? x.ocultos : []).map((c) => texto(c, 40)).filter(Boolean).slice(0, 60) };
 }
 function validarCatalogo(lista) {
   if (!Array.isArray(lista) || !lista.length || lista.length > 500) throw new Error("lista de productos vacía");

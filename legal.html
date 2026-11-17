@@ -59,7 +59,7 @@
       <h3>Cuánto tiempo los guardamos</h3>
       <p>Mientras sean necesarios para tu pedido y para cumplir obligaciones tributarias y de atención al consumidor.</p>
       <h3>Tus derechos</h3>
-      <p>Puedes pedir acceso, rectificación, cancelación u oposición al uso de tus datos escribiéndonos por WhatsApp al 983 573 288<span class="dato-correo-texto"></span>. Te respondemos en los plazos que fija la ley.</p>
+      <p>Puedes pedir acceso, rectificación, cancelación u oposición al uso de tus datos escribiéndonos por WhatsApp al <span class="dato-wsp"></span><span class="dato-correo-texto"></span>. Te respondemos en los plazos que fija la ley.</p>
       <h3>Seguridad</h3>
       <p>Tus datos viajan cifrados (https) y se guardan en un servidor de acceso restringido. Solo el personal autorizado de Galmor Textiles puede verlos.</p>
     </section>
@@ -87,6 +87,7 @@
   <script>
     // Datos de la empresa desde productos.js (no se muestran si están vacíos).
     const E = window.CATALOGO.empresa || {};
+    document.querySelectorAll(".dato-wsp").forEach((x) => (x.textContent = window.CATALOGO.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")));
     if (E.razonSocial) document.querySelectorAll(".dato-empresa").forEach((x) => (x.textContent = E.razonSocial));
     if (E.ruc) document.querySelectorAll(".dato-ruc").forEach((x) => (x.textContent = `, RUC ${E.ruc}`));
     if (E.direccion) document.querySelectorAll(".dato-direccion").forEach((x) => (x.textContent = `, con domicilio en ${E.direccion}`));

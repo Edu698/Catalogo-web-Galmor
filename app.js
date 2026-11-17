@@ -4,6 +4,8 @@
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const soles = (n) => "S/ " + n.toFixed(2);
   const producto = (id) => C.productos.find((p) => p.id === id);
+  // Número para mostrar: "51908341818" → "908 341 818".
+  const telefono = C.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
   const wsp = (texto) => `https://wa.me/${C.whatsapp}${texto ? "?text=" + encodeURIComponent(texto) : ""}`;
   const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -36,10 +38,13 @@
     const { productos } = await (await fetch("/api/catalogo")).json();
     C.productos = productos.map((x) => {
       const d = (C.detalles || []).find((y) => y.id === x.codigo);
+      // Colores marcados "sin stock" en el panel no se muestran; si no queda ninguno, el producto no sale.
+      const visibles = d?.colores && Object.fromEntries(Object.entries(d.colores).filter(([n]) => !(x.ocultos || []).includes(n)));
+      if (visibles && !Object.keys(visibles).length) return null;
       return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0,
-        descripcion: d?.descripcion || "", colores: d?.colores || { [SIN_COLOR]: "#cfc6bc" }, sinColor: !d?.colores, sinFoto: !d?.fotos,
+        descripcion: d?.descripcion || "", colores: visibles || { [SIN_COLOR]: "#cfc6bc" }, sinColor: !d?.colores, sinFoto: !d?.fotos,
         ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
-    });
+    }).filter(Boolean);
   } catch {
     C.productos = [];
     $("#rejilla").innerHTML = `<p class="vacio">No se pudo cargar el catálogo. Revisa tu internet y recarga la página.</p>`;
@@ -141,6 +146,7 @@
     const puntos = p.sinColor ? "" : colores.slice(0, 4).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
     return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
       <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
+      ${p.destacado ? `<span class="etiqueta-top">★ Más vendido</span>` : ""}
       <button class="corazon ${fav ? "activo" : ""}" data-fav aria-pressed="${fav}" aria-label="Guardar en favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9-9.2C2 7.6 4 5 6.8 5c2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5 20 5 22 7.6 21 10.8 19.5 15.4 12 20 12 20z"/></svg></button>
       <div class="tarjeta-info">
         <button class="tarjeta-nombre" data-ver>${p.nombre}</button>
@@ -168,7 +174,7 @@
       .filter((p) => Object.entries(SETS).every(([k, de]) => !elegidos[k].size || de(p).some((v) => elegidos[k].has(v))))
       .filter((p) => p.precio >= precioMin && p.precio <= precioMax)
       .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.corte} ${p.tela} ${nombresColor(p).join(" ")}`).includes(t)));
-    if (ORDEN[$("#orden").value]) lista.sort(ORDEN[$("#orden").value]);
+    lista.sort(ORDEN[$("#orden").value] || ((a, b) => (b.destacado === true) - (a.destacado === true)));
     $("#rejilla").innerHTML = lista.map(tarjeta).join("")
       || `<p class="vacio">No encontramos productos${texto ? ` para «${esc(texto)}»` : " con esos filtros"}. <button class="btn-texto" data-limpiar>Ver todos</button></p>`;
     $("#limpiar-filtros").hidden = !hayFiltros() && !texto;
@@ -773,7 +779,7 @@
 
     // Pie
     caja(0, H - 140, W, 140, NEGRO);
-    texto("ENVÍA TU CAPTURA DE PAGO AL 983 573 288", W / 2, H - 78, `600 32px ${F}`, "#FFFFFF", "center", "2px");
+    texto(`ENVÍA TU CAPTURA DE PAGO AL ${telefono}`, W / 2, H - 78, `600 32px ${F}`, "#FFFFFF", "center", "2px");
     texto("Gracias por tu compra · Galmor Textiles", W / 2, H - 40, `400 19px ${F}`, "#BDBDBD", "center");
     return new Promise((ok) => cv.toBlob(ok, "image/png"));
   }
@@ -832,6 +838,7 @@
     `<a href="${enlaces[n] || "#"}" ${enlaces[n] && enlaces[n] !== "#" ? 'target="_blank" rel="noopener"' : ""} aria-label="${n}"><svg viewBox="0 0 24 24">${svg}</svg></a>`).join("");
   const E = C.empresa || {};
   $("#pie-wsp").href = wsp("Hola Galmor, quiero información.");
+  $("#pie-wsp span").textContent = `WhatsApp: ${telefono}`;
   $$("[data-wsp]").forEach((a) => (a.href = wsp(a.dataset.wsp)));
   $("#pie-contacto").href = E.correo ? `mailto:${E.correo}` : wsp("Hola Galmor, quiero comunicarme con ustedes.");
   if (E.correo) { $("#pie-correo").hidden = false; $("#pie-correo").href = `mailto:${E.correo}`; $("#pie-correo span").textContent = E.correo; }

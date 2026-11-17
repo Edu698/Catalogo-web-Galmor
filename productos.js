@@ -7,7 +7,7 @@
 // Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
   versionFotos: "202611082348", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
-  whatsapp: "51983573288", // número de contacto (por ahora el del dueño). 51 = Perú + celular, sin espacios
+  whatsapp: "51908341818", // WhatsApp Business de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
 
   // Datos para pagar.
   pago: {
