@@ -70,6 +70,38 @@
     .tarjeta-link p { margin: 6px 0 12px; font-size: 13px; color: #bdbdbd; }
     .tarjeta-link input { width: 100%; padding: 10px; border: 1px solid #444; background: #000; color: #fff; font: 12px monospace; }
     .tarjeta-link button { margin-top: 10px; width: 100%; min-height: 44px; border: 0; background: var(--color); color: #0a0a0a; font: 800 17px var(--titulo); letter-spacing: .1em; text-transform: uppercase; }
+
+    /* Celular (la mayoría de visitas): todo en una pantalla, sin cortes ni textos encima de la imagen. */
+    .catalogo b { white-space: nowrap; }
+    @media (max-width: 600px) {
+      .enlaces { min-height: 100svh; justify-content: center; padding: calc(22px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)); }
+      .marca { font-size: clamp(34px, 10.5vw, 48px); }
+      .marca-sub { margin-top: 8px; font-size: 11px; gap: 10px; }
+      .marca-sub::before, .marca-sub::after { width: 30px; }
+      .lema { margin-top: 12px; font-size: 20px; }
+      .datos { margin-top: 8px; font-size: 9.5px; letter-spacing: .12em; }
+      .datos i { margin: 0 7px; }
+      .lista { margin-top: 18px; gap: 11px; }
+      .enlace { min-height: 56px; gap: 12px; padding: 0 14px 0 10px; box-shadow: 4px 4px 0 var(--color, var(--oro)); }
+      .icono { width: 36px; height: 36px; }
+      .icono svg { width: 21px; height: 21px; }
+      .enlace b { font-size: 17px; }
+      .enlace small { margin-top: 3px; font-size: 11px; }
+      .enlace::after { font-size: 19px; }
+      .catalogo { min-height: 92px; padding: 0 14px; background:
+        linear-gradient(90deg, #0a0a0a 46%, rgba(10, 10, 10, .55) 70%, rgba(10, 10, 10, .15)), url(marca/pack-pila.webp) right -10px center / auto 92% no-repeat, #0a0a0a; }
+      .catalogo b { font-size: clamp(21px, 6.4vw, 26px); }
+      .catalogo .ceja { margin-bottom: 5px; font-size: 10px; letter-spacing: .2em; }
+      .enlaces-pie { margin-top: 18px; font-size: 10px; letter-spacing: .3em; }
+    }
+    /* Pantallas bajas (iPhone SE, Android chicos con la barra del navegador). */
+    @media (max-width: 600px) and (max-height: 700px) {
+      .enlaces { padding-top: 16px; }
+      .lema { font-size: 18px; margin-top: 10px; }
+      .lista { gap: 9px; margin-top: 14px; }
+      .enlace { min-height: 52px; }
+      .catalogo { min-height: 84px; }
+    }
   </style>
 </head>
 <body>
