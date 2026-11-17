@@ -6,7 +6,7 @@
 //   fotos/<código>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 // Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
-  versionFotos: "202611082348", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
+  versionFotos: "202611171800", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51908341818", // WhatsApp Business de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
 
   // Datos para pagar.
@@ -46,20 +46,20 @@ window.CATALOGO = {
   //   la foto de un color, se muestra "Foto pronto". modelos: cuántas fotos de cuerpo entero (modelo-N.webp).
   // alias: color → nombre del archivo de foto, cuando no se llaman igual.
   detalles: [
-    { id: "drill-clasico", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Cocoa": "#5a4337", "Azul noche": "#171c2e", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Hueso": "#ddd6cb" } },
+    { id: "drill-clasico", fotos: "drill-clasico", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Cocoa": "#5a4337", "Azul noche": "#171c2e", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Hueso": "#ddd6cb" } },
     { id: "jogger-cargo", fotos: "jogger-cargo", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Cocoa": "#5a4337", "Plomo oscuro": "#2c3238", "Hueso": "#ddd6cb" } },
     { id: "bermuda-torero", fotos: "bermuda-cargo", colores: { "Blanco": "#f4f4f2", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Cocoa": "#5a4337", "Hueso": "#ddd6cb", "Plomo oscuro": "#2c3238" } },
-    { id: "jean-clasico-grueso", colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Plomo lápiz": "#4a4d52", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf" } },
-    { id: "drill-tri-cargo", colores: { "Negro": "#1a1a1c", "Verde arena": "#4f5546", "Cocoa": "#5a4337", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238" } },
-    { id: "pantalon-carbon", fotos: "doble-cargo", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Verde arena": "#4f5546", "Hueso": "#ddd6cb" } },
-    { id: "bermuda-jean-clasico", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
-    { id: "short-corto", colores: { "Hueso": "#ddd6cb", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Plomo oscuro": "#2c3238", "Blanco": "#f4f4f2" } },
+    { id: "jean-clasico-grueso", fotos: "jean-clasico-grueso", colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf", "Plomo lápiz": "#4a4d52" } },
+    { id: "drill-tri-cargo", fotos: "drill-tri-cargo", colores: { "Negro": "#1a1a1c", "Verde arena": "#4f5546", "Cocoa": "#5a4337", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238" } },
+    { id: "pantalon-carbon", fotos: "doble-cargo", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Verde arena": "#4f5546", "Hueso": "#ddd6cb", "Camello": "#c4914f", "Azul oscuro": "#5f7a88" } },
+    { id: "bermuda-jean-clasico", fotos: "bermuda-jean-clasico", colores: { "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238", "Celeste froz": "#a7c3e3", "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c" } },
+    { id: "short-corto", fotos: "short-corto", colores: { "Hueso": "#ddd6cb", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Plomo oscuro": "#2c3238", "Blanco": "#f4f4f2" } },
     { id: "bermuda-torero-drill", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Hueso": "#ddd6cb" } },
     { id: "drill-semi-pitillo", fotos: "drill-semi-pitillo", modelos: 2, colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Cocoa": "#5a4337", "Plomo oscuro": "#2c3238", "Verde arena": "#4f5546", "Hueso": "#ddd6cb" } },
     { id: "drill-nino", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Hueso": "#ddd6cb", "Canela": "#7a3f1f", "Cocoa": "#5a4337", "Camello": "#b0742f" } },
-    { id: "bermuda-jean-sin-basta", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
+    { id: "bermuda-jean-sin-basta", fotos: "bermuda-jean-sin-basta", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Madera froz": "#55698c", "Plomo oscuro": "#2c3238", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Acero froz": "#6582b3" } },
     { id: "tactico-cargo" },
     { id: "jean-clasico-delgado", fotos: "jean-semi-pitillo", modelos: 2, alias: {"Cristal":  "azul-cristal", "Celeste":  "celeste-claro"}, colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Plomo lápiz": "#4a4d52", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf" } },
-    { id: "bermuda-jean-rasgado", colores: { "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
+    { id: "bermuda-jean-rasgado", fotos: "bermuda-jean-rasgado", colores: { "Celeste froz": "#a7c3e3", "Plomo oscuro froz": "#5f636b", "Madera froz": "#55698c", "Cristal froz": "#6f8fbd", "Maíz froz": "#b9c6d6", "Acero froz": "#6582b3", "Plomo oscuro": "#2c3238" } },
   ],
 };

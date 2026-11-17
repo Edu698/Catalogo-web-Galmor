@@ -9,15 +9,16 @@
   const wsp = (texto) => `https://wa.me/${C.whatsapp}${texto ? "?text=" + encodeURIComponent(texto) : ""}`;
   const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---------- Fotos: fotos/<id>/<color>.webp y fotos/<id>/modelo-N.webp ----------
+  // ---------- Fotos: fotos/<id>/<color>.webp (Full HD, galería), <color>-m.webp (800 px, tarjetas/carrito) y modelo-N.webp ----------
   const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-");
   const V = C.versionFotos ? `?v=${C.versionFotos}` : "";
   const SIN_FOTO = "marca/sin-foto.webp";
-  const fotoColor = (p, color) => (p.sinFoto ? SIN_FOTO : `fotos/${p.carpeta}/${p.alias?.[color] || slug(color)}.webp${V}`);
+  const fotoColor = (p, color, grande) => (p.sinFoto ? SIN_FOTO : `fotos/${p.carpeta}/${p.alias?.[color] || slug(color)}${grande ? "" : "-m"}.webp${V}`);
   // Color sin foto todavía: se ve "Foto pronto" en vez de una imagen rota.
   document.addEventListener("error", (e) => {
     const img = e.target;
-    if (img.tagName === "IMG" && !img.src.endsWith(SIN_FOTO)) img.src = SIN_FOTO;
+    // Sin miniatura (-m) se usa la foto grande; si tampoco existe, "Foto pronto".
+    if (img.tagName === "IMG" && !img.src.endsWith(SIN_FOTO)) img.src = img.src.includes("-m.webp") ? img.src.replace("-m.webp", ".webp") : SIN_FOTO;
   }, true);
   const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.carpeta}/modelo-${i + 1}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
@@ -342,7 +343,7 @@
     const irA = (i, suave = true) => pista.scrollTo({ left: i * pista.clientWidth, behavior: suave && !quieto ? "smooth" : "auto" });
     function pintarGaleria() {
       // Al elegir un color, la galería muestra primero ese color y luego las fotos con modelo.
-      fotos = [fotoColor(p, sel.color), ...modelos(p)];
+      fotos = [fotoColor(p, sel.color, true), ...modelos(p)];
       pista.innerHTML = fotos.map((f, i) => `<img src="${f}" alt="${p.nombre}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("");
       $(".galeria-puntos", dlg).innerHTML = fotos.map(() => "<i></i>").join("");
       $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f}" alt="" loading="lazy"></button>`).join("");
