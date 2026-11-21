@@ -181,8 +181,10 @@ a { color: inherit; }
 .lupa { border: 0; padding: 0; margin: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; background: var(--arena-2); }
 .lupa::backdrop { background: var(--tinta); }
 .lupa-marco { width: 100%; height: 100%; overflow: auto; display: grid; place-items: center; touch-action: pinch-zoom pan-x pan-y; }
-.lupa-marco img { max-width: 100%; max-height: 100dvh; cursor: zoom-in; transition: transform .2s; }
-.lupa-marco.zoom img { transform: scale(2.2); cursor: zoom-out; }
+.lupa-marco img { max-width: 100%; max-height: 100dvh; cursor: zoom-in; }
+/* Zoom: la foto crece de verdad y el marco se desplaza (con el dedo en celular; app.js lo mueve con el mouse). */
+.lupa-marco.zoom { display: block; overscroll-behavior: contain; }
+.lupa-marco.zoom img { display: block; width: min(250vw, 250vh); max-width: none; max-height: none; cursor: zoom-out; } /* 2.5 veces su tamaño en pantalla */
 .cerrar { position: absolute; top: 8px; right: 8px; z-index: 2; width: 48px; height: 48px; border: 0; background: none; font-size: 32px; line-height: 1; }
 
 /* Carrito */

@@ -17,6 +17,7 @@ from PIL import Image, ImageFilter
 from rembg import new_session, remove
 
 ORIGEN, REPO = sys.argv[1], sys.argv[2]
+REVISION = sys.argv[3] if len(sys.argv) > 3 else None  # carpeta opcional para revisar los recortes
 LADO = 1920
 
 # carpeta en fotos/ -> {color: [(foto, giro), ...]}  giro = grados (antihorario) para dejar la cintura arriba.
@@ -28,16 +29,22 @@ FOTOS = {
     "drill-clasico": {"Azul noche": [(242, 90), (240, 90)], "Beige": [(238, 90), (237, 90)],
                       "Cocoa": [(235, 90), (233, 90)], "Hueso": [(255, 90), (252, 90)], "Negro": [(229, 0), (227, 90)],
                       "Plomo oscuro": [(250, 90), (248, 90)], "Verde arena": [(246, 0), (244, 90)]},
-    "drill-tri-cargo": {"Beige": [(79, 90)], "Cocoa": [(68, 90), (70, 90)], "Negro": [(83, 90)],
-                        "Plomo oscuro": [(86, 90)], "Verde arena": [(75, 90)]},
+    # Segunda foto: el pantalón doblado, que muestra el bolsillo cargo (dueño, 2026-11-21: "todos con 2 fotos").
+    "drill-tri-cargo": {"Beige": [(79, 90), (81, 90)], "Cocoa": [(68, 90), (73, 90)], "Negro": [(83, 90), (84, 90)],
+                        "Plomo oscuro": [(86, 90), (88, 90)], "Verde arena": [(75, 90), (77, 90)]},
+    # Dueño (2026-11-21): el que se llamó "Azul oscuro" es Plomo plata.
     "doble-cargo": {"Beige": [(139, 90), (137, 90)], "Camello": [(106, 90), (108, 90)], "Cocoa": [(94, 90), (96, 90)],
-                    "Azul oscuro": [(110, 0), (112, 90)], "Hueso": [(135, 0), (104, 90)], "Negro": [(120, 0), (92, 90)],
+                    "Plomo plata": [(110, 0), (112, 90)], "Hueso": [(135, 0), (104, 90)], "Negro": [(120, 0), (92, 90)],
                     "Plomo oscuro": [(123, 90), (125, 90)], "Verde arena": [(98, 90), (100, 90)]},
     # Jogger: la foto vertical va primero (las dobladas en diagonal no lucen como principal).
     "jogger-cargo": {"Beige": [(268, 90), (266, 0)], "Cocoa": [(274, 0), (276, 0)], "Hueso": [(143, 90), (258, 90)],
-                     "Negro": [(147, 0), (264, 90)], "Verde arena": [(272, 0), (270, 0)]},
+                     # En la carpeta hay dos tonos oscuros: negro puro (278-281) y uno azulado (145-148, 262-265),
+                     # que queda como Plomo oscuro hasta que el dueño confirme el nombre.
+                     "Negro": [(278, 90), (280, 0)], "Plomo oscuro": [(147, 0), (264, 90)],
+                     "Verde arena": [(272, 0), (270, 0)]},
+    # Dueño (2026-11-21): el #165 "no es celeste"; queda como Plomo lápiz hasta que él confirme el nombre.
     "jean-clasico-grueso": {"Cristal": [(150, 0)], "Grafito azul": [(155, 90), (154, 90)],
-                            "Celeste": [(165, 90), (163, 90)], "Negro": [(160, 90), (157, 90)]},
+                            "Plomo lápiz": [(165, 90), (163, 90)], "Negro": [(160, 90), (157, 90)]},
     "bermuda-torero": {"Beige": [(197, 0), (195, 0)], "Cocoa": [(172, 90), (174, 0)], "Hueso": [(185, 0), (183, 0)],
                        "Negro": [(187, 0), (189, 0)], "Plomo oscuro": [(193, 0), (191, 0)],
                        "Verde arena": [(176, 0), (177, 0)]},
@@ -56,11 +63,17 @@ def slug(s: str) -> str:  # igual que slug() de app.js
 
 
 def enderezar(rgba: Image.Image) -> Image.Image:
-    """Corrige la inclinación (hasta ±30°) con el eje principal de la prenda; más que eso se deja como está."""
+    """Pone vertical el eje largo de la prenda (hasta ±60°: también las dobladas en diagonal).
+
+    Reason (dueño, 2026-11-21: "fotos que salen horizontales o en diagonal"). Solo si la prenda es alargada: en una
+    bermuda casi cuadrada el eje no dice nada y se deja como está.
+    """
     ys, xs = np.nonzero(np.asarray(rgba)[..., 3] > 128)
-    vx, vy = np.linalg.eigh(np.cov(np.vstack([xs - xs.mean(), ys - ys.mean()])))[1][:, -1]
+    valores, vectores = np.linalg.eigh(np.cov(np.vstack([xs - xs.mean(), ys - ys.mean()])))
+    vx, vy = vectores[:, -1]
     ang = (np.degrees(np.arctan2(vx, vy)) + 90) % 180 - 90  # 0 = eje vertical
-    return rgba.rotate(-ang, expand=True, resample=Image.Resampling.BICUBIC) if abs(ang) <= 30 else rgba
+    alargada = valores[-1] > 1.6 * valores[0]
+    return rgba.rotate(-ang, expand=True, resample=Image.Resampling.BICUBIC) if alargada and abs(ang) <= 60 else rgba
 
 
 def ficha(sesion, n: int, giro: int) -> Image.Image:
@@ -68,6 +81,14 @@ def ficha(sesion, n: int, giro: int) -> Image.Image:
     rgba = enderezar(remove(im, session=sesion, post_process_mask=True).rotate(giro, expand=True))
     rgba = rgba.crop(rgba.getbbox())
     rgba.thumbnail((int(LADO * 0.80), int(LADO * 0.90)), Image.Resampling.LANCZOS)
+    # Nitidez suave en la tela (dueño: "mejorar la calidad"); el color no cambia.
+    r, g, b, a = rgba.split()
+    rgba = Image.merge("RGB", (r, g, b)).filter(ImageFilter.UnsharpMask(radius=1.4, percent=45, threshold=3))
+    rgba.putalpha(a)
+    if REVISION:  # recorte sobre fondo oscuro: ahí se ve cualquier resto de piso que quedó
+        oscuro = Image.new("RGB", rgba.size, "#20262e")
+        oscuro.paste(rgba, (0, 0), rgba)
+        oscuro.save(os.path.join(REVISION, f"BEESER-{n}.jpg"), quality=80)
     lienzo = Image.new("RGB", (LADO, LADO), "white")
     x, y = (LADO - rgba.width) // 2, (LADO - rgba.height) // 2
     # Sombra suave abajo a la derecha: la prenda "se apoya" en el blanco y no se pierde sobre el crema de la página.

@@ -20,7 +20,10 @@
     // Sin miniatura (-m) se usa la foto grande; si tampoco existe, "Foto pronto".
     if (img.tagName === "IMG" && !img.src.endsWith(SIN_FOTO)) img.src = img.src.includes("-m.webp") ? img.src.replace("-m.webp", ".webp") : SIN_FOTO;
   }, true);
-  const modelos = (p) => Array.from({ length: p.modelos || 0 }, (_, i) => `fotos/${p.carpeta}/modelo-${i + 1}.webp${V}`);
+  // modelos: número = fotos con modelo para todos los colores; {color: [N…]} = cada foto solo en el color que lleva
+  // puesto el modelo (dueño, 2026-11-21: "estoy en un color y aparece el modelo con otro").
+  const modelos = (p, color) => (typeof p.modelos === "object" ? p.modelos[color] || [] : Array.from({ length: p.modelos || 0 }, (_, i) => i + 1))
+    .map((n) => `fotos/${p.carpeta}/modelo-${n}.webp${V}`);
   const nombresColor = (p) => Object.keys(p.colores);
   const marcaDe = (p) => C.marcas[p.marca];
 
@@ -175,8 +178,14 @@
       .filter((p) => Object.entries(SETS).every(([k, de]) => !elegidos[k].size || de(p).some((v) => elegidos[k].has(v))))
       .filter((p) => p.precio >= precioMin && p.precio <= precioMax)
       .filter((p) => !busca || busca.split(/\s+/).every((t) => norma(`${p.nombre} ${p.tipo} ${p.corte} ${p.tela} ${nombresColor(p).join(" ")}`).includes(t)));
-    lista.sort(ORDEN[$("#orden").value] || ((a, b) => (b.destacado === true) - (a.destacado === true)));
-    $("#rejilla").innerHTML = lista.map(tarjeta).join("")
+    // Recomendados: "Más vendido" primero y luego el orden de productos.js, que va de más a menos vendido (dueño, 2026-11-21).
+    const puesto = (p) => { const i = (C.detalles || []).findIndex((d) => d.id === p.id); return i < 0 ? 99 : i; };
+    lista.sort(ORDEN[$("#orden").value] || ((a, b) => (b.destacado === true) - (a.destacado === true) || puesto(a) - puesto(b)));
+    // Recomendados con pantalones y bermudas a la vez: van separados, cada grupo con su título (dueño, 2026-11-21).
+    const corta = (p) => ["Bermuda / Short", "Torero"].includes(p.tipo);
+    const grupos = !ORDEN[$("#orden").value] && lista.some(corta) && !lista.every(corta)
+      ? [["Pantalones", lista.filter((p) => !corta(p))], ["Bermudas", lista.filter(corta)]] : [["", lista]];
+    $("#rejilla").innerHTML = grupos.map(([titulo, ps]) => (titulo ? `<h3 class="rejilla-titulo">${titulo}</h3>` : "") + ps.map(tarjeta).join("")).join("")
       || `<p class="vacio">No encontramos productos${texto ? ` para «${esc(texto)}»` : " con esos filtros"}. <button class="btn-texto" data-limpiar>Ver todos</button></p>`;
     $("#limpiar-filtros").hidden = !hayFiltros() && !texto;
   }
@@ -344,10 +353,10 @@
     function pintarGaleria() {
       // Al elegir un color, la galería muestra ese color (frente y, si hay, espalda) y luego las fotos con modelo.
       const frente = fotoColor(p, sel.color, true);
-      fotos = [frente, ...(p.dos.includes(sel.color) ? [frente.replace(".webp", "-2.webp")] : []), ...modelos(p)];
+      fotos = [frente, ...(p.dos.includes(sel.color) ? [frente.replace(".webp", "-2.webp")] : []), ...modelos(p, sel.color)];
       pista.innerHTML = fotos.map((f, i) => `<img src="${f}" alt="${p.nombre}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("");
       $(".galeria-puntos", dlg).innerHTML = fotos.map(() => "<i></i>").join("");
-      $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f}" alt="" loading="lazy"></button>`).join("");
+      $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f.includes("/modelo-") ? f : f.replace(".webp", "-m.webp")}" alt="" loading="lazy"></button>`) // 800 px: la de 1920 reducida se veía pixelada.join("");
       irA(0, false);
       marcar();
     }
@@ -404,7 +413,10 @@
   }
   dlg.addEventListener("close", () => history.replaceState(null, "", location.pathname));
 
-  // Foto ampliada: en celular se acerca con los dedos; en computadora, clic = zoom que sigue al mouse.
+  // Foto ampliada: un toque o clic la agranda; en celular se mueve con el dedo, en computadora sigue al mouse.
+  // Reason (dueño, 2026-11-21: "en el celular hago zoom y no puedo mover la foto"): antes el zoom era un
+  // transform, que no se puede arrastrar con el dedo. Ahora la foto se agranda de verdad dentro de un marco
+  // con desplazamiento, y queda centrada en el punto que se tocó.
   const lupa = $("#lupa"), marco = $(".lupa-marco", lupa), lupaImg = $("#lupa-img");
   function abrirLupa(src) {
     lupaImg.src = src;
@@ -413,13 +425,14 @@
   }
   lupaImg.addEventListener("click", (e) => {
     const r = lupaImg.getBoundingClientRect();
-    lupaImg.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
-    marco.classList.toggle("zoom");
+    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    if (!marco.classList.toggle("zoom")) return;
+    marco.scrollTo(fx * lupaImg.offsetWidth - marco.clientWidth / 2, fy * lupaImg.offsetHeight - marco.clientHeight / 2);
   });
-  lupaImg.addEventListener("mousemove", (e) => {
-    if (!marco.classList.contains("zoom")) return;
+  marco.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || !marco.classList.contains("zoom")) return;
     const r = marco.getBoundingClientRect();
-    lupaImg.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+    marco.scrollTo(((e.clientX - r.left) / r.width) * (marco.scrollWidth - marco.clientWidth), ((e.clientY - r.top) / r.height) * (marco.scrollHeight - marco.clientHeight));
   });
   $("#cerrar-lupa").onclick = () => lupa.close();
 
