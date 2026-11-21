@@ -45,7 +45,7 @@
       // Colores marcados "sin stock" en el panel no se muestran; si no queda ninguno, el producto no sale.
       const visibles = d?.colores && Object.fromEntries(Object.entries(d.colores).filter(([n]) => !(x.ocultos || []).includes(n)));
       if (visibles && !Object.keys(visibles).length) return null;
-      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0, dos: d?.dos || [],
+      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0, dos: d?.dos || [], portada: d?.portada,
         descripcion: d?.descripcion || "", colores: visibles || { [SIN_COLOR]: "#cfc6bc" }, sinColor: !d?.colores, sinFoto: !d?.fotos,
         ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
     }).filter(Boolean);
@@ -144,10 +144,11 @@
   const ICONO_BOLSA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg>`;
   function tarjeta(p) {
     const colores = nombresColor(p);
-    // Si se filtró por color, la tarjeta abre en ese color.
-    const c0 = colores.find((c) => elegidos.color.has(c)) || colores[0];
+    // Si se filtró por color, la tarjeta abre en ese color. Si no, en su color de portada (productos.js): así el
+    // catálogo se ve variado y no todo en negro (dueño, 2026-11-21). El color mostrado va primero en los círculos.
+    const c0 = colores.find((c) => elegidos.color.has(c)) || (colores.includes(p.portada) ? p.portada : colores[0]);
     const fav = favoritos.includes(p.id);
-    const puntos = p.sinColor ? "" : colores.slice(0, 4).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
+    const puntos = p.sinColor ? "" : [c0, ...colores.filter((c) => c !== c0)].slice(0, 4).map((c) => `<button data-punto="${c}" class="${c === c0 ? "activo" : ""}" style="background:${p.colores[c]}" title="${c}" aria-label="Color ${c}"></button>`).join("");
     return `<article class="tarjeta" data-id="${p.id}" data-color="${c0}">
       <button class="tarjeta-foto" data-ver aria-label="Ver ${p.nombre}"><img src="${fotoColor(p, c0)}" alt="${p.nombre}, color ${c0}" loading="lazy"></button>
       ${p.destacado ? `<span class="etiqueta-top">★ Más vendido</span>` : ""}
