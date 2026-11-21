@@ -92,6 +92,13 @@ if (!fs.existsSync(MARCA_NOMBRES)) {
     console.warn("Nombres comerciales: no se pudo guardar todavía.", e.code);
   }
 }
+// 21/11/2026 (dueño): "es semi pitillo, no pitillo: el pitillo es muy pegado". Solo se corrige si el nombre sigue
+// siendo el anterior; si el dueño ya lo cambió en el panel, no se toca.
+const semi = catalogo.find((p) => p.codigo === "drill-semi-pitillo" && p.nombre === "Pantalón Pitillo Drill");
+if (semi) {
+  semi.nombre = "Pantalón Semi Pitillo Drill";
+  try { guardarCatalogo(); } catch (e) { console.warn("Semi pitillo: no se pudo guardar todavía.", e.code); }
+}
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
 function lima(fecha) { return new Date(fecha.getTime() - 5 * 3600e3); }
