@@ -83,8 +83,14 @@ if (!fs.existsSync(MARCA_NOMBRES)) {
     if (NOMBRES[p.codigo]) p.nombre = NOMBRES[p.codigo];
     if (SIN_FOTOS.includes(p.codigo)) p.web = false;
   }
-  guardarCatalogo();
-  fs.writeFileSync(MARCA_NOMBRES, new Date().toISOString());
+  // Reason (publicar.yml prueba el servidor en GitHub, sin carpeta de datos): si no se puede guardar, queda en memoria
+  // y se intenta de nuevo en el próximo arranque.
+  try {
+    guardarCatalogo();
+    fs.writeFileSync(MARCA_NOMBRES, new Date().toISOString());
+  } catch (e) {
+    console.warn("Nombres comerciales: no se pudo guardar todavía.", e.code);
+  }
 }
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
