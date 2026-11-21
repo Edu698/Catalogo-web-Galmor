@@ -68,6 +68,24 @@ const guardarOpiniones = () => escribir(ARCHIVO_OPINIONES, opiniones);
 let reclamos = leer(ARCHIVO_RECLAMOS);
 const guardarReclamos = () => escribir(ARCHIVO_RECLAMOS, reclamos);
 const guardarCatalogo = () => escribir(ARCHIVO_CATALOGO, catalogo);
+// 21/11/2026 (dueño): nombres comerciales y productos sin fotos ocultos. Se aplica UNA vez (queda una marca en DATOS);
+// después el panel manda: lo que el dueño cambie ahí no se pisa.
+const MARCA_NOMBRES = path.join(DATOS, "nombres-2026-11-21");
+if (!fs.existsSync(MARCA_NOMBRES)) {
+  const NOMBRES = {
+    "drill-semi-pitillo": "Pantalón Pitillo Drill", "drill-clasico": "Pantalón Drill Clásico", "drill-tri-cargo": "Pantalón Cargo Drill",
+    "pantalon-carbon": "Pantalón Cargo Paper Touch", "jogger-cargo": "Jogger Cargo Paper Touch", "jean-clasico-grueso": "Jean Clásico Grueso",
+    "bermuda-torero": "Bermuda Torero", "bermuda-jean-clasico": "Bermuda Jean Clásica", "bermuda-jean-sin-basta": "Bermuda Jean Sin Basta",
+    "bermuda-jean-rasgado": "Bermuda Jean Rasgada",
+  };
+  const SIN_FOTOS = ["short-corto", "bermuda-torero-drill", "drill-nino", "tactico-cargo", "jean-clasico-delgado"];
+  for (const p of catalogo) {
+    if (NOMBRES[p.codigo]) p.nombre = NOMBRES[p.codigo];
+    if (SIN_FOTOS.includes(p.codigo)) p.web = false;
+  }
+  guardarCatalogo();
+  fs.writeFileSync(MARCA_NOMBRES, new Date().toISOString());
+}
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
 function lima(fecha) { return new Date(fecha.getTime() - 5 * 3600e3); }

@@ -128,7 +128,7 @@ a { color: inherit; }
   .miniaturas img { width: 88px; height: 117px; object-fit: cover; }
 }
 .galeria { position: relative; }
-.galeria-pista { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; background: var(--arena-2); }
+.galeria-pista { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; background: #fff; } /* fotos con fondo blanco (2026-11-21) */
 .galeria-pista::-webkit-scrollbar { display: none; }
 .galeria-pista img { flex: 0 0 100%; width: 100%; aspect-ratio: 3 / 4; object-fit: contain; scroll-snap-align: center; cursor: zoom-in; }
 .galeria-cuenta { position: absolute; top: 12px; right: 12px; background: var(--tinta); color: var(--arena); font: 500 12px var(--texto); padding: 4px 8px; }

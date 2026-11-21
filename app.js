@@ -42,7 +42,7 @@
       // Colores marcados "sin stock" en el panel no se muestran; si no queda ninguno, el producto no sale.
       const visibles = d?.colores && Object.fromEntries(Object.entries(d.colores).filter(([n]) => !(x.ocultos || []).includes(n)));
       if (visibles && !Object.keys(visibles).length) return null;
-      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0,
+      return { ...x, id: x.codigo, carpeta: d?.fotos || x.codigo, alias: d?.alias, precio: x.precios[0], modelos: d?.modelos || 0, dos: d?.dos || [],
         descripcion: d?.descripcion || "", colores: visibles || { [SIN_COLOR]: "#cfc6bc" }, sinColor: !d?.colores, sinFoto: !d?.fotos,
         ficha: { ...(x.tela ? { Tela: x.tela } : {}), ...(d?.ficha || {}), ...(x.publico === "Niño" ? { Público: "Niño" } : {}) } };
     }).filter(Boolean);
@@ -342,8 +342,9 @@
     }
     const irA = (i, suave = true) => pista.scrollTo({ left: i * pista.clientWidth, behavior: suave && !quieto ? "smooth" : "auto" });
     function pintarGaleria() {
-      // Al elegir un color, la galería muestra primero ese color y luego las fotos con modelo.
-      fotos = [fotoColor(p, sel.color, true), ...modelos(p)];
+      // Al elegir un color, la galería muestra ese color (frente y, si hay, espalda) y luego las fotos con modelo.
+      const frente = fotoColor(p, sel.color, true);
+      fotos = [frente, ...(p.dos.includes(sel.color) ? [frente.replace(".webp", "-2.webp")] : []), ...modelos(p)];
       pista.innerHTML = fotos.map((f, i) => `<img src="${f}" alt="${p.nombre}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("");
       $(".galeria-puntos", dlg).innerHTML = fotos.map(() => "<i></i>").join("");
       $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f}" alt="" loading="lazy"></button>`).join("");
