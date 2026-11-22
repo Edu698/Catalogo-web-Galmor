@@ -6,7 +6,7 @@
 //   fotos/<código>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 // Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
-  versionFotos: "202611211900", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
+  versionFotos: "202611221200", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51908341818", // WhatsApp Business de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
 
   // Datos para pagar.
@@ -51,7 +51,8 @@ window.CATALOGO = {
   detalles: [
     // Orden = de más a menos vendido (ventas 2026, dueño 2026-11-21): así salen en "Recomendados".
     // ficha: lo que sale en "Ficha técnica" (la tela del panel se reemplaza por la de aquí).
-    { id: "drill-semi-pitillo", portada: "Beige", fotos: "drill-semi-pitillo", modelos: { "Plomo oscuro": [1], "Beige": [2] }, // cada foto con modelo, solo en su color dos: ["Azul noche", "Hueso", "Verde arena"],
+    { id: "drill-semi-pitillo", portada: "Beige", fotos: "drill-semi-pitillo", modelos: { "Plomo oscuro": [1], "Beige": [2] }, // cada foto con modelo, solo en su color
+      dos: ["Negro", "Beige", "Azul noche", "Cocoa", "Plomo oscuro", "Verde arena", "Hueso"],
       descripcion: "Drill stretch, cómodo y flexible. Corte semi pitillo. Bolsillos delanteros sesgados y bolsillo trasero con botón.",
       ficha: { "Tela": "Drill stretch (estira)", "Corte": "Semi pitillo: ajustado sin apretar", "Bolsillos": "2 delanteros sesgados y 2 traseros con botón", "Cierre": "Cierre y botón", "Confección": "Galmor · Lima, Perú" },
       colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Cocoa": "#5a4337", "Plomo oscuro": "#2c3238", "Verde arena": "#4f5546", "Hueso": "#ddd6cb" } },

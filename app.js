@@ -352,12 +352,12 @@
     }
     const irA = (i, suave = true) => pista.scrollTo({ left: i * pista.clientWidth, behavior: suave && !quieto ? "smooth" : "auto" });
     function pintarGaleria() {
-      // Al elegir un color, la galería muestra ese color (frente y, si hay, espalda) y luego las fotos con modelo.
+      // Al elegir un color: primero la foto con modelo de ese color (dueño, 2026-11-22), luego frente y, si hay, espalda.
       const frente = fotoColor(p, sel.color, true);
-      fotos = [frente, ...(p.dos.includes(sel.color) ? [frente.replace(".webp", "-2.webp")] : []), ...modelos(p, sel.color)];
+      fotos = [...modelos(p, sel.color), frente, ...(p.dos.includes(sel.color) ? [frente.replace(".webp", "-2.webp")] : [])];
       pista.innerHTML = fotos.map((f, i) => `<img src="${f}" alt="${p.nombre}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("");
       $(".galeria-puntos", dlg).innerHTML = fotos.map(() => "<i></i>").join("");
-      $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f.includes("/modelo-") ? f : f.replace(".webp", "-m.webp")}" alt="" loading="lazy"></button>`) // 800 px: la de 1920 reducida se veía pixelada.join("");
+      $(".miniaturas", dlg).innerHTML = fotos.map((f, i) => `<button data-i="${i}" aria-label="Foto ${i + 1}"><img src="${f.includes("/modelo-") ? f : f.replace(".webp", "-m.webp")}" alt="" loading="lazy"></button>`).join(""); // 800 px: la de 1920 reducida se veía pixelada
       irA(0, false);
       marcar();
     }
