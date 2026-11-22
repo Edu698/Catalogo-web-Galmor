@@ -98,6 +98,10 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None) -> Image.Image
 
     im = Image.open(os.path.join(ORIGEN, f"BEESER-{n}.jpg")).convert("RGB")
     rgba = remove(im, session=sesion, post_process_mask=True)
+    # Reason (dueño, 2026-11-22: "no está bien pintado el blanco"): el recorte incluía 1-3 px de la sombra que la prenda
+    # hace en el piso; en prendas claras se veía como una línea gris en el borde. Se le come 4 px al borde.
+    borde = cv2.erode(np.asarray(rgba.split()[3]), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    rgba.putalpha(Image.fromarray(cv2.GaussianBlur(borde, (0, 0), 1.2)))
     rgba = enderezar(rgba.rotate(giro, expand=True, resample=Image.Resampling.BICUBIC))
     rgba = rgba.crop(rgba.getbbox())
     rgba.thumbnail((int(LADO * 0.80), int(LADO * 0.90)), Image.Resampling.LANCZOS)
