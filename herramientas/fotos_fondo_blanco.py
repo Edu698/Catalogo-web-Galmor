@@ -43,11 +43,11 @@ FOTOS = {
                     "Plomo plata": [(110, 0), (112, 75)], "Hueso": [(135, 0), (104, 80)], "Negro": [(120, 0), (92, 85)],
                     "Plomo oscuro": [(123, 90), (125, 90)], "Verde arena": [(98, 90), (100, 80)]},
     # Jogger: la foto vertical va primero. En la carpeta hay dos tonos oscuros: negro puro (278-281) y uno azulado
-    # (145-148, 262-265), que queda como Plomo oscuro hasta que el dueño confirme el nombre.
+    # (145-148, 262-265), que es Plomo oscuro (confirmado por el dueño, 2026-11-22).
     "jogger-cargo": {"Beige": [(268, 90), (266, 45)], "Cocoa": [(274, 0), (276, 70)], "Hueso": [(143, 90), (258, 90)],
                      "Negro": [(278, 90), (280, 50)], "Plomo oscuro": [(147, 0), (264, 90)],
                      "Verde arena": [(272, 0), (270, 50)]},
-    # Dueño (2026-11-21): el #165 "no es celeste"; queda como Plomo lápiz hasta que él confirme el nombre.
+    # Dueño: el #165 "no es celeste" (2026-11-21); es Plomo lápiz (confirmado 2026-11-22).
     # Cristal: su segunda foto (152/153) pesa más de 10 MB en Drive y aún no se pudo bajar.
     "jean-clasico-grueso": {"Cristal": [(150, 0)], "Grafito azul": [(155, 90), (154, 75)],
                             "Plomo lápiz": [(165, 90), (163, 85)], "Negro": [(160, 90), (157, 75)]},
