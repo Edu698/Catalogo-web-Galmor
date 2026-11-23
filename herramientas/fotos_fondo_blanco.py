@@ -18,7 +18,7 @@ import unicodedata
 
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 LADO = 1920
 # Reason (dueño, 2026-11-22: "el hueso tiene partes mal recortadas"): el modelo "lite" dejaba el borde con dientes en
@@ -68,6 +68,15 @@ def slug(s: str) -> str:  # igual que slug() de app.js
     return "-".join("".join(c for c in s if not unicodedata.combining(c)).split())
 
 
+# Retoques a mano: foto -> polígonos (en píxeles de la foto original de 2400 px) que el recorte se lleva de más.
+# Reason (dueño, 2026-11-23: "el Hueso es lo único que falla"): en el Semi Pitillo Hueso (#205) el recorte se lleva
+# una franja de piso encima de la pretina. Por tono no se distingue de la tela en sombra (se probó: borrar "lo que
+# parece piso" se comía partes de otras prendas), así que la franja se borra con su forma exacta.
+BORRAR = {
+    205: [[(2309, 780), (2309, 1600), (2249, 1600), (2253, 1500), (2257, 1300), (2263, 1100), (2260, 780)]],
+}
+
+
 def enderezar(rgba: Image.Image) -> Image.Image:
     """Deja verticales los bordes largos de la prenda (las costuras de la pierna), hasta ±25°.
 
@@ -100,7 +109,10 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None) -> Image.Image
     rgba = remove(im, session=sesion, post_process_mask=True)
     # Reason (dueño, 2026-11-22: "no está bien pintado el blanco"): el recorte incluía 1-3 px de la sombra que la prenda
     # hace en el piso; en prendas claras se veía como una línea gris en el borde. Se le come 4 px al borde.
-    borde = cv2.erode(np.asarray(rgba.split()[3]), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    alfa = rgba.split()[3]
+    for poligono in BORRAR.get(n, []):
+        ImageDraw.Draw(alfa).polygon(poligono, fill=0)
+    borde = cv2.erode(np.asarray(alfa), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
     rgba.putalpha(Image.fromarray(cv2.GaussianBlur(borde, (0, 0), 1.2)))
     rgba = enderezar(rgba.rotate(giro, expand=True, resample=Image.Resampling.BICUBIC))
     rgba = rgba.crop(rgba.getbbox())
