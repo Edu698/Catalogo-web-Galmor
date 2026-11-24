@@ -94,23 +94,43 @@ def limpiar(rgb: np.ndarray, prenda: np.ndarray) -> np.ndarray:
     lado = max(rgb.shape[:2])
     k = int(lado / 110) | 1  # ventana de ~22 px en una foto de 2400 px
     L = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)[..., 0]
-    ad = np.abs(L.astype(np.int16) - cv2.medianBlur(L, k).astype(np.int16))
+    dif = L.astype(np.int16) - cv2.medianBlur(L, k).astype(np.int16)
+    ad = np.abs(dif)
     textura = cv2.medianBlur(np.clip(ad, 0, 255).astype(np.uint8), 2 * k + 1).astype(np.int16)
     sat = rgb.max(2).astype(np.int16) - rgb.min(2)
     lejos_borde = cv2.erode(prenda.astype(np.uint8), np.ones((2 * k, 2 * k), np.uint8)) > 0
-    candidato = ((ad > 10) & (ad > 4 * textura + 6) & lejos_borde & (sat < 60)).astype(np.uint8)
+    # sat < 110: deja pasar manchitas de óxido o tierra (algo de color) pero no las letras rojas de la etiqueta.
+    candidato = ((ad > 10) & (ad > 4 * textura + 6) & lejos_borde & (sat < 110)).astype(np.uint8)
     n, et, st, _ = cv2.connectedComponentsWithStats(candidato, 8)
-    area_max, r = (lado / 2400) ** 2 * 260, max(4, k // 2)
+    escala = (lado / 2400) ** 2
+    r = max(4, k // 2)
     mancha = np.zeros(candidato.shape, np.uint8)
     for i in range(1, n):
         x, y, w, h, a = st[i]
-        if a < 3 * (lado / 2400) ** 2 or a > area_max or max(w, h) > 3 * max(1, min(w, h)) or a < 0.35 * w * h:
+        sel = et[y:y + h, x:x + w] == i
+        # Una mota muy marcada (pelusa blanca en tela negra) puede medir 2-3 px; el grano de la tela es más suave.
+        pico = ad[y:y + h, x:x + w][sel].max()
+        minima = 2 if pico >= 45 else 3 * escala
+        # Las pelusas claras son chiquitas; algo claro más grande es un remache o un botón (se probó: borraba el
+        # remache del bolsillo del Drill Clásico Negro). Las manchas oscuras sobre tela clara pueden ser algo mayores.
+        clara = dif[y:y + h, x:x + w][sel].mean() > 0
+        maxima = (40 if clara else 260) * escala
+        if a < minima or a > maxima or max(w, h) > 2 * max(1, min(w, h)) or a < 0.4 * w * h:
             continue
-        y0, y1, x0, x1 = max(0, y - 2 * r), y + h + 2 * r, max(0, x - 2 * r), x + w + 2 * r
+        y0, y1, x0, x1 = max(0, y - 3 * r), y + h + 3 * r, max(0, x - 3 * r), x + w + 3 * r
         punto = (et[y0:y1, x0:x1] == i).astype(np.uint8)
-        anillo = (cv2.dilate(punto, np.ones((2 * r + 1, 2 * r + 1), np.uint8)) > 0) & (punto == 0)
-        if anillo.any() and (ad[y0:y1, x0:x1][anillo] > 8).mean() <= 0.04:
-            mancha[y0:y1, x0:x1][punto > 0] = 1
+        cerca = cv2.dilate(punto, np.ones((2 * r + 1, 2 * r + 1), np.uint8)) > 0
+        anillo = cerca & (punto == 0)
+        # "Fuerte" es relativo al grano de la tela (en el negro el grano solo ya pasa de 8) y al punto (una pelusa
+        # muy marcada sobre negro se ve aunque la tela tenga grano).
+        fuerte = (ad[y0:y1, x0:x1] > np.maximum(max(8, pico // 2), 3 * textura[y0:y1, x0:x1])) & (punto == 0)
+        if not anillo.any() or fuerte[anillo].mean() > 0.04:
+            continue
+        # Solo motas sueltas: si alrededor hay otras parecidas, es un dibujo de la prenda (las puntadas de una
+        # costura se borraban una por una).
+        if cv2.connectedComponents((fuerte & ~cerca | fuerte & anillo).astype(np.uint8), connectivity=8)[0] - 1 >= 2:
+            continue
+        mancha[y0:y1, x0:x1][punto > 0] = 1
     if not mancha.any():
         return rgb
     mancha = cv2.dilate(mancha, np.ones((5, 5), np.uint8))
