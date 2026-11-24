@@ -1,6 +1,8 @@
 """Fotos del catálogo con fondo blanco (dueño, 2026-11-21: "profesional, Full HD, vertical, que contraste con la página").
 
-Uso: python3 herramientas/fotos_fondo_blanco.py CARPETA_FOTOS REPO [CARPETA_REVISION] [producto ...]
+Uso: [ORIGINAL_BLANCO=carpeta] python3 herramientas/fotos_fondo_blanco.py CARPETA_FOTOS REPO [CARPETA_REVISION] [producto ...]
+  CARPETA_FOTOS: usar las fotos originales completas (no reducidas): de ellas sale la nitidez para el zoom.
+  ORIGINAL_BLANCO: carpeta donde guardar cada foto del tamaño original, solo con fondo blanco y limpia (para el Drive).
   CARPETA_FOTOS: fotos BEESER-N.jpg de la sesión (Drive "Fotos Galmor"). Requiere: pillow numpy opencv "rembg[cpu]".
   CARPETA_REVISION ("-" = ninguna): guarda cada recorte sobre fondo oscuro, para ver restos de piso.
   producto: carpeta de fotos/ (ej. jogger-cargo); sin productos, se hacen todos.
@@ -140,7 +142,8 @@ def enderezar(rgba: Image.Image) -> Image.Image:
     return rgba.rotate(-suma / peso, expand=True, resample=Image.Resampling.BICUBIC)
 
 
-def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = False) -> Image.Image:
+def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = False,
+          original: str | None = None) -> Image.Image:
     from rembg import remove
 
     im = Image.open(os.path.join(ORIGEN, f"BEESER-{n}.jpg")).convert("RGB")
@@ -155,6 +158,12 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = 
     borde = cv2.erode(np.asarray(alfa), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (d, d)))
     rgba = Image.fromarray(limpiar(np.asarray(im), np.asarray(alfa) > 128))
     rgba.putalpha(Image.fromarray(cv2.GaussianBlur(borde, (0, 0), 1.2 * e)))
+    if original:
+        # Reason (dueño, 2026-11-24: "tienen que ser originales, solo cambiar el fondo gris por blanco, nada más"):
+        # copia para el Drive con el tamaño, encuadre y color de la foto original; solo fondo blanco y limpieza.
+        blanca = Image.new("RGB", rgba.size, "white")
+        blanca.paste(rgba, (0, 0), rgba)
+        blanca.save(original, "JPEG", quality=95, subsampling=0)
     rgba = enderezar(rgba.rotate(giro, expand=True, resample=Image.Resampling.BICUBIC))
     rgba = rgba.crop(rgba.getbbox())
     rgba.thumbnail((int(LADO * 0.80), int(LADO * 0.90)), Image.Resampling.LANCZOS)
@@ -198,7 +207,11 @@ if __name__ == "__main__":
 
         n, giro = FOTOS[carpeta][color][i]
         base = os.path.join(REPO, "fotos", carpeta, slug(color) + ("-2" if i else ""))
-        guardar(ficha(new_session(MODELO), n, giro, None if revision == "-" else revision, color in CLAROS), base)
+        # ORIGINAL_BLANCO=carpeta: además guarda "<Color> (BEESER-N).jpg" del tamaño original, para el Drive.
+        drive = os.environ.get("ORIGINAL_BLANCO")
+        original = os.path.join(drive, f"{color} (BEESER-{n}).jpg") if drive else None
+        guardar(ficha(new_session(MODELO), n, giro, None if revision == "-" else revision, color in CLAROS, original),
+                base)
         sys.exit(0)
     revision = sys.argv[3] if len(sys.argv) > 3 else "-"
     productos = sys.argv[4:] or list(FOTOS)
