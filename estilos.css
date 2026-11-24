@@ -184,7 +184,7 @@ a { color: inherit; }
 .lupa-marco img { max-width: 100%; max-height: 100dvh; cursor: zoom-in; }
 /* Zoom: la foto crece de verdad y el marco se desplaza (con el dedo en celular; app.js lo mueve con el mouse). */
 .lupa-marco.zoom { display: block; overscroll-behavior: contain; }
-.lupa-marco.zoom img { display: block; width: min(250vw, 250vh); max-width: none; max-height: none; cursor: zoom-out; } /* 2.5 veces su tamaño en pantalla */
+.lupa-marco.zoom img { display: block; width: min(250vw, 250vh, 2400px); max-width: none; max-height: none; cursor: zoom-out; } /* 2.5 veces su tamaño en pantalla, sin pasar el tamaño real de la foto (si no, se pixelea) */
 .cerrar { position: absolute; top: 8px; right: 8px; z-index: 2; width: 48px; height: 48px; border: 0; background: none; font-size: 32px; line-height: 1; }
 
 /* Carrito */

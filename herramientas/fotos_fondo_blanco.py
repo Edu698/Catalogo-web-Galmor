@@ -20,7 +20,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-LADO = 1920
+# Reason (dueño, 2026-11-24: "si acerco con zoom se ve pixeleada"): 2400 px desde las fotos originales completas.
+LADO = 2400
 # Colores claros que llevan más color (ver ficha). Medido en las fotos: Hueso y Beige son los únicos muy claros;
 # el siguiente (Celeste de la bermuda rasgada) ya es bastante más oscuro.
 CLAROS = {"Hueso", "Beige"}
@@ -80,6 +81,40 @@ BORRAR = {
 }
 
 
+def limpiar(rgb: np.ndarray, prenda: np.ndarray) -> np.ndarray:
+    """Borra puntitos y manchitas sueltas sobre tela lisa (polvo, pelusa, manchas pequeñas) y rellena con la tela.
+
+    Reason (dueño, 2026-11-24: "hay puntitos blancos, la prenda se ve sucia, límpialas"). Solo toca manchas pequeñas
+    y redondas rodeadas de tela lisa: no toca costuras (largas), elástico, pliegues ni cordones (no tienen tela lisa
+    alrededor), etiquetas (color fuerte) ni el borde de la prenda. Se probó sin el anillo de tela lisa y se comía
+    el elástico y la punta del cordón del Jogger.
+    """
+    lado = max(rgb.shape[:2])
+    k = int(lado / 110) | 1  # ventana de ~22 px en una foto de 2400 px
+    L = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)[..., 0]
+    ad = np.abs(L.astype(np.int16) - cv2.medianBlur(L, k).astype(np.int16))
+    textura = cv2.medianBlur(np.clip(ad, 0, 255).astype(np.uint8), 2 * k + 1).astype(np.int16)
+    sat = rgb.max(2).astype(np.int16) - rgb.min(2)
+    lejos_borde = cv2.erode(prenda.astype(np.uint8), np.ones((2 * k, 2 * k), np.uint8)) > 0
+    candidato = ((ad > 10) & (ad > 4 * textura + 6) & lejos_borde & (sat < 60)).astype(np.uint8)
+    n, et, st, _ = cv2.connectedComponentsWithStats(candidato, 8)
+    area_max, r = (lado / 2400) ** 2 * 260, max(4, k // 2)
+    mancha = np.zeros(candidato.shape, np.uint8)
+    for i in range(1, n):
+        x, y, w, h, a = st[i]
+        if a < 3 * (lado / 2400) ** 2 or a > area_max or max(w, h) > 3 * max(1, min(w, h)) or a < 0.35 * w * h:
+            continue
+        y0, y1, x0, x1 = max(0, y - 2 * r), y + h + 2 * r, max(0, x - 2 * r), x + w + 2 * r
+        punto = (et[y0:y1, x0:x1] == i).astype(np.uint8)
+        anillo = (cv2.dilate(punto, np.ones((2 * r + 1, 2 * r + 1), np.uint8)) > 0) & (punto == 0)
+        if anillo.any() and (ad[y0:y1, x0:x1][anillo] > 8).mean() <= 0.04:
+            mancha[y0:y1, x0:x1][punto > 0] = 1
+    if not mancha.any():
+        return rgb
+    mancha = cv2.dilate(mancha, np.ones((5, 5), np.uint8))
+    return cv2.inpaint(rgb, mancha, 5, cv2.INPAINT_TELEA)
+
+
 def enderezar(rgba: Image.Image) -> Image.Image:
     """Deja verticales los bordes largos de la prenda (las costuras de la pierna), hasta ±25°.
 
@@ -113,10 +148,13 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = 
     # Reason (dueño, 2026-11-22: "no está bien pintado el blanco"): el recorte incluía 1-3 px de la sombra que la prenda
     # hace en el piso; en prendas claras se veía como una línea gris en el borde. Se le come 4 px al borde.
     alfa = rgba.split()[3]
+    e = im.width / 2400  # BORRAR y el borde se midieron en fotos de 2400 px
     for poligono in BORRAR.get(n, []):
-        ImageDraw.Draw(alfa).polygon(poligono, fill=0)
-    borde = cv2.erode(np.asarray(alfa), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
-    rgba.putalpha(Image.fromarray(cv2.GaussianBlur(borde, (0, 0), 1.2)))
+        ImageDraw.Draw(alfa).polygon([(x * e, y * e) for x, y in poligono], fill=0)
+    d = 2 * round(4 * e) + 1
+    borde = cv2.erode(np.asarray(alfa), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (d, d)))
+    rgba = Image.fromarray(limpiar(np.asarray(im), np.asarray(alfa) > 128))
+    rgba.putalpha(Image.fromarray(cv2.GaussianBlur(borde, (0, 0), 1.2 * e)))
     rgba = enderezar(rgba.rotate(giro, expand=True, resample=Image.Resampling.BICUBIC))
     rgba = rgba.crop(rgba.getbbox())
     rgba.thumbnail((int(LADO * 0.80), int(LADO * 0.90)), Image.Resampling.LANCZOS)
@@ -138,14 +176,15 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = 
     x, y = (LADO - rgba.width) // 2, (LADO - rgba.height) // 2
     # Sombra suave abajo a la derecha: la prenda "se apoya" en el blanco y no se pierde sobre el crema de la página.
     sombra = Image.new("L", (LADO, LADO), 0)
-    sombra.paste(rgba.split()[3].point(lambda v: v * 0.28), (x + 12, y + 22))
-    lienzo.paste(Image.new("RGB", (LADO, LADO), "#6f6f6f"), mask=sombra.filter(ImageFilter.GaussianBlur(24)))
+    s = LADO / 1920  # la sombra se diseñó a 1920 px
+    sombra.paste(rgba.split()[3].point(lambda v: v * 0.28), (x + round(12 * s), y + round(22 * s)))
+    lienzo.paste(Image.new("RGB", (LADO, LADO), "#6f6f6f"), mask=sombra.filter(ImageFilter.GaussianBlur(24 * s)))
     lienzo.paste(rgba, (x, y), rgba)
     return lienzo
 
 
 def guardar(im: Image.Image, base: str) -> None:
-    im.save(base + ".webp", "WEBP", quality=82, method=6)
+    im.save(base + ".webp", "WEBP", quality=88, method=6)
     chica = im.copy()
     chica.thumbnail((800, 800), Image.Resampling.LANCZOS)
     chica.save(base + "-m.webp", "WEBP", quality=78, method=6)
