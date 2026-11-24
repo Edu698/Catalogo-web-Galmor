@@ -6,7 +6,7 @@
 //   fotos/<código>/modelo-N.webp    fotos de cuerpo entero; "modelos" dice cuántas hay.
 // Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
-  versionFotos: "202611231000", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
+  versionFotos: "202611241200", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
   whatsapp: "51908341818", // WhatsApp Business de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
 
   // Datos para pagar.

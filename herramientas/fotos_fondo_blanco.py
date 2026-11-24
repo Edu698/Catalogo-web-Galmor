@@ -21,6 +21,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 LADO = 1920
+# Colores claros que llevan más color (ver ficha). Medido en las fotos: Hueso y Beige son los únicos muy claros;
+# el siguiente (Celeste de la bermuda rasgada) ya es bastante más oscuro.
+CLAROS = {"Hueso", "Beige"}
 # Reason (dueño, 2026-11-22: "el hueso tiene partes mal recortadas"): el modelo "lite" dejaba el borde con dientes en
 # prendas claras sobre el piso claro. El completo recorta limpio, pero usa mucha memoria: una foto por proceso.
 MODELO = "birefnet-general"
@@ -102,7 +105,7 @@ def enderezar(rgba: Image.Image) -> Image.Image:
     return rgba.rotate(-suma / peso, expand=True, resample=Image.Resampling.BICUBIC)
 
 
-def ficha(sesion, n: int, giro: int, revision: str | None = None) -> Image.Image:
+def ficha(sesion, n: int, giro: int, revision: str | None = None, claro: bool = False) -> Image.Image:
     from rembg import remove
 
     im = Image.open(os.path.join(ORIGEN, f"BEESER-{n}.jpg")).convert("RGB")
@@ -117,9 +120,15 @@ def ficha(sesion, n: int, giro: int, revision: str | None = None) -> Image.Image
     rgba = enderezar(rgba.rotate(giro, expand=True, resample=Image.Resampling.BICUBIC))
     rgba = rgba.crop(rgba.getbbox())
     rgba.thumbnail((int(LADO * 0.80), int(LADO * 0.90)), Image.Resampling.LANCZOS)
-    # Nitidez suave en la tela (dueño: "mejorar la calidad"); el color no cambia.
+    # Nitidez suave en la tela (dueño: "mejorar la calidad").
     r, g, b, a = rgba.split()
-    rgba = Image.merge("RGB", (r, g, b)).filter(ImageFilter.UnsharpMask(radius=1.4, percent=45, threshold=3))
+    rgb = Image.merge("RGB", (r, g, b)).filter(ImageFilter.UnsharpMask(radius=1.4, percent=45, threshold=3))
+    # Reason (dueño, 2026-11-24, eligió la "opción B"): sobre blanco puro las prendas claras (Hueso, Beige) se ven
+    # lavadas. A esas se les oscurecen los medios tonos (curva 1.5); los demás colores no cambian. Se decide por
+    # color (no por foto) para que el frente y la espalda queden del mismo tono.
+    if claro:
+        rgb = rgb.point(lambda v: round(255 * (v / 255) ** 1.5))
+    rgba = rgb
     rgba.putalpha(a)
     if revision:
         oscuro = Image.new("RGB", rgba.size, "#20262e")
@@ -150,7 +159,7 @@ if __name__ == "__main__":
 
         n, giro = FOTOS[carpeta][color][i]
         base = os.path.join(REPO, "fotos", carpeta, slug(color) + ("-2" if i else ""))
-        guardar(ficha(new_session(MODELO), n, giro, None if revision == "-" else revision), base)
+        guardar(ficha(new_session(MODELO), n, giro, None if revision == "-" else revision, color in CLAROS), base)
         sys.exit(0)
     revision = sys.argv[3] if len(sys.argv) > 3 else "-"
     productos = sys.argv[4:] or list(FOTOS)
