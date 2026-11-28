@@ -84,6 +84,8 @@
     .tabla-precios th:first-child, .tabla-precios td:first-child { text-align: left; }
     .tabla-precios td small { display: block; color: #2e7d32; font-size: 12px; }
     .tabla-precios td small.mal { color: #b23a2e; }
+    .tabla-precios td.celda-costo { background: #fff4c2; font-weight: 600; }
+    .tabla-precios td { white-space: nowrap; }
     .cambios { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 2px solid var(--denim); }
     .cambios ul { margin: 6px 0 10px; padding-left: 18px; font-size: 14px; max-height: 220px; overflow-y: auto; }
     .ventana-panel { border: 0; border-radius: 14px; padding: 22px; width: min(780px, 94vw); max-height: 92dvh; }
@@ -424,20 +426,22 @@
         const ocultos = p.ocultos || [];
         const colores = coloresDe(p.codigo).map(([n, tono]) => `<button type="button" class="color-stock ${ocultos.includes(n) ? "sin" : ""}" data-color-stock="${k}" data-c="${esc(n)}"
           title="${ocultos.includes(n) ? "Sin stock: no se muestra" : "Con stock: se muestra"}"><i style="background:${tono}"></i>${esc(n)}</button>`).join("");
-        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${CANT.map((c, j) => {
+        // Costo: uno por producto, el mismo para talla chica, 36 y extra. Se cambia en Editar.
+        const costo = `<td class="celda-costo">${p.costo === null ? "Falta" : soles(p.costo)}</td>`;
+        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${costo}${CANT.map((c, j) => {
           const venta = p.precios[j] + r, gana = p.costo === null ? null : (venta - p.costo) * c;
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
-        const mayor = grupos(p).filter(([, , k]) => p.mayorista?.[k]?.some((v) => v)).map(([g, , k]) => `<tr><td>${g}</td>${p.mayorista[k].map((v, j) =>
-          `<td${j === ESTANDAR ? ' style="background:#d9f3ff"' : ""}>${v ? soles(v) : "—"}${v && p.costo !== null ? `<small class="${v < p.costo ? "mal" : ""}">gana ${soles(v - p.costo)} c/u</small>` : ""}</td>`).join("")}</tr>`).join("");
+        const mayor = grupos(p).filter(([, , k]) => p.mayorista?.[k]?.some((v) => v)).map(([g, , k]) => `<tr><td>${g}</td>${costo}${p.mayorista[k].map((v, j) =>
+          `<td${j === ESTANDAR ? ' style="background:#d9f3ff"' : ""}>${v ? soles(v) : "—"}${v && p.costo !== null ? `<small class="${v < p.costo ? "mal" : ""}">gana ${soles(v - p.costo)}</small>` : ""}</td>`).join("")}</tr>`).join("");
         return `<details class="producto-panel ${p.web ? "" : "oculto"}" data-codigo="${esc(p.codigo)}" ${abiertos.has(p.codigo) ? "open" : ""}><summary><b>${esc(p.nombre)}</b>
             <span class="rapidos"><button type="button" class="chip-web ${p.web ? "si" : ""}" data-web="${k}">${p.web ? "✓ Se muestra" : "✗ Oculto"}</button>
               <button type="button" class="chip-top ${p.destacado ? "si" : ""}" data-top="${k}">★ Más vendido</button></span>
             <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)}${p.corte ? ` · ${esc(p.corte)}` : ""} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
             <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
-          <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
-            ${mayor ? `<p class="rotulo-stock">Mayorista · solo panel, no sale en la web · celeste = tu precio de siempre:</p>
-              <div style="overflow-x:auto"><table class="tabla-precios"><tr><th>Talla</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>${mayor}</table></div>` : ""}
+          <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th><th>Costo</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
+            ${mayor ? `<p class="rotulo-stock">Mayorista · solo panel, no sale en la web · celeste = tu precio de siempre · ganancia por prenda:</p>
+              <div style="overflow-x:auto"><table class="tabla-precios"><tr><th>Talla</th><th>Costo</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>${mayor}</table></div>` : ""}
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
             ${colores ? `<p class="rotulo-stock">Colores · toca un color sin stock para ocultarlo de la tienda:</p><div class="colores-stock">${colores}</div>` : ""}
             <div class="botones"><button data-editar="${k}">Editar</button><button data-quitar-producto="${k}">Quitar</button></div></div></details>`;
