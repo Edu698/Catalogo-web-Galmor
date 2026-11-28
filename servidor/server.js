@@ -179,12 +179,13 @@ function validarProducto(x, i) {
   for (let k = 1; k < 3; k++) if (!(precios[k] > 0)) precios[k] = precios[k - 1]; // vacío = igual al anterior
   const mayorista = Object.fromEntries(["chica", "media", "extra"].map((g) => [g,
     Array.from({ length: 7 }, (_, k) => { const v = num((x.mayorista?.[g] || [])[k]); return v > 0 && v < 10000 ? v : null; })]));
-  const costo = num(x.costo);
-  if (costo !== null && !(costo >= 0 && costo < 10000)) throw new Error(fila + "costo inválido");
+  // Dos costos (28/11/2026, dueño): Galmor nos vende a un precio para venta por unidad y a otro, más bajo, para venta por mayor.
+  const costo = num(x.costo), costoMayorista = num(x.costoMayorista);
+  for (const c of [costo, costoMayorista]) if (c !== null && !(c >= 0 && c < 10000)) throw new Error(fila + "costo inválido");
   const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
   return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", corte: texto(x.corte, 30),
     publico: x.publico, tallas, tela: texto(x.tela, 40),
-    costo, precios, mayorista, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false,
+    costo, costoMayorista, precios, mayorista, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false,
     // Más vendido: sale primero en la tienda con su etiqueta. Ocultos: colores sin stock que no se muestran.
     destacado: x.destacado === true, ocultos: (Array.isArray(x.ocultos) ? x.ocultos : []).map((c) => texto(c, 40)).filter(Boolean).slice(0, 60) };
 }
@@ -324,7 +325,7 @@ const servidor = http.createServer(async (req, res) => {
       return responder(res, 200, { ok: true, numero: hoja.numero, fecha: hoja.d });
     }
     if (ruta === "/api/catalogo" && req.method === "GET") {
-      return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, mayorista, ...venta }) => venta) });
+      return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, costoMayorista, mayorista, ...venta }) => venta) });
     }
     if (ruta === "/api/seguimiento" && req.method === "GET") {
       const q = new URL(req.url, "http://x").searchParams;

@@ -191,7 +191,8 @@
       <label>Público<select name="publico"><option>Adulto</option><option>Niño</option></select></label>
       <label class="ancho">Tallas<input name="tallas" placeholder="28, 30, 32, 34, 36, 38, 40"></label>
       <label>Tela (ficha técnica)<input name="tela" maxlength="40"></label>
-      <label>Costo (S/)<input name="costo" inputmode="decimal"></label>
+      <label>Costo por unidad (S/)<input name="costo" inputmode="decimal"></label>
+      <label>Costo por mayor (S/)<input name="costoMayorista" inputmode="decimal"></label>
       <div class="fila-precios">
         <label>Cant. 1<input name="p0" inputmode="decimal" required></label><label>Cant. 3<input name="p1" inputmode="decimal"></label>
         <label>Cant. 6<input name="p2" inputmode="decimal"></label>
@@ -377,7 +378,7 @@
 
     // ---------- Precios: catálogo con costo, ganancia y Excel ----------
     const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Corte", "corte"], ["Público", "publico"], ["Tallas", "tallas"],
-      ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2],
+      ["Tela", "tela"], ["Costo", "costo"], ["Costo por mayor", "costoMayorista"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2],
       ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"], ["Más vendido", "destacado"]];
     const MARCAS = { zoroz: "Zoroz 77", galmor: "Galmor" };
     const TELEFONO = window.CATALOGO.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
@@ -421,21 +422,24 @@
     });
 
     const coloresDe = (codigo) => Object.entries((window.CATALOGO.detalles || []).find((d) => d.id === codigo)?.colores || {});
-    // Apartado de costos: una lista con todos los productos para poner cuánto cuesta cada prenda (el mismo costo para todas sus tallas).
+    // Apartado de costos: una lista con todos los productos y sus dos costos por prenda (el mismo para todas sus tallas):
+    // a cuánto nos vende Galmor para vender por unidad (1 a 6) y a cuánto para vender por mayor (12 a más).
+    const COSTOS = [["costo", "Costo por unidad (1 a 6)"], ["costoMayorista", "Costo por mayor (12 a más)"]];
     function pintarCostos() {
       const abierto = $("#costos details")?.open;
-      $("#costos").innerHTML = `<details class="producto-panel" style="border-left-color:#e0b93a" ${abierto ? "open" : ""}><summary><b>Costos · cuánto te cuesta cada producto</b>
+      const casilla = (p, k, [campo, rotulo]) => `<td class="celda-costo"><input data-costo="${campo}-${k}" inputmode="decimal" value="${p[campo] ?? ""}" placeholder="Falta"
+        aria-label="${rotulo} de ${esc(p.nombre)}" style="width:110px;height:42px;padding:0 10px;border:1px solid var(--linea);border-radius:6px;font:600 16px var(--texto);text-align:right"></td>`;
+      $("#costos").innerHTML = `<details class="producto-panel" style="border-left-color:#e0b93a" ${abierto ? "open" : ""}><summary><b>Costos · a cuánto te vende Galmor cada producto</b>
           <small>Toca aquí para ponerlos o cambiarlos. Solo tú los ves; nunca salen en la web.</small></summary>
-        <div class="cuerpo"><table class="tabla-precios" style="min-width:0;max-width:560px"><tr><th>Producto</th><th>Costo por prenda (S/)</th></tr>
-          ${catalogo.map((p, k) => `<tr><td style="white-space:normal">${esc(p.nombre)}</td><td class="celda-costo"><input data-costo="${k}" inputmode="decimal" value="${p.costo ?? ""}" placeholder="Falta"
-            aria-label="Costo de ${esc(p.nombre)}" style="width:110px;height:42px;padding:0 10px;border:1px solid var(--linea);border-radius:6px;font:600 16px var(--texto);text-align:right"></td></tr>`).join("")}</table>
-          <p style="font-size:14px;margin:0">El costo es el mismo para talla chica, 36 y extra. Deja la casilla vacía si todavía no lo sabes.</p>
+        <div class="cuerpo"><table class="tabla-precios" style="min-width:0;max-width:720px"><tr><th>Producto</th>${COSTOS.map(([, r]) => `<th style="white-space:normal">${r}</th>`).join("")}</tr>
+          ${catalogo.map((p, k) => `<tr><td style="white-space:normal">${esc(p.nombre)}</td>${COSTOS.map((c) => casilla(p, k, c)).join("")}</tr>`).join("")}</table>
+          <p style="font-size:14px;margin:0">Son costos por prenda, en soles, iguales para talla chica, 36 y extra. Deja la casilla vacía si todavía no lo sabes.</p>
           <p class="aviso-talla" id="aviso-costos" role="status"></p>
           <div class="botones"><button class="si" id="guardar-costos">Guardar costos</button></div></div></details>`;
     }
     $("#costos").addEventListener("click", async (e) => {
       if (e.target.id !== "guardar-costos") return;
-      const error = await guardarCatalogo(catalogo.map((p, k) => ({ ...p, costo: numero($(`[data-costo="${k}"]`).value) })));
+      const error = await guardarCatalogo(catalogo.map((p, k) => ({ ...p, ...Object.fromEntries(COSTOS.map(([campo]) => [campo, numero($(`[data-costo="${campo}-${k}"]`).value)])) })));
       $("#aviso-costos").textContent = error || "✓ Costos guardados.";
       $("#aviso-costos").style.color = error ? "" : "#2e7d32";
     });
@@ -446,22 +450,23 @@
         const ocultos = p.ocultos || [];
         const colores = coloresDe(p.codigo).map(([n, tono]) => `<button type="button" class="color-stock ${ocultos.includes(n) ? "sin" : ""}" data-color-stock="${k}" data-c="${esc(n)}"
           title="${ocultos.includes(n) ? "Sin stock: no se muestra" : "Con stock: se muestra"}"><i style="background:${tono}"></i>${esc(n)}</button>`).join("");
-        // Costo: uno por producto, el mismo para talla chica, 36 y extra. Se cambia en Editar.
-        const costo = `<td class="celda-costo">${p.costo === null ? "Falta" : soles(p.costo)}</td>`;
-        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${costo}${CANT.map((c, j) => {
+        // Costos: por unidad y por mayor, iguales para talla chica, 36 y extra. Se cambian en el apartado Costos o en Editar.
+        const cm = p.costoMayorista ?? null;
+        const celda = (v) => `<td class="celda-costo">${v === null ? "Falta" : soles(v)}</td>`;
+        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${celda(p.costo)}${CANT.map((c, j) => {
           const venta = p.precios[j] + r, gana = p.costo === null ? null : (venta - p.costo) * c;
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
-        const mayor = grupos(p).filter(([, , k]) => p.mayorista?.[k]?.some((v) => v)).map(([g, , k]) => `<tr><td>${g}</td>${costo}${p.mayorista[k].map((v, j) =>
-          `<td${j === ESTANDAR ? ' style="background:#d9f3ff"' : ""}>${v ? soles(v) : "—"}${v && p.costo !== null ? `<small class="${v < p.costo ? "mal" : ""}">gana ${soles(v - p.costo)}</small>` : ""}</td>`).join("")}</tr>`).join("");
+        const mayor = grupos(p).filter(([, , k]) => p.mayorista?.[k]?.some((v) => v)).map(([g, , k]) => `<tr><td>${g}</td>${celda(cm)}${p.mayorista[k].map((v, j) =>
+          `<td${j === ESTANDAR ? ' style="background:#d9f3ff"' : ""}>${v ? soles(v) : "—"}${v && cm !== null ? `<small class="${v < cm ? "mal" : ""}">gana ${soles(v - cm)}</small>` : ""}</td>`).join("")}</tr>`).join("");
         return `<details class="producto-panel ${p.web ? "" : "oculto"}" data-codigo="${esc(p.codigo)}" ${abiertos.has(p.codigo) ? "open" : ""}><summary><b>${esc(p.nombre)}</b>
             <span class="rapidos"><button type="button" class="chip-web ${p.web ? "si" : ""}" data-web="${k}">${p.web ? "✓ Se muestra" : "✗ Oculto"}</button>
               <button type="button" class="chip-top ${p.destacado ? "si" : ""}" data-top="${k}">★ Más vendido</button></span>
             <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)}${p.corte ? ` · ${esc(p.corte)}` : ""} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
-            <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
-          <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th><th>Costo</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
+            <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}${cm === null ? "" : ` · por mayor ${soles(cm)}`}</small></summary>
+          <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th><th>Costo por unidad</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
             ${mayor ? `<p class="rotulo-stock">Mayorista · solo panel, no sale en la web · celeste = tu precio de siempre · ganancia por prenda:</p>
-              <div style="overflow-x:auto"><table class="tabla-precios"><tr><th>Talla</th><th>Costo</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>${mayor}</table></div>` : ""}
+              <div style="overflow-x:auto"><table class="tabla-precios"><tr><th>Talla</th><th>Costo por mayor</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>${mayor}</table></div>` : ""}
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
             ${colores ? `<p class="rotulo-stock">Colores · toca un color sin stock para ocultarlo de la tienda:</p><div class="colores-stock">${colores}</div>` : ""}
             <div class="botones"><button data-editar="${k}">Editar</button><button data-quitar-producto="${k}">Quitar</button></div></div></details>`;
@@ -489,6 +494,7 @@
       fp.elements.codigo.readOnly = k >= 0;
       fp.elements.tallas.value = p.tallas.join(", ");
       fp.elements.costo.value = p.costo ?? "";
+      fp.elements.costoMayorista.value = p.costoMayorista ?? "";
       [0, 1, 2].forEach((j) => (fp.elements["p" + j].value = p.precios[j] ?? ""));
       // Mayorista: precio por prenda y por talla, desde 12 hasta 1000. Solo panel; una casilla vacía = sin precio.
       $("#editor-mayorista").innerHTML = `<p style="font:600 13px var(--texto);color:var(--tinta-2);margin:6px 0 4px">Mayorista · precio por prenda (solo panel, no sale en la web)</p>
@@ -503,7 +509,7 @@
       e.preventDefault();
       const f = fp.elements;
       const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), corte: f.corte.value.trim(),
-        publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
+        publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value), costoMayorista: numero(f.costoMayorista.value),
         precios: [0, 1, 2].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked,
         destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [],
         mayorista: Object.fromEntries(GRUPOS_MAYOR.map(([k]) => [k, MAYOR.map((_, j) => numero(f[`m_${k}_${j}`].value))])) };
@@ -565,7 +571,10 @@
         return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "", corte: col.corte >= 0 ? String(valor(f, "corte")).trim() : previo?.corte || "",
           publico: /ni/.test(normal(valor(f, "publico"))) ? "Niño" : "Adulto",
           tallas: rango ? Array.from({ length: (rango[2] - rango[1]) / 2 + 1 }, (_, j) => String(+rango[1] + 2 * j)) : tallas ? tallas.split(/[^\d]+/).filter(Boolean) : previo?.tallas || [],
-          tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2].map((j) => numero(valor(f, j))), mayorista: previo?.mayorista,
+          tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")),
+          // Reason: un Excel bajado antes del 28/11 no trae esta columna; en ese caso se conserva el costo por mayor que ya había.
+          costoMayorista: col.costoMayorista >= 0 ? numero(valor(f, "costoMayorista")) : previo?.costoMayorista ?? null,
+          precios: [0, 1, 2].map((j) => numero(valor(f, j))), mayorista: previo?.mayorista,
           recargoMedia: numero(valor(f, "recargoMedia")) ?? 0, recargoExtra: numero(valor(f, "recargoExtra")) ?? 0, web: !/^no$/.test(normal(valor(f, "web"))),
           destacado: col.destacado >= 0 ? /^si$/.test(normal(valor(f, "destacado"))) : previo?.destacado === true, ocultos: previo?.ocultos || [] };
       });
@@ -578,7 +587,7 @@
       try { nuevos = leerExcel(await archivo.arrayBuffer()); } catch (err) { return alert(err.message); }
       const antes = Object.fromEntries(catalogo.map((p) => [p.codigo, p]));
       const agregados = nuevos.filter((p) => !antes[p.codigo]);
-      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", corte: "corte", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web", destacado: "más vendido" };
+      const CAMPOS = { nombre: "nombre", marca: "marca", tipo: "tipo", corte: "corte", publico: "público", tallas: "tallas", tela: "tela", costo: "costo", costoMayorista: "costo por mayor", precios: "precios", recargoMedia: "+36", recargoExtra: "+extra", web: "web", destacado: "más vendido" };
       const cambian = nuevos.filter((p) => antes[p.codigo]).map((p) => [p, Object.keys(CAMPOS).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(antes[p.codigo][k]))]).filter(([, c]) => c.length);
       const quitados = catalogo.filter((p) => !nuevos.some((n) => n.codigo === p.codigo));
       const lista = (t, l) => l.length ? `<p><b>${t} (${l.length})</b></p><ul>${l.join("")}</ul>` : "";
