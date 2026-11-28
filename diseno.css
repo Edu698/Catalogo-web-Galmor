@@ -251,13 +251,31 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 .pack.estrella .btn { background: #fbf3ec; color: #2b1a10; }
 @media (max-width: 767px) { .pack-tag { top: -16px; } .packs-lista { gap: 34px; padding-top: 14px; } }
 .pack .pct-texto { font-size: 44px; }
-/* ¿Eres mayorista? (catálogo) */
-.mayorista-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 26px var(--margen); background: linear-gradient(160deg, #4a2c1a, #2e1b10); color: #fff; }
-.mayorista-banda b { display: block; font: 700 clamp(30px, 4vw, 44px)/1.1 var(--titulo); text-transform: uppercase; letter-spacing: .03em; }
-.mayorista-banda span { font-size: 17px; opacity: .9; }
-.mayorista-banda .btn { background: #fbf3ec; color: #2b1a10; min-height: 58px; padding: 0 30px; font-weight: 700; font-size: 17px; }
-@media (max-width: 600px) { .mayorista-banda .btn { width: 100%; } }
+/* ¿Eres mayorista?: etiqueta de cartón que cuelga sobre la pared de la portada (a la izquierda del modelo en celular, a la derecha en pantallas anchas). */
+.colgante { position: absolute; top: 0; left: 10px; z-index: 2; width: 166px; padding: 26px 0 0; border: 0; background: none; cursor: pointer; font: inherit; color: #2b1a10;
+  transform: rotate(-3deg); transform-origin: 50% 0; filter: drop-shadow(0 10px 12px rgba(58, 36, 22, .3)); animation: mecer 2.4s ease-out 1.2s 1 backwards; transition: transform .25s; }
+.colgante:hover, .colgante:focus-visible { transform: rotate(0); }
+.colgante:focus-visible { outline: none; }
+.colgante:focus-visible .etiqueta em { outline: 3px solid #fff; outline-offset: 2px; }
+.colgante::before { content: ""; position: absolute; left: 50%; top: -4px; width: 2px; height: 52px; margin-left: -1px; background: #3a2416; z-index: 1; }
+.etiqueta { display: block; position: relative; padding: 46px 14px 14px; text-align: center; background: linear-gradient(170deg, #e0c194, #d0ac79);
+  clip-path: polygon(18% 0, 82% 0, 100% 11%, 100% 100%, 0 100%, 0 11%); }
+.etiqueta::before { content: ""; position: absolute; top: 16px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: #ecd9c6; box-shadow: 0 0 0 3px #a98250; }
+.etiqueta b { display: block; font: 700 20px/1.08 var(--titulo); text-transform: uppercase; letter-spacing: .03em; }
+.etiqueta span { display: block; font-size: 13px; line-height: 1.35; margin: 6px -14px 0; padding: 0 14px 12px; border-bottom: 2px dashed rgba(58, 36, 22, .45); }
+.etiqueta em { display: block; margin-top: 12px; padding: 10px 6px; border-radius: 6px; background: #3a2416; color: #fff; font: 700 13px/1.2 var(--texto); text-transform: uppercase; letter-spacing: .03em; }
+@keyframes mecer { 0% { transform: rotate(8deg); } 30% { transform: rotate(-9deg); } 55% { transform: rotate(2deg); } 78% { transform: rotate(-5deg); } 100% { transform: rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) { .colgante { animation: none; transition: none; } }
+@media (min-width: 768px) { .colgante { left: auto; right: 14px; width: 128px; } .etiqueta { padding: 44px 10px 12px; } .etiqueta b { font-size: 17px; } .etiqueta span { font-size: 12px; margin-inline: -10px; padding-inline: 10px; } .etiqueta em { font-size: 11px; } }
+@media (min-width: 1024px) {
+  .colgante { right: clamp(14px, 3vw, 64px); width: clamp(200px, 19vw, 290px); padding-top: 38px; }
+  .colgante::before { height: 72px; }
+  .etiqueta { padding: 64px 22px 22px; }
+  .etiqueta::before { top: 22px; width: 18px; height: 18px; margin-left: -9px; box-shadow: 0 0 0 4px #a98250; }
+  .etiqueta b { font-size: clamp(24px, 2.2vw, 32px); }
+  .etiqueta span { font-size: clamp(14px, 1.15vw, 17px); margin: 8px -22px 0; padding: 0 22px 16px; }
+  .etiqueta em { margin-top: 16px; padding: 14px 8px; font-size: clamp(13px, 1.05vw, 15px); }
+}
 .enlace { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
 /* Destacado: doble cargo */
