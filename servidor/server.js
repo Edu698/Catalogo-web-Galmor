@@ -104,6 +104,19 @@ if (semi) {
   semi.nombre = "Pantalón Semi Pitillo Drill";
   try { guardarCatalogo(); } catch (e) { console.warn("Semi pitillo: no se pudo guardar todavía.", e.code); }
 }
+// 28/11/2026 (dueño): precios por unidad (1, 3 y 6) y tabla mayorista de su Excel «Precios Galmor - Unidad y Mayorista».
+// Se aplica UNA vez (marca en DATOS); después manda el panel. Solo cambia precios, recargos y mayorista de los productos del archivo.
+const MARCA_PRECIOS = path.join(DATOS, "precios-2026-11-28");
+if (!fs.existsSync(MARCA_PRECIOS)) {
+  const nuevos = leer(path.join(__dirname, "precios-2026-11-28.json"));
+  for (const p of catalogo) Object.assign(p, nuevos[p.codigo]);
+  try {
+    guardarCatalogo();
+    fs.writeFileSync(MARCA_PRECIOS, new Date().toISOString());
+  } catch (e) {
+    console.warn("Precios 28/11: no se pudo guardar todavía.", e.code);
+  }
+}
 
 // Fecha y hora de Lima (UTC−5 todo el año, Perú no cambia de horario).
 function lima(fecha) { return new Date(fecha.getTime() - 5 * 3600e3); }

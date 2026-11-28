@@ -86,13 +86,13 @@
     .tabla-precios td small.mal { color: #b23a2e; }
     .cambios { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 2px solid var(--denim); }
     .cambios ul { margin: 6px 0 10px; padding-left: 18px; font-size: 14px; max-height: 220px; overflow-y: auto; }
-    .ventana-panel { border: 0; border-radius: 14px; padding: 22px; width: min(560px, 94vw); max-height: 92dvh; }
+    .ventana-panel { border: 0; border-radius: 14px; padding: 22px; width: min(780px, 94vw); max-height: 92dvh; }
     .ventana-panel::backdrop { background: rgba(0, 0, 0, .5); }
     .ventana-panel form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
     .ventana-panel label { display: grid; gap: 4px; font: 600 13px var(--texto); color: var(--tinta-2); }
     .ventana-panel label.ancho { grid-column: 1 / -1; }
     .ventana-panel input, .ventana-panel select { height: 44px; padding: 0 10px; border: 1px solid var(--linea); border-radius: 6px; font: 400 16px var(--texto); }
-    .ventana-panel .fila-precios { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .ventana-panel .fila-precios { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .ventana-panel .botones { grid-column: 1 / -1; }
     .rapidos { display: flex; gap: 6px; flex-wrap: wrap; }
     .rapidos button { min-height: 34px; padding: 0 12px; border-radius: 17px; border: 1.5px solid var(--linea); background: #fff; font: 600 13px var(--texto); cursor: pointer; color: var(--tinta-3); }
@@ -195,6 +195,7 @@
       </div>
       <label>+ Talla 36 (niño 10-16)<input name="recargoMedia" inputmode="decimal"></label>
       <label>+ Talla 38-40<input name="recargoExtra" inputmode="decimal"></label>
+      <div id="editor-mayorista" style="grid-column:1/-1"></div>
       <label class="ancho" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="web" style="height:22px;width:22px"> Mostrar en la web</label>
       <p class="aviso-talla ancho" id="error-producto" style="grid-column:1/-1"></p>
       <div class="botones"><button class="si" type="submit">Guardar</button><button type="button" id="cancelar-producto">Cancelar</button></div>
@@ -380,6 +381,7 @@
     const CANT = [1, 3, 6];
     const MAYOR = [12, 24, 50, 100, 250, 500, 1000];
     const ESTANDAR = 2; // Reason: el dueño marca "50 a más" como su precio de siempre (celeste en su Excel)
+    const GRUPOS_MAYOR = [["chica", "Chica (28-34 · niño 2-8)"], ["media", "Talla 36 (niño 10-16)"], ["extra", "Extra (38-40)"]];
     const normal = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9+]/g, "");
     const slug = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
     const numero = (v) => { const n = parseFloat(String(v ?? "").replace(/[^\d.,-]/g, "").replace(",", ".")); return isNaN(n) ? null : n; };
@@ -464,6 +466,11 @@
       fp.elements.tallas.value = p.tallas.join(", ");
       fp.elements.costo.value = p.costo ?? "";
       [0, 1, 2].forEach((j) => (fp.elements["p" + j].value = p.precios[j] ?? ""));
+      // Mayorista: precio por prenda y por talla, desde 12 hasta 1000. Solo panel; una casilla vacía = sin precio.
+      $("#editor-mayorista").innerHTML = `<p style="font:600 13px var(--texto);color:var(--tinta-2);margin:6px 0 4px">Mayorista · precio por prenda (solo panel, no sale en la web)</p>
+        <div style="overflow-x:auto"><table class="tabla-precios" style="min-width:600px"><tr><th>Talla</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>
+        ${GRUPOS_MAYOR.map(([k, g]) => `<tr><td>${g}</td>${MAYOR.map((c, j) => `<td style="padding:3px"><input name="m_${k}_${j}" inputmode="decimal" aria-label="${g}, ${c} a más"
+          value="${p.mayorista?.[k]?.[j] ?? ""}" style="width:68px;padding:0 6px;text-align:right"></td>`).join("")}</tr>`).join("")}</table></div>`;
       fp.elements.web.checked = p.web;
       $("#error-producto").textContent = "";
       $("#ventana-producto").showModal();
@@ -474,7 +481,8 @@
       const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), corte: f.corte.value.trim(),
         publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
         precios: [0, 1, 2].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked,
-        destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [], mayorista: catalogo[editando]?.mayorista };
+        destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [],
+        mayorista: Object.fromEntries(GRUPOS_MAYOR.map(([k]) => [k, MAYOR.map((_, j) => numero(f[`m_${k}_${j}`].value))])) };
       if (editando < 0 && catalogo.some((p) => p.codigo === nuevo.codigo)) return ($("#error-producto").textContent = "Ese código ya existe. Escribe otro.");
       const lista = editando < 0 ? [...catalogo, nuevo] : catalogo.map((p, k) => (k === editando ? nuevo : p));
       const error = await guardarCatalogo(lista);
