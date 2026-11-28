@@ -4,7 +4,7 @@
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const soles = (n) => "S/ " + n.toFixed(2);
   const producto = (id) => C.productos.find((p) => p.id === id);
-  // Número para mostrar: "51908341818" → "908 341 818".
+  // Número para mostrar: "51929406608" → "929 406 608".
   const telefono = C.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
   const wsp = (texto) => `https://wa.me/${C.whatsapp}${texto ? "?text=" + encodeURIComponent(texto) : ""}`;
   const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -884,7 +884,7 @@
       `DNI/RUC: ${f.documento.trim()}`, `Dirección de mi tienda: ${f.direccion.trim()}`,
       foto ? `Foto de mi tienda: ${foto}` : f.foto?.size ? "Foto de mi tienda: te la envío por aquí." : "",
       f.mensaje.trim() ? `Mensaje: ${f.mensaje.trim()}` : ""].filter(Boolean).join("\n");
-    $("#enviar-mayorista").href = `https://wa.me/${C.whatsappMayorista || C.whatsapp}?text=${encodeURIComponent(texto)}`;
+    $("#enviar-mayorista").href = wsp(texto);
     boton.disabled = false;
     boton.textContent = "Continuar";
     e.target.hidden = true;

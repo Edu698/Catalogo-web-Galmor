@@ -7,8 +7,9 @@
 // Un producto sin fotos aquí sale en la web con la imagen "Foto pronto" y color a coordinar.
 window.CATALOGO = {
   versionFotos: "202611250600", // la cambia herramientas/preparar_fotos.py; obliga al navegador a bajar las fotos nuevas
-  whatsapp: "51908341818", // WhatsApp Business de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
-  whatsappMayorista: "51929406608", // 28/11/2026 (dueño): aquí llegan los datos del botón «¿Eres mayorista?».
+  // WhatsApp de Galmor. 51 = Perú + celular, sin espacios. Es el único lugar donde se escribe.
+  // 28/11/2026 (dueño): todos los botones de WhatsApp (pedidos, consultas y mayorista) van al 929 406 608.
+  whatsapp: "51929406608",
 
   // Datos para pagar.
   pago: {
