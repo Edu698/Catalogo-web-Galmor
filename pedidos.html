@@ -175,6 +175,7 @@
       <p class="ventana-sub">Precios de <b>Cant. 1, 3 y 6</b> son de talla chica (28-34; niño 2-8); de 7 a 11 prendas se paga como 6. La talla 36 (niño 10-16) y la extra (38-40) suman su recargo. Debajo de cada precio, la ganancia de esa venta.
         La tabla <b>mayorista</b> (desde 12) es solo para ti y el asistente: <b>no sale en la web</b>. Se carga con «Subir precios», usando tu Excel de dos hojas (las filas sin todos sus precios no se tocan).</p>
       <div id="cambios-excel"></div>
+      <div id="costos"></div>
       <div id="lista-precios"></div>
     </div>
   </main>
@@ -420,7 +421,26 @@
     });
 
     const coloresDe = (codigo) => Object.entries((window.CATALOGO.detalles || []).find((d) => d.id === codigo)?.colores || {});
+    // Apartado de costos: una lista con todos los productos para poner cuánto cuesta cada prenda (el mismo costo para todas sus tallas).
+    function pintarCostos() {
+      const abierto = $("#costos details")?.open;
+      $("#costos").innerHTML = `<details class="producto-panel" style="border-left-color:#e0b93a" ${abierto ? "open" : ""}><summary><b>Costos · cuánto te cuesta cada producto</b>
+          <small>Toca aquí para ponerlos o cambiarlos. Solo tú los ves; nunca salen en la web.</small></summary>
+        <div class="cuerpo"><table class="tabla-precios" style="min-width:0;max-width:560px"><tr><th>Producto</th><th>Costo por prenda (S/)</th></tr>
+          ${catalogo.map((p, k) => `<tr><td style="white-space:normal">${esc(p.nombre)}</td><td class="celda-costo"><input data-costo="${k}" inputmode="decimal" value="${p.costo ?? ""}" placeholder="Falta"
+            aria-label="Costo de ${esc(p.nombre)}" style="width:110px;height:42px;padding:0 10px;border:1px solid var(--linea);border-radius:6px;font:600 16px var(--texto);text-align:right"></td></tr>`).join("")}</table>
+          <p style="font-size:14px;margin:0">El costo es el mismo para talla chica, 36 y extra. Deja la casilla vacía si todavía no lo sabes.</p>
+          <p class="aviso-talla" id="aviso-costos" role="status"></p>
+          <div class="botones"><button class="si" id="guardar-costos">Guardar costos</button></div></div></details>`;
+    }
+    $("#costos").addEventListener("click", async (e) => {
+      if (e.target.id !== "guardar-costos") return;
+      const error = await guardarCatalogo(catalogo.map((p, k) => ({ ...p, costo: numero($(`[data-costo="${k}"]`).value) })));
+      $("#aviso-costos").textContent = error || "✓ Costos guardados.";
+      $("#aviso-costos").style.color = error ? "" : "#2e7d32";
+    });
     function pintarPrecios() {
+      pintarCostos();
       const abiertos = new Set([...document.querySelectorAll("#lista-precios details[open]")].map((d) => d.dataset.codigo));
       $("#lista-precios").innerHTML = catalogo.map((p, k) => {
         const ocultos = p.ocultos || [];

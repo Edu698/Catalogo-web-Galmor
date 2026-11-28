@@ -54,11 +54,10 @@ let catalogo = fs.existsSync(ARCHIVO_CATALOGO) ? leer(ARCHIVO_CATALOGO) : inicia
 // 2026-11-10: productos que no estaban en el Excel de stock; sus fotos pasaron a otro producto (ver productos.js).
 const FUSIONADOS = { "jean-semi-pitillo": "jean-clasico-delgado", "doble-cargo": "pantalon-carbon", "bermuda-cargo": "bermuda-torero" };
 catalogo = catalogo.filter((p) => !(FUSIONADOS[p.codigo] && catalogo.some((x) => x.codigo === FUSIONADOS[p.codigo])));
-// Costo vacío: se completa con el del Excel de stock (P. costo). Un costo ya escrito en el panel no se toca.
+// 28/11/2026: el costo ya no se rellena solo desde el Excel de stock: si el dueño deja un costo vacío en el panel, se queda vacío.
 // 11/11/2026: filtros nuevos (tipo, corte y material). Un producto guardado antes de existir "corte" los toma del catálogo inicial.
 for (const p of catalogo) {
   const base = inicial.find((x) => x.codigo === p.codigo);
-  if (p.costo === null) p.costo = base?.costo ?? null;
   if (p.corte === undefined) Object.assign(p, base ? { tipo: base.tipo, corte: base.corte, tela: base.tela } : { corte: "" });
   delete p.estilo;
 }
