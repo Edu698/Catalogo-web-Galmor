@@ -98,7 +98,7 @@ window.CATALOGO = {
     { id: "short-corto", colores: { "Hueso": "#ddd6cb", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Negro": "#1a1a1c", "Plomo oscuro": "#2c3238", "Blanco": "#f4f4f2" } },
     { id: "bermuda-torero-drill", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Verde arena": "#4f5546", "Plomo oscuro": "#2c3238", "Cocoa": "#5a4337", "Hueso": "#ddd6cb" } },
     { id: "drill-nino", colores: { "Negro": "#1a1a1c", "Beige": "#d6c4a6", "Azul noche": "#171c2e", "Hueso": "#ddd6cb", "Canela": "#7a3f1f", "Cocoa": "#5a4337", "Camello": "#b0742f" } },
-    { id: "tactico-cargo" },
+    { id: "paper-touch-cargo" },
     { id: "jean-clasico-delgado", fotos: "jean-semi-pitillo", modelos: 2, alias: {"Cristal":  "azul-cristal", "Celeste":  "celeste-claro"}, colores: { "Negro": "#1a1a1c", "Cristal": "#2e4a7c", "Plomo lápiz": "#4a4d52", "Grafito azul": "#1b2440", "Celeste": "#7ca2cf" } },
   ],
 };

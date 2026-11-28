@@ -73,6 +73,14 @@ const guardarOpiniones = () => escribir(ARCHIVO_OPINIONES, opiniones);
 let reclamos = leer(ARCHIVO_RECLAMOS);
 const guardarReclamos = () => escribir(ARCHIVO_RECLAMOS, reclamos);
 const guardarCatalogo = () => escribir(ARCHIVO_CATALOGO, catalogo);
+// 28/11/2026 (dueño): el «Táctico Cargo» se llama «Pantalón Paper Touch Cargo»; cambia también su código para que
+// «táctico» no salga en ningún lado. El nombre solo se corrige si sigue siendo el anterior.
+const tactico = catalogo.find((p) => p.codigo === "tactico-cargo");
+if (tactico && !catalogo.some((p) => p.codigo === "paper-touch-cargo")) {
+  tactico.codigo = "paper-touch-cargo";
+  if (tactico.nombre === "Pantalón Táctico Cargo") tactico.nombre = "Pantalón Paper Touch Cargo";
+  try { guardarCatalogo(); } catch (e) { console.warn("Paper Touch Cargo: no se pudo guardar todavía.", e.code); }
+}
 // 21/11/2026 (dueño): nombres comerciales y productos sin fotos ocultos. Se aplica UNA vez (queda una marca en DATOS);
 // después el panel manda: lo que el dueño cambie ahí no se pisa.
 const MARCA_NOMBRES = path.join(DATOS, "nombres-2026-11-21");
@@ -83,7 +91,7 @@ if (!fs.existsSync(MARCA_NOMBRES)) {
     "bermuda-torero": "Bermuda Torero", "bermuda-jean-clasico": "Bermuda Jean Clásica", "bermuda-jean-sin-basta": "Bermuda Jean Sin Basta",
     "bermuda-jean-rasgado": "Bermuda Jean Rasgada",
   };
-  const SIN_FOTOS = ["short-corto", "bermuda-torero-drill", "drill-nino", "tactico-cargo", "jean-clasico-delgado"];
+  const SIN_FOTOS = ["short-corto", "bermuda-torero-drill", "drill-nino", "paper-touch-cargo", "jean-clasico-delgado"];
   for (const p of catalogo) {
     if (NOMBRES[p.codigo]) p.nombre = NOMBRES[p.codigo];
     if (SIN_FOTOS.includes(p.codigo)) p.web = false;

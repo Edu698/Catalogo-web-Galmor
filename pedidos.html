@@ -576,7 +576,6 @@
 
     // Excel de precios del dueño: hoja "Unidades (1 a 6)" (por 1, 3 y 6) y hoja "Mayorista (12 a 1000)", por producto y talla.
     // Solo cambia precios. Una fila sin todos sus precios (productos en rojo que no se producen) no se toca.
-    const ALIAS = { "paper-touch-cargo": "tactico-cargo" }; // Reason: 28/11/2026 el dueño renombró Táctico Cargo a Paper Touch Cargo en su Excel
     const grupoDe = (t) => (/36|media/i.test(t) ? "media" : /extra/i.test(t) ? "extra" : /chica/i.test(t) ? "chica" : "");
     function leerPrecios(datos) {
       const libro = XLSX.read(datos);
@@ -587,7 +586,7 @@
         const iCab = filas.findIndex((f) => normal(f[0]) === "codigo");
         return filas.slice(iCab + 1).filter((f) => String(f[0]).trim()).map((f) => {
           const codigo = slug(f[0]);
-          return { codigo: ALIAS[codigo] || codigo, grupo: grupoDe(String(f[2])), precios: f.slice(3, 3 + cuantos).map(numero) };
+          return { codigo, grupo: grupoDe(String(f[2])), precios: f.slice(3, 3 + cuantos).map(numero) };
         });
       };
       const completas = (filas) => filas.filter((f) => f.grupo && f.precios.every((v) => v > 0));
