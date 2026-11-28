@@ -16,6 +16,8 @@
 //   GET  /api/opiniones          opiniones aprobadas (se muestran en la tienda)
 //   GET  /api/panel/opiniones    panel: todas las opiniones          (cabecera x-clave)
 //   POST /api/panel/opinion      panel: {id, accion: aprobar|ocultar|borrar} (cabecera x-clave)
+//   POST /api/mayorista/foto     "¿Eres mayorista?": la tienda sube la foto (JPEG) del local; devuelve su link para el WhatsApp
+//   GET  /mayorista/<id>.jpg     esa foto
 // Datos en DATOS/pedidos.json y DATOS/opiniones.json. La clave del panel llega en la variable PANEL_CLAVE.
 "use strict";
 const http = require("node:http");
@@ -31,6 +33,9 @@ const ARCHIVO_RECLAMOS = path.join(DATOS, "reclamos.json");
 const IMAGENES = path.join(DATOS, "imagenes");
 const ARCHIVO_CATALOGO = path.join(DATOS, "catalogo.json");
 const MAX_IMAGEN = 4 * 1024 * 1024;
+const FOTOS_MAYORISTA = path.join(DATOS, "mayoristas");
+const MAX_FOTO = 1.5 * 1024 * 1024;
+const MAX_FOTOS_MAYORISTA = 300; // Reason: tope de fotos guardadas; al pasarlo se borran las más antiguas (nadie llena el disco)
 const MAX_PENDIENTES = 200; // Reason: tope de opiniones sin revisar para que nadie llene el disco
 const CLAVE = process.env.PANEL_CLAVE || "";
 const PUERTO = +(process.env.PUERTO || 80);
@@ -136,7 +141,8 @@ function validarOpinion(o) {
   return { nombre, texto: comentario, estrellas };
 }
 
-// Producto del catálogo. Precios de Cant. 1, 3, 6 y 12 son de talla chica; la talla media (36, niño 10-16) y la extra (38-40) suman su recargo.
+// Producto del catálogo. Precios de Cant. 1, 3 y 6 son de talla chica; la talla media (36, niño 10-16) y la extra (38-40) suman su recargo.
+// Mayorista (solo panel, nunca sale en /api/catalogo): precio por prenda desde 12, 24, 50, 100, 250, 500 y 1000, por grupo de talla.
 function validarProducto(x, i) {
   const fila = `Producto ${i + 1}${x.nombre ? ` (${texto(x.nombre, 80)})` : ""}: `;
   const num = (v) => (v === null || v === undefined || v === "" || isNaN(+v) ? null : Math.round(+v * 100) / 100);
@@ -148,15 +154,17 @@ function validarProducto(x, i) {
   if (!["Adulto", "Niño"].includes(x.publico)) throw new Error(fila + "público debe ser Adulto o Niño");
   const tallas = (Array.isArray(x.tallas) ? x.tallas : []).map((t) => texto(t, 3)).filter((t) => /^\d{1,2}$/.test(t));
   if (!tallas.length || tallas.length > 15) throw new Error(fila + "faltan las tallas");
-  const precios = [0, 1, 2, 3].map((k) => num((x.precios || [])[k]));
+  const precios = [0, 1, 2].map((k) => num((x.precios || [])[k]));
   if (!(precios[0] > 0 && precios[0] < 10000)) throw new Error(fila + "falta el precio de Cant. 1");
-  for (let k = 1; k < 4; k++) if (!(precios[k] > 0)) precios[k] = precios[k - 1]; // vacío = igual al anterior
+  for (let k = 1; k < 3; k++) if (!(precios[k] > 0)) precios[k] = precios[k - 1]; // vacío = igual al anterior
+  const mayorista = Object.fromEntries(["chica", "media", "extra"].map((g) => [g,
+    Array.from({ length: 7 }, (_, k) => { const v = num((x.mayorista?.[g] || [])[k]); return v > 0 && v < 10000 ? v : null; })]));
   const costo = num(x.costo);
   if (costo !== null && !(costo >= 0 && costo < 10000)) throw new Error(fila + "costo inválido");
   const recargo = (v) => { const r = num(v) ?? 0; if (!(r >= 0 && r <= 500)) throw new Error(fila + "recargo inválido"); return r; };
   return { codigo, nombre, marca: x.marca, tipo: texto(x.tipo, 30) || "Pantalón", corte: texto(x.corte, 30),
     publico: x.publico, tallas, tela: texto(x.tela, 40),
-    costo, precios, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false,
+    costo, precios, mayorista, recargoMedia: recargo(x.recargoMedia), recargoExtra: recargo(x.recargoExtra), web: x.web !== false,
     // Más vendido: sale primero en la tienda con su etiqueta. Ocultos: colores sin stock que no se muestran.
     destacado: x.destacado === true, ocultos: (Array.isArray(x.ocultos) ? x.ocultos : []).map((c) => texto(c, 40)).filter(Boolean).slice(0, 60) };
 }
@@ -264,6 +272,25 @@ const servidor = http.createServer(async (req, res) => {
         res.end(datos);
       });
     }
+    if (ruta === "/api/mayorista/foto" && req.method === "POST") {
+      let jpg;
+      try { jpg = await leerBinario(req, MAX_FOTO); } catch { return responder(res, 413, { ok: false }); }
+      if (jpg.subarray(0, 3).toString("hex") !== "ffd8ff") return responder(res, 400, { ok: false });
+      fs.mkdirSync(FOTOS_MAYORISTA, { recursive: true });
+      const viejas = fs.readdirSync(FOTOS_MAYORISTA).map((f) => [f, fs.statSync(path.join(FOTOS_MAYORISTA, f)).mtimeMs]).sort((a, b) => a[1] - b[1]);
+      for (const [f] of viejas.slice(0, Math.max(0, viejas.length - MAX_FOTOS_MAYORISTA + 1))) fs.unlinkSync(path.join(FOTOS_MAYORISTA, f));
+      const id = crypto.randomBytes(12).toString("base64url");
+      fs.writeFileSync(path.join(FOTOS_MAYORISTA, id + ".jpg"), jpg);
+      return responder(res, 200, { ok: true, url: `/mayorista/${id}.jpg` });
+    }
+    const fotoMayorista = ruta.match(/^\/mayorista\/([\w-]{16})\.jpg$/);
+    if (fotoMayorista && req.method === "GET") {
+      return fs.readFile(path.join(FOTOS_MAYORISTA, fotoMayorista[1] + ".jpg"), (err, datos) => {
+        if (err) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("No encontrado"); }
+        res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "private, max-age=86400", "X-Robots-Tag": "noindex" });
+        res.end(datos);
+      });
+    }
     if (ruta === "/api/reclamos" && req.method === "POST") {
       let h;
       try { h = validarReclamo(JSON.parse(await leerCuerpo(req, 8000))); }
@@ -277,7 +304,7 @@ const servidor = http.createServer(async (req, res) => {
       return responder(res, 200, { ok: true, numero: hoja.numero, fecha: hoja.d });
     }
     if (ruta === "/api/catalogo" && req.method === "GET") {
-      return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, ...venta }) => venta) });
+      return responder(res, 200, { productos: catalogo.filter((x) => x.web).map(({ costo, mayorista, ...venta }) => venta) });
     }
     if (ruta === "/api/seguimiento" && req.method === "GET") {
       const q = new URL(req.url, "http://x").searchParams;

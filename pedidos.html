@@ -168,8 +168,10 @@
         <button class="btn btn-denim" id="agregar-producto">+ Agregar producto</button>
         <button class="btn btn-borde" id="descargar-excel">Descargar Excel</button>
         <label class="btn btn-borde">Subir Excel<input type="file" id="subir-excel" accept=".xlsx,.xls" hidden></label>
+        <label class="btn btn-denim">Subir precios (unidad y mayorista)<input type="file" id="subir-precios" accept=".xlsx,.xls" hidden></label>
       </div>
-      <p class="ventana-sub">Precios de <b>Cant. 1, 3, 6 y 12</b> son de talla chica (28-34; niño 2-8). La talla 36 (niño 10-16) y la extra (38-40) suman su recargo. Debajo de cada precio, la ganancia de esa venta.</p>
+      <p class="ventana-sub">Precios de <b>Cant. 1, 3 y 6</b> son de talla chica (28-34; niño 2-8); de 7 a 11 prendas se paga como 6. La talla 36 (niño 10-16) y la extra (38-40) suman su recargo. Debajo de cada precio, la ganancia de esa venta.
+        La tabla <b>mayorista</b> (desde 12) es solo para ti y el asistente: <b>no sale en la web</b>. Se carga con «Subir precios», usando tu Excel de dos hojas (las filas sin todos sus precios no se tocan).</p>
       <div id="cambios-excel"></div>
       <div id="lista-precios"></div>
     </div>
@@ -189,7 +191,7 @@
       <label>Costo (S/)<input name="costo" inputmode="decimal"></label>
       <div class="fila-precios">
         <label>Cant. 1<input name="p0" inputmode="decimal" required></label><label>Cant. 3<input name="p1" inputmode="decimal"></label>
-        <label>Cant. 6<input name="p2" inputmode="decimal"></label><label>Cant. 12<input name="p3" inputmode="decimal"></label>
+        <label>Cant. 6<input name="p2" inputmode="decimal"></label>
       </div>
       <label>+ Talla 36 (niño 10-16)<input name="recargoMedia" inputmode="decimal"></label>
       <label>+ Talla 38-40<input name="recargoExtra" inputmode="decimal"></label>
@@ -371,17 +373,19 @@
 
     // ---------- Precios: catálogo con costo, ganancia y Excel ----------
     const COLUMNAS = [["Código", "codigo"], ["Producto", "nombre"], ["Marca", "marca"], ["Tipo", "tipo"], ["Corte", "corte"], ["Público", "publico"], ["Tallas", "tallas"],
-      ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2], ["Cant. 12", 3],
+      ["Tela", "tela"], ["Costo", "costo"], ["Cant. 1", 0], ["Cant. 3", 1], ["Cant. 6", 2],
       ["+ Talla 36 (niño 10-16)", "recargoMedia"], ["+ Talla 38-40", "recargoExtra"], ["En la web", "web"], ["Más vendido", "destacado"]];
     const MARCAS = { zoroz: "Zoroz 77", galmor: "Galmor" };
     const TELEFONO = window.CATALOGO.whatsapp.replace(/^51/, "").replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
-    const CANT = [1, 3, 6, 12];
+    const CANT = [1, 3, 6];
+    const MAYOR = [12, 24, 50, 100, 250, 500, 1000];
+    const ESTANDAR = 2; // Reason: el dueño marca "50 a más" como su precio de siempre (celeste en su Excel)
     const normal = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9+]/g, "");
     const slug = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
     const numero = (v) => { const n = parseFloat(String(v ?? "").replace(/[^\d.,-]/g, "").replace(",", ".")); return isNaN(n) ? null : n; };
     const grupos = (p) => p.publico === "Niño"
-      ? [["Chica (2-8)", 0], ["Media (10-16)", p.recargoMedia]]
-      : [["Chica (28-34)", 0], ["Talla 36", p.recargoMedia], ["Extra (38-40)", p.recargoExtra]];
+      ? [["Chica (2-8)", 0, "chica"], ["Media (10-16)", p.recargoMedia, "media"]]
+      : [["Chica (28-34)", 0, "chica"], ["Talla 36", p.recargoMedia, "media"], ["Extra (38-40)", p.recargoExtra, "extra"]];
     let catalogo = [], reclamos = [];
     // Días hábiles (lunes a viernes) que pasaron desde la hoja; la ley da 15 para responder.
     const habiles = (iso) => { let n = 0; for (let d = new Date(iso); d < new Date(); d.setDate(d.getDate() + 1)) if (d.getDay() % 6) n++; return Math.max(0, n - 1); };
@@ -418,16 +422,20 @@
         const ocultos = p.ocultos || [];
         const colores = coloresDe(p.codigo).map(([n, tono]) => `<button type="button" class="color-stock ${ocultos.includes(n) ? "sin" : ""}" data-color-stock="${k}" data-c="${esc(n)}"
           title="${ocultos.includes(n) ? "Sin stock: no se muestra" : "Con stock: se muestra"}"><i style="background:${tono}"></i>${esc(n)}</button>`).join("");
-        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${p.precios.map((v, j) => {
-          const venta = v + r, gana = p.costo === null ? null : (venta - p.costo) * CANT[j];
+        const filas = grupos(p).map(([g, r]) => `<tr><td>${g}${r ? ` <small>+S/ ${r}</small>` : ""}</td>${CANT.map((c, j) => {
+          const venta = p.precios[j] + r, gana = p.costo === null ? null : (venta - p.costo) * c;
           return `<td>${soles(venta)}${gana === null ? "" : `<small class="${gana < 0 ? "mal" : ""}">gana ${soles(gana)}</small>`}</td>`;
         }).join("")}</tr>`).join("");
+        const mayor = grupos(p).filter(([, , k]) => p.mayorista?.[k]?.some((v) => v)).map(([g, , k]) => `<tr><td>${g}</td>${p.mayorista[k].map((v, j) =>
+          `<td${j === ESTANDAR ? ' style="background:#d9f3ff"' : ""}>${v ? soles(v) : "—"}${v && p.costo !== null ? `<small class="${v < p.costo ? "mal" : ""}">gana ${soles(v - p.costo)} c/u</small>` : ""}</td>`).join("")}</tr>`).join("");
         return `<details class="producto-panel ${p.web ? "" : "oculto"}" data-codigo="${esc(p.codigo)}" ${abiertos.has(p.codigo) ? "open" : ""}><summary><b>${esc(p.nombre)}</b>
             <span class="rapidos"><button type="button" class="chip-web ${p.web ? "si" : ""}" data-web="${k}">${p.web ? "✓ Se muestra" : "✗ Oculto"}</button>
               <button type="button" class="chip-top ${p.destacado ? "si" : ""}" data-top="${k}">★ Más vendido</button></span>
             <small>${esc(p.codigo)} · ${MARCAS[p.marca]} · ${esc(p.tipo)}${p.corte ? ` · ${esc(p.corte)}` : ""} · ${esc(p.publico)}${p.web ? "" : " · NO SALE EN LA WEB"}</small>
             <span>${soles(p.precios[0])}</span><small class="${p.costo === null ? "falta" : ""}">${p.costo === null ? "Falta el costo" : `costo ${soles(p.costo)}`}</small></summary>
           <div class="cuerpo"><table class="tabla-precios"><tr><th>Talla</th>${CANT.map((c) => `<th>Cant. ${c}</th>`).join("")}</tr>${filas}</table>
+            ${mayor ? `<p class="rotulo-stock">Mayorista · solo panel, no sale en la web · celeste = tu precio de siempre:</p>
+              <div style="overflow-x:auto"><table class="tabla-precios"><tr><th>Talla</th>${MAYOR.map((c) => `<th>${c}+</th>`).join("")}</tr>${mayor}</table></div>` : ""}
             <p style="font-size:14px;margin:0 0 6px">Tallas: ${p.tallas.join(", ")}${p.tela ? ` · Tela: ${esc(p.tela)}` : ""}</p>
             ${colores ? `<p class="rotulo-stock">Colores · toca un color sin stock para ocultarlo de la tienda:</p><div class="colores-stock">${colores}</div>` : ""}
             <div class="botones"><button data-editar="${k}">Editar</button><button data-quitar-producto="${k}">Quitar</button></div></div></details>`;
@@ -455,7 +463,7 @@
       fp.elements.codigo.readOnly = k >= 0;
       fp.elements.tallas.value = p.tallas.join(", ");
       fp.elements.costo.value = p.costo ?? "";
-      [0, 1, 2, 3].forEach((j) => (fp.elements["p" + j].value = p.precios[j] ?? ""));
+      [0, 1, 2].forEach((j) => (fp.elements["p" + j].value = p.precios[j] ?? ""));
       fp.elements.web.checked = p.web;
       $("#error-producto").textContent = "";
       $("#ventana-producto").showModal();
@@ -465,8 +473,8 @@
       const f = fp.elements;
       const nuevo = { codigo: f.codigo.value.trim() || slug(f.nombre.value), nombre: f.nombre.value.trim(), marca: f.marca.value, tipo: f.tipo.value.trim(), corte: f.corte.value.trim(),
         publico: f.publico.value, tallas: f.tallas.value.split(/[^\d]+/).filter(Boolean), tela: f.tela.value.trim(), costo: numero(f.costo.value),
-        precios: [0, 1, 2, 3].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked,
-        destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [] };
+        precios: [0, 1, 2].map((j) => numero(f["p" + j].value)), recargoMedia: numero(f.recargoMedia.value) ?? 0, recargoExtra: numero(f.recargoExtra.value) ?? 0, web: f.web.checked,
+        destacado: catalogo[editando]?.destacado === true, ocultos: catalogo[editando]?.ocultos || [], mayorista: catalogo[editando]?.mayorista };
       if (editando < 0 && catalogo.some((p) => p.codigo === nuevo.codigo)) return ($("#error-producto").textContent = "Ese código ya existe. Escribe otro.");
       const lista = editando < 0 ? [...catalogo, nuevo] : catalogo.map((p, k) => (k === editando ? nuevo : p));
       const error = await guardarCatalogo(lista);
@@ -525,7 +533,7 @@
         return { codigo, nombre, marca: normal(valor(f, "marca")).includes("galmor") ? "galmor" : "zoroz", tipo: String(valor(f, "tipo")).trim() || previo?.tipo || "", corte: col.corte >= 0 ? String(valor(f, "corte")).trim() : previo?.corte || "",
           publico: /ni/.test(normal(valor(f, "publico"))) ? "Niño" : "Adulto",
           tallas: rango ? Array.from({ length: (rango[2] - rango[1]) / 2 + 1 }, (_, j) => String(+rango[1] + 2 * j)) : tallas ? tallas.split(/[^\d]+/).filter(Boolean) : previo?.tallas || [],
-          tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2, 3].map((j) => numero(valor(f, j))),
+          tela: String(valor(f, "tela")).trim(), costo: numero(valor(f, "costo")), precios: [0, 1, 2].map((j) => numero(valor(f, j))), mayorista: previo?.mayorista,
           recargoMedia: numero(valor(f, "recargoMedia")) ?? 0, recargoExtra: numero(valor(f, "recargoExtra")) ?? 0, web: !/^no$/.test(normal(valor(f, "web"))),
           destacado: col.destacado >= 0 ? /^si$/.test(normal(valor(f, "destacado"))) : previo?.destacado === true, ocultos: previo?.ocultos || [] };
       });
@@ -555,6 +563,69 @@
         const error = await guardarCatalogo([...nuevos, ...(quitar ? [] : quitados)]);
         if (error) $("#error-excel").textContent = error;
         else $("#cambios-excel").innerHTML = `<p class="aviso-panel">✓ Precios guardados. La tienda ya muestra los cambios.</p>`;
+      };
+    };
+
+    // Excel de precios del dueño: hoja "Unidades (1 a 6)" (por 1, 3 y 6) y hoja "Mayorista (12 a 1000)", por producto y talla.
+    // Solo cambia precios. Una fila sin todos sus precios (productos en rojo que no se producen) no se toca.
+    const ALIAS = { "paper-touch-cargo": "tactico-cargo" }; // Reason: 28/11/2026 el dueño renombró Táctico Cargo a Paper Touch Cargo en su Excel
+    const grupoDe = (t) => (/36|media/i.test(t) ? "media" : /extra/i.test(t) ? "extra" : /chica/i.test(t) ? "chica" : "");
+    function leerPrecios(datos) {
+      const libro = XLSX.read(datos);
+      const hoja = (palabra, cuantos) => {
+        const nombre = libro.SheetNames.find((s) => normal(s).includes(palabra));
+        if (!nombre) throw new Error(`No encontré la hoja «${palabra}». Usa tu Excel de precios de dos hojas.`);
+        const filas = XLSX.utils.sheet_to_json(libro.Sheets[nombre], { header: 1, defval: "" });
+        const iCab = filas.findIndex((f) => normal(f[0]) === "codigo");
+        return filas.slice(iCab + 1).filter((f) => String(f[0]).trim()).map((f) => {
+          const codigo = slug(f[0]);
+          return { codigo: ALIAS[codigo] || codigo, grupo: grupoDe(String(f[2])), precios: f.slice(3, 3 + cuantos).map(numero) };
+        });
+      };
+      const completas = (filas) => filas.filter((f) => f.grupo && f.precios.every((v) => v > 0));
+      const unidad = hoja("unidad", 3), mayor = hoja("mayorista", 7);
+      const avisos = [];
+      const nuevos = catalogo.map((p) => {
+        const u = Object.fromEntries(completas(unidad).filter((f) => f.codigo === p.codigo).map((f) => [f.grupo, f.precios]));
+        const m = Object.fromEntries(completas(mayor).filter((f) => f.codigo === p.codigo).map((f) => [f.grupo, f.precios]));
+        const nuevo = { ...p };
+        if (u.chica) {
+          nuevo.precios = u.chica;
+          for (const [g, campo] of [["media", "recargoMedia"], ["extra", "recargoExtra"]]) {
+            if (!u[g]) continue;
+            const difs = u[g].map((v, j) => Math.round((v - u.chica[j]) * 100) / 100);
+            nuevo[campo] = difs[0];
+            if (difs.some((d) => d !== difs[0])) avisos.push(`${p.nombre}: la talla ${g === "media" ? "36" : "extra"} no sube igual en 1, 3 y 6 (${difs.join(" / ")}); se usa ${difs[0]}.`);
+          }
+        }
+        if (Object.keys(m).length) nuevo.mayorista = { ...(p.mayorista || {}), ...m };
+        return nuevo;
+      });
+      const codigos = new Set(catalogo.map((p) => p.codigo));
+      const noEsta = [...new Set([...unidad, ...mayor].map((f) => f.codigo).filter((c) => !codigos.has(c)))];
+      if (noEsta.length) avisos.push(`No están en el panel (no se cargan): ${noEsta.join(", ")}.`);
+      return { nuevos, avisos };
+    }
+    $("#subir-precios").onchange = async (e) => {
+      const archivo = e.target.files[0];
+      e.target.value = "";
+      if (!archivo) return;
+      let r;
+      try { r = leerPrecios(await archivo.arrayBuffer()); } catch (err) { return alert(err.message); }
+      const fila = (p, k) => grupos(p).map(([g, rec, key]) => k === "mayorista" ? `${g} ${(p.mayorista?.[key] || []).map((v) => (v ? soles(v) : "—")).join("/")}`
+        : `${g} ${CANT.map((c, j) => soles(p.precios[j] + rec)).join("/")}`).join(" · ");
+      const cambian = r.nuevos.map((p, i) => [p, catalogo[i]]).filter(([n, a]) => JSON.stringify([n.precios, n.recargoMedia, n.recargoExtra, n.mayorista]) !== JSON.stringify([a.precios, a.recargoMedia, a.recargoExtra, a.mayorista]));
+      $("#cambios-excel").innerHTML = `<div class="cambios"><h3 style="margin:0 0 6px">Revisa antes de guardar · ${esc(archivo.name)}</h3>
+        ${cambian.length ? `<ul>${cambian.map(([n, a]) => `<li><b>${esc(n.nombre)}</b>${n.precios.join() !== a.precios.join() || n.recargoMedia !== a.recargoMedia || n.recargoExtra !== a.recargoExtra
+          ? `<br>Web (1/3/6): ${fila(a)} → <b>${fila(n)}</b>` : ""}${JSON.stringify(n.mayorista) !== JSON.stringify(a.mayorista) ? `<br>Mayorista (12…1000): <b>${fila(n, "mayorista")}</b>` : ""}</li>`).join("")}</ul>` : "<p>No hay cambios.</p>"}
+        ${r.avisos.map((t) => `<p class="aviso-talla">${esc(t)}</p>`).join("")}
+        <p class="aviso-talla" id="error-excel"></p>
+        <div class="botones"><button class="si" id="aplicar-excel">Guardar precios</button><button id="cancelar-excel">Cancelar</button></div></div>`;
+      $("#cancelar-excel").onclick = () => ($("#cambios-excel").innerHTML = "");
+      $("#aplicar-excel").onclick = async () => {
+        const error = await guardarCatalogo(r.nuevos);
+        if (error) $("#error-excel").textContent = error;
+        else $("#cambios-excel").innerHTML = `<p class="aviso-panel">✓ Precios guardados. La web ya muestra los precios por unidad; la tabla mayorista queda solo en el panel.</p>`;
       };
     };
 

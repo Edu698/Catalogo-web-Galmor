@@ -250,6 +250,15 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 .pack.estrella b { border-color: rgba(255, 255, 255, .3); }
 .pack.estrella .btn { background: #fbf3ec; color: #2b1a10; }
 @media (max-width: 767px) { .pack-tag { top: -16px; } .packs-lista { gap: 34px; padding-top: 14px; } }
+.pack .pct-texto { font-size: 44px; }
+/* ¿Eres mayorista? (catálogo) */
+.mayorista-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 22px;
+  padding: 20px 24px; border-radius: 14px; background: linear-gradient(160deg, #4a2c1a, #2e1b10); color: #fff; }
+.mayorista-banda b { display: block; font: 700 26px var(--titulo); text-transform: uppercase; letter-spacing: .03em; }
+.mayorista-banda span { font-size: 16px; opacity: .9; }
+.mayorista-banda .btn { background: #fbf3ec; color: #2b1a10; min-height: 52px; padding: 0 26px; font-weight: 700; }
+@media (max-width: 600px) { .mayorista-banda .btn { width: 100%; } }
+.enlace { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
 /* Destacado: doble cargo */
 .destacado { display: grid; grid-template-columns: 1fr; gap: 18px; background: linear-gradient(90deg, #d7d5d3 0 40%, #f8eee6 40%); padding: 32px var(--margen); align-items: center; }

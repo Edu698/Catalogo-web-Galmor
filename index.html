@@ -65,6 +65,10 @@
           <option value="">Recomendados</option><option value="menor">Precio: menor a mayor</option>
           <option value="mayor">Precio: mayor a menor</option><option value="nombre">Nombre A–Z</option></select></label>
       </div>
+      <div class="mayorista-banda">
+        <div><b>¿Eres mayorista?</b><span>Comunícate con nosotros y te damos los mejores precios. Desde 12 prendas.</span></div>
+        <button type="button" class="btn btn-cafe" data-mayorista>Quiero precio mayorista</button>
+      </div>
       <nav class="estilos" id="estilos" aria-label="Elige un estilo"></nav>
       <button class="btn-filtrar" id="btn-filtrar" aria-expanded="false" aria-controls="filtros">Filtrar por</button>
       <aside class="filtros" id="filtros" aria-label="Filtros">
@@ -123,7 +127,7 @@
         <details id="faq-pago"><summary>¿Qué medios de pago aceptan?</summary><p>Yape, Plin y transferencia bancaria (BCP). Al terminar tu pedido ves los datos de pago y el monto exacto. Tú eliges boleta o ticket; todos los precios incluyen IGV.</p></details>
         <details id="faq-talla"><summary>¿Cómo puedo elegir mi talla?</summary><p>Adulto: tallas 28 a 40. Niño: tallas 2 a 16. La talla 36 y las tallas 38 y 40 tienen un pequeño recargo, que ves al elegirlas. Si dudas entre dos tallas, escríbenos por WhatsApp con tu medida de cintura y te recomendamos la mejor.</p></details>
         <details id="faq-cambios"><summary>¿Puedo cambiar o devolver mi pantalón?</summary><p>Sí. Escríbenos por WhatsApp con tu número de pedido y coordinamos el cambio de talla o de modelo. La prenda debe estar sin uso y con sus etiquetas. Revisa las condiciones en nuestra <a href="legal.html#cambios">Política de cambios y devoluciones</a>.</p></details>
-        <details id="faq-pack"><summary>¿Cómo funciona ARMA TU PACK?</summary><p>Desde 3 prendas, cada una te sale más barata; y baja más con 6 y con 12. El descuento se aplica solo en el carrito y puedes mezclar modelos, colores y tallas.</p></details>
+        <details id="faq-pack"><summary>¿Cómo funciona ARMA TU PACK?</summary><p>Desde 3 prendas, cada una te sale más barata; y baja más con 6. Desde 12 prendas es precio mayorista: pídelo con el botón «¿Eres mayorista?». El descuento se aplica solo en el carrito y puedes mezclar modelos, colores y tallas.</p></details>
         <details id="faq-seguimiento"><summary>¿Cómo puedo consultar el estado de mi pedido?</summary><p>Toca el ícono de la persona, arriba a la derecha («Mi pedido»), y escribe tu número de pedido y tu DNI. Verás si está recibido, pagado o despachado, y la fecha de despacho.</p></details>
       </div>
       <p class="faq-ayuda">¿Necesitas ayuda adicional?</p>
@@ -201,6 +205,26 @@
       <button class="btn btn-cafe btn-alto" type="submit">Ver estado</button>
     </form>
     <div id="resultado-seguimiento"></div>
+  </dialog>
+
+  <!-- ¿Eres mayorista?: los datos van por WhatsApp al número de mayoristas (productos.js) -->
+  <dialog class="ventana" id="ventana-mayorista" aria-labelledby="titulo-mayorista">
+    <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    <form id="form-mayorista" novalidate>
+      <h2 id="titulo-mayorista">¿Eres mayorista?</h2>
+      <p class="ventana-sub">Déjanos tus datos y te enviamos los mejores precios desde 12 prendas.</p>
+      <label class="campo">Nombre completo<input name="nombre" autocomplete="name" maxlength="120"></label>
+      <label class="campo">DNI o RUC<input name="documento" inputmode="numeric" maxlength="11" placeholder="8 u 11 dígitos" autocomplete="off"></label>
+      <label class="campo">Dirección de tu tienda<input name="direccion" autocomplete="street-address" maxlength="200"></label>
+      <label class="campo">Foto de tu tienda (opcional)<input name="foto" type="file" accept="image/*"></label>
+      <label class="campo">Mensaje (opcional)<textarea name="mensaje" rows="3" maxlength="500" placeholder="Ej.: Busco 50 pantalones drill, tallas 28 a 34."></textarea></label>
+      <p class="aviso-talla" id="error-mayorista" role="alert"></p>
+      <button class="btn btn-cafe btn-alto" type="submit">Continuar</button>
+    </form>
+    <div id="listo-mayorista" hidden>
+      <p class="ventana-sub">¡Listo! Toca el botón para enviarnos tus datos por WhatsApp.</p>
+      <a class="btn btn-cafe btn-alto" id="enviar-mayorista" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+    </div>
   </dialog>
 
   <!-- Producto -->

@@ -54,9 +54,11 @@
     $("#rejilla").innerHTML = `<p class="vacio">No se pudo cargar el catálogo. Revisa tu internet y recarga la página.</p>`;
   }
 
-  // Precio por talla y cantidad. Cant. 1, 3, 6 y 12 son de talla chica (28-34, niño 2-8);
+  // Precio por talla y cantidad. Cant. 1, 3 y 6 son de talla chica (28-34, niño 2-8);
   // la talla media (36, niño 10-16) y la extra (38-40) suman su recargo. La cantidad cuenta todas las prendas del carrito.
-  const NIVELES = [1, 3, 6, 12];
+  // 28/11/2026 (dueño): de 7 a 11 se paga como 6; desde 12 es mayorista (precios solo en el panel, se piden por WhatsApp).
+  const NIVELES = [1, 3, 6];
+  const MAYORISTA = 12;
   const grupoTalla = (p, t) => (p.publico === "Niño" ? (+t >= 10 ? "media" : "chica") : +t >= 38 ? "extra" : +t === 36 ? "media" : "chica");
   const recargo = (p, t) => ({ chica: 0, media: p.recargoMedia, extra: p.recargoExtra })[grupoTalla(p, t)] || 0;
   const nivel = (n) => NIVELES.findLastIndex((k) => n >= k);
@@ -500,6 +502,7 @@
         <div><span>IGV (18 %)</span><span>${soles(t - b)}</span></div>
         <div class="total"><span>Total</span><span>${soles(t)}</span></div>
         ${siguientePack() ? `<p class="pack-aviso">${siguientePack()}</p>` : ""}
+        ${piezas() >= MAYORISTA ? `<p class="pack-aviso">¿Compras ${MAYORISTA} o más? Tenemos precio mayorista. <button type="button" class="enlace" data-mayorista>Pídelo aquí</button></p>` : ""}
         <p>El costo de envío se coordina por WhatsApp.</p></div>
       <button class="btn btn-denim btn-alto" id="ir-pagar">Ir a pagar</button>
       <button class="btn btn-borde" id="seguir">Seguir comprando</button>`;
@@ -801,8 +804,8 @@
   }
 
   // ---------- Packs, "Ver todo", destacado y preguntas ----------
-  // "Arma tu pack": cuánto baja cada prenda al llevar 3, 6 o 12 (lo más común entre los productos).
-  const ETIQUETAS = ["", "★ Más popular", "♛ Mejor precio"];
+  // "Arma tu pack": cuánto baja cada prenda al llevar 3 o 6 (lo más común entre los productos); la tercera tarjeta es mayorista.
+  const ETIQUETAS = ["", "★ Más popular"];
   const rebaja = (k) => {
     const cuenta = {};
     for (const p of C.productos) { const d = Math.round((p.precios[0] - p.precios[k]) * 100) / 100; if (d > 0) cuenta[d] = (cuenta[d] || 0) + 1; }
@@ -810,9 +813,12 @@
   };
   $("#packs-lista").innerHTML = NIVELES.slice(1).map((n, j) => `<div class="pack ${j === 1 ? "estrella" : ""}">
       ${ETIQUETAS[j] ? `<span class="pack-tag">${ETIQUETAS[j]}</span>` : ""}
-      <b><strong>${n}${j === 2 ? "+" : ""}</strong> prendas</b><span class="pct">S/ ${rebaja(j + 1)}</span>
+      <b><strong>${n}</strong> prendas</b><span class="pct">S/ ${rebaja(j + 1)}</span>
       <small>de descuento por unidad</small>
-      <a class="btn" href="#catalogo">Elegir pack <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("");
+      <a class="btn" href="#catalogo">Elegir pack <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></div>`).join("")
+    + `<div class="pack"><span class="pack-tag">♛ Mayorista</span><b><strong>${MAYORISTA}+</strong> prendas</b><span class="pct pct-texto">Por mayor</span>
+      <small>los mejores precios</small>
+      <button type="button" class="btn" data-mayorista>Pedir precios <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button></div>`;
   $$("[data-abrir]").forEach((b) => (b.onclick = () => abrirProducto(b.dataset.abrir, b.dataset.color)));
   $("#faq-wsp").href = wsp("Hola Galmor, tengo una consulta.");
   // Ventana "Mi pedido".
@@ -840,6 +846,51 @@
         <a class="btn btn-borde" href="${wsp(`Hola Galmor, consulto por mi pedido ${f.n.trim().toUpperCase()}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>`;
     } catch (err) { $("#error-seguimiento").textContent = err.message.startsWith("Failed") ? "Sin conexión. Intenta otra vez." : err.message; }
   };
+
+  // ---------- ¿Eres mayorista?: datos + foto opcional del local, se envían por WhatsApp ----------
+  // Reason: la foto no viaja en un link wa.me; se sube al servidor y va su link en el mensaje.
+  async function fotoLocal(archivo) {
+    const img = await cargarImg(URL.createObjectURL(archivo));
+    if (!img) return "";
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const cv = Object.assign(document.createElement("canvas"), { width: Math.round(img.width * k), height: Math.round(img.height * k) });
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    const jpg = await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.82));
+    try {
+      const r = await fetch("/api/mayorista/foto", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: jpg });
+      return r.ok ? new URL((await r.json()).url, location.href).href : "";
+    } catch { return ""; }
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-mayorista]")) return;
+    $("#form-mayorista").hidden = false;
+    $("#listo-mayorista").hidden = true;
+    $("#error-mayorista").textContent = "";
+    $("#ventana-mayorista").showModal();
+  });
+  $("#form-mayorista").onsubmit = async (e) => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    const error = f.nombre.trim().split(/\s+/).length < 2 ? "Escribe tu nombre completo."
+      : !/^(\d{8}|\d{11})$/.test(f.documento.trim()) ? "El DNI tiene 8 dígitos y el RUC 11."
+      : f.direccion.trim().length < 5 ? "Escribe la dirección de tu tienda." : "";
+    $("#error-mayorista").textContent = error;
+    if (error) return;
+    const boton = $("button[type=submit]", e.target);
+    boton.disabled = true;
+    boton.textContent = "Preparando…";
+    const foto = f.foto?.size ? await fotoLocal(f.foto) : "";
+    const texto = ["Hola Galmor, soy mayorista y quiero sus precios por mayor.", `Nombre: ${f.nombre.trim()}`,
+      `DNI/RUC: ${f.documento.trim()}`, `Dirección de mi tienda: ${f.direccion.trim()}`,
+      foto ? `Foto de mi tienda: ${foto}` : f.foto?.size ? "Foto de mi tienda: te la envío por aquí." : "",
+      f.mensaje.trim() ? `Mensaje: ${f.mensaje.trim()}` : ""].filter(Boolean).join("\n");
+    $("#enviar-mayorista").href = `https://wa.me/${C.whatsappMayorista || C.whatsapp}?text=${encodeURIComponent(texto)}`;
+    boton.disabled = false;
+    boton.textContent = "Continuar";
+    e.target.hidden = true;
+    $("#listo-mayorista").hidden = false;
+  };
+  $("#enviar-mayorista").onclick = () => setTimeout(() => { $("#form-mayorista").reset(); $("#ventana-mayorista").close(); }, 300);
 
   // ---------- Inicio ----------
   $("#wsp-flotante").href = wsp("Hola Galmor, quiero información de sus productos.");
