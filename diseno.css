@@ -252,11 +252,11 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 @media (max-width: 767px) { .pack-tag { top: -16px; } .packs-lista { gap: 34px; padding-top: 14px; } }
 .pack .pct-texto { font-size: 44px; }
 /* ¿Eres mayorista? (catálogo) */
-.mayorista-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 22px;
-  padding: 20px 24px; border-radius: 14px; background: linear-gradient(160deg, #4a2c1a, #2e1b10); color: #fff; }
-.mayorista-banda b { display: block; font: 700 26px var(--titulo); text-transform: uppercase; letter-spacing: .03em; }
-.mayorista-banda span { font-size: 16px; opacity: .9; }
-.mayorista-banda .btn { background: #fbf3ec; color: #2b1a10; min-height: 52px; padding: 0 26px; font-weight: 700; }
+.mayorista-banda { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 26px var(--margen); background: linear-gradient(160deg, #4a2c1a, #2e1b10); color: #fff; }
+.mayorista-banda b { display: block; font: 700 clamp(30px, 4vw, 44px)/1.1 var(--titulo); text-transform: uppercase; letter-spacing: .03em; }
+.mayorista-banda span { font-size: 17px; opacity: .9; }
+.mayorista-banda .btn { background: #fbf3ec; color: #2b1a10; min-height: 58px; padding: 0 30px; font-weight: 700; font-size: 17px; }
 @media (max-width: 600px) { .mayorista-banda .btn { width: 100%; } }
 .enlace { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
